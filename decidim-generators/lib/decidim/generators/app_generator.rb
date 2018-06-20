@@ -112,7 +112,7 @@ module Decidim
           end
         end
 
-        Bundler.with_original_env { run "BUNDLE_GEMFILE=Gemfile bundle install" }
+        Bundler.with_original_env { run "bundle install" }
       end
 
       def tweak_bootsnap
