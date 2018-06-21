@@ -63,7 +63,7 @@ module Decidim
 
         if options[:external]
           inside(component_folder) do
-            Bundler.with_original_env { run "bundle install" }
+            Bundler.with_clean_env { run "bundle install" }
           end
         end
       end
