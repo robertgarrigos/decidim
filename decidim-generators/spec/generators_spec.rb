@@ -20,7 +20,7 @@ module Decidim
     end
 
     let(:result) do
-      Bundler.with_original_env { GemManager.capture(command, env: env) }
+      Bundler.with_clean_env { GemManager.capture(command, env: env) }
     end
 
     shared_examples_for "a sane generator" do
