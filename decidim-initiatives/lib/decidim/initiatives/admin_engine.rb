@@ -11,9 +11,11 @@ module Decidim
       isolate_namespace Decidim::Initiatives::Admin
 
       paths["db/migrate"] = nil
+      paths["lib/tasks"] = nil
 
       routes do
         resources :initiatives_types, except: :show do
+          resource :permissions, controller: "initiatives_types_permissions"
           resources :initiatives_type_scopes, except: [:index, :show]
         end
 
@@ -24,6 +26,7 @@ module Decidim
             delete :unpublish
             delete :discard
             get :export_votes
+            get :export_pdf_signatures
             post :accept
             delete :reject
           end
@@ -36,6 +39,8 @@ module Decidim
               delete :revoke
             end
           end
+
+          resource :answer, only: [:edit, :update]
         end
 
         scope "/initiatives/:initiative_slug" do
@@ -46,6 +51,14 @@ module Decidim
               put :unpublish
             end
             resources :exports, only: :create
+          end
+
+          resources :moderations do
+            member do
+              put :unreport
+              put :hide
+              put :unhide
+            end
           end
         end
 
@@ -66,7 +79,7 @@ module Decidim
         )
       end
 
-      initializer "decidim_assemblies.admin_menu" do
+      initializer "decidim_initiaves.admin_menu" do
         Decidim.menu :admin_menu do |menu|
           menu.item I18n.t("menu.initiatives", scope: "decidim.admin"),
                     decidim_admin_initiatives.initiatives_path,

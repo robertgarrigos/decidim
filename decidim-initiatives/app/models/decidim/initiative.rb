@@ -16,6 +16,9 @@ module Decidim
     include Decidim::Loggable
     include Decidim::Initiatives::InitiativeSlug
     include Decidim::Resourceable
+    include Decidim::HasReference
+    include Decidim::Randomable
+    include Decidim::Searchable
 
     belongs_to :organization,
                foreign_key: "decidim_organization_id",
@@ -26,8 +29,8 @@ module Decidim
                class_name: "Decidim::InitiativesTypeScope",
                inverse_of: :initiatives
 
-    delegate :type, to: :scoped_type, allow_nil: true
-    delegate :scope, to: :scoped_type, allow_nil: true
+    delegate :type, :scope, :scope_name, to: :scoped_type, allow_nil: true
+    delegate :promoting_committee_enabled?, to: :type
 
     has_many :votes,
              foreign_key: "decidim_initiative_id",
@@ -51,11 +54,13 @@ module Decidim
              dependent: :destroy,
              as: :participatory_space
 
-    enum signature_type: [:online, :offline, :any]
+    enum signature_type: [:online, :offline, :any], _suffix: true
     enum state: [:created, :validating, :discarded, :published, :rejected, :accepted]
 
     validates :title, :description, :state, presence: true
     validates :signature_type, presence: true
+    validate :signature_type_allowed
+
     validates :hashtag,
               uniqueness: true,
               allow_blank: true,
@@ -63,20 +68,21 @@ module Decidim
 
     scope :open, lambda {
       published
-        .where.not(state: [:discarded, :rejected, :accepted])
-        .where("signature_start_time <= ?", Time.now.utc)
-        .where("signature_end_time >= ?", Time.now.utc)
+        .where.not(state: [:discarded, :rejected, :accepted, :created])
+        .where("signature_start_date <= ?", Date.current)
+        .where("signature_end_date >= ?", Date.current)
     }
     scope :closed, lambda {
       published
         .where(state: [:discarded, :rejected, :accepted])
-        .or(where("signature_start_time > ?", Time.now.utc))
-        .or(where("signature_end_time < ?", Time.now.utc))
+        .or(where("signature_start_date > ?", Date.current))
+        .or(where("signature_end_date < ?", Date.current))
     }
     scope :published, -> { where.not(published_at: nil) }
     scope :with_state, ->(state) { where(state: state) if state.present? }
 
     scope :public_spaces, -> { published }
+    scope :signature_type_updatable, -> { created }
 
     scope :order_by_most_recent, -> { order(created_at: :desc) }
     scope :order_by_supports, -> { order(Arel.sql("initiative_votes_count + coalesce(offline_votes, 0) desc")) }
@@ -90,11 +96,22 @@ module Decidim
     after_save :notify_state_change
     after_create :notify_creation
 
-    def self.order_randomly(seed)
-      transaction do
-        connection.execute("SELECT setseed(#{connection.quote(seed)})")
-        select('"decidim_initiatives".*, RANDOM()').order(Arel.sql("RANDOM()")).load
-      end
+    searchable_fields({
+                        participatory_space: :itself,
+                        A: :title,
+                        D: :description,
+                        datetime: :published_at
+                      },
+                      index_on_create: ->(_initiative) { false },
+                      # is Resourceable instead of ParticipatorySpaceResourceable so we can't use `visible?`
+                      index_on_update: ->(initiative) { initiative.published? })
+
+    def self.future_spaces
+      none
+    end
+
+    def self.past_spaces
+      closed
     end
 
     def self.log_presenter_class_for(_log)
@@ -163,10 +180,20 @@ module Decidim
     # RETURNS string
     delegate :banner_image, to: :type
 
+    delegate :document_number_authorization_handler, to: :type
+    delegate :supports_required, to: :scoped_type
+
     def votes_enabled?
       published? &&
-        signature_start_time <= Time.zone.today &&
-        signature_end_time >= Time.zone.today
+        signature_start_date <= Date.current &&
+        signature_end_date >= Date.current
+    end
+
+    # Public: Check if the user has voted the question.
+    #
+    # Returns Boolean.
+    def voted_by?(user)
+      votes.where(author: user).any?
     end
 
     # Public: Checks if the organization has given an answer for the initiative.
@@ -195,11 +222,12 @@ module Decidim
     # Returns true if the record was properly saved, false otherwise.
     def publish!
       return false if published?
+
       update(
         published_at: Time.current,
         state: "published",
-        signature_start_time: DateTime.now.utc,
-        signature_end_time: DateTime.now.utc + Decidim::Initiatives.default_signature_time_period_length
+        signature_start_date: Date.current,
+        signature_end_date: Date.current + Decidim::Initiatives.default_signature_time_period_length
       )
     end
 
@@ -209,12 +237,13 @@ module Decidim
     # Returns true if the record was properly saved, false otherwise.
     def unpublish!
       return false unless published?
+
       update(published_at: nil, state: "discarded")
     end
 
     # Public: Returns wether the signature interval is already defined or not.
     def has_signature_interval_defined?
-      signature_end_time.present? && signature_start_time.present?
+      signature_end_date.present? && signature_start_date.present?
     end
 
     # Public: Returns the hashtag for the initiative.
@@ -223,16 +252,21 @@ module Decidim
     end
 
     def supports_count
-      face_to_face_votes = offline_votes.nil? || online? ? 0 : offline_votes
-      digital_votes = offline? ? 0 : (initiative_votes_count + initiative_supports_count)
+      face_to_face_votes = offline_votes.nil? || online_signature_type? ? 0 : offline_votes
+      digital_votes = offline_signature_type? ? 0 : (initiative_votes_count + initiative_supports_count)
       digital_votes + face_to_face_votes
     end
 
     # Public: Returns the percentage of required supports reached
     def percentage
-      percentage = supports_count * 100 / scoped_type.supports_required
-      percentage = 100 if percentage > 100
-      percentage
+      return 100 if supports_goal_reached?
+
+      supports_count * 100 / supports_required
+    end
+
+    # Public: Whether the supports required objective has been reached
+    def supports_goal_reached?
+      supports_count >= supports_required
     end
 
     # Public: Overrides slug attribute from participatory processes.
@@ -263,19 +297,59 @@ module Decidim
     # RETURNS boolean
     def has_authorship?(user)
       return true if author.id == user.id
+
       committee_members.approved.where(decidim_users_id: user.id).any?
     end
 
     def accepts_offline_votes?
-      Decidim::Initiatives.face_to_face_voting_allowed &&
-        (offline? || any?) &&
-        published?
+      published? && (offline_signature_type? || any_signature_type?)
+    end
+
+    def accepts_online_votes?
+      votes_enabled? && (online_signature_type? || any_signature_type?)
+    end
+
+    def accepts_online_unvotes?
+      accepts_online_votes? && type.undo_online_signatures_enabled?
+    end
+
+    def minimum_committee_members
+      type.minimum_committee_members || Decidim::Initiatives.minimum_committee_members
+    end
+
+    def enough_committee_members?
+      committee_members.approved.count >= minimum_committee_members
+    end
+
+    # PUBLIC
+    #
+    # Checks if the type the initiative belongs to enables SMS code
+    # verification step. Tis configuration is ignored if the organization
+    # doesn't have the sms authorization available
+    #
+    # RETURNS boolean
+    def validate_sms_code_on_votes?
+      organization.available_authorizations.include?("sms") && type.validate_sms_code_on_votes?
+    end
+
+    # Public: Returns an empty object. This method should be implemented by
+    # `ParticipatorySpaceResourceable`, but for some reason this model does not
+    # implement this interface.
+    def user_role_config_for(_user, _role_name)
+      Decidim::ParticipatorySpaceRoleConfig::Base.new(:empty_role_name)
     end
 
     private
 
+    def signature_type_allowed
+      return if published?
+
+      errors.add(:signature_type, :invalid) if type.allowed_signature_types_for_initiatives.exclude?(signature_type)
+    end
+
     def notify_state_change
       return unless saved_change_to_state?
+
       notifier = Decidim::Initiatives::StatusChangeNotifier.new(initiative: self)
       notifier.notify
     end
@@ -284,5 +358,15 @@ module Decidim
       notifier = Decidim::Initiatives::StatusChangeNotifier.new(initiative: self)
       notifier.notify
     end
+
+    # Allow ransacker to search for a key in a hstore column (`title`.`en`)
+    [:title, :description].each do |column|
+      ransacker column do |parent|
+        Arel::Nodes::InfixOperation.new("->>", parent.table[column], Arel::Nodes.build_quoted(I18n.locale.to_s))
+      end
+    end
+
+    # Allow ransacker to search on an Enum Field
+    ransacker :state, formatter: proc { |int| states[int] }
   end
 end

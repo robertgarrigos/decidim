@@ -7,12 +7,11 @@
 <%= partial "template_top" %>
 
 <main>
+  <%= partial "process_header" %>
   <div class="wrapper">
-    <%= partial "process_header" %>
-
     <div class="row column">
       <div class="callout alert mb-sm">
-        <p>This amendment for the proposal <a><strong>Donec facilisis tortor ut augue</strong></a> was rejected on <strong>11/10/2018</strong>. <br /> You can publish this ammendment as an independent proposal.</p>
+        <p>This amendment for the proposal <a><strong>Donec facilisis tortor ut augue</strong></a> was rejected on <strong>11/10/2018</strong>. <br> You can publish this ammendment as an independent proposal.</p>
       </div>
     </div>
     <div class="row column view-header">
@@ -63,11 +62,16 @@
           <% amends = Faker::Number.between(8, 20) %>
           <h2 class="section-heading">Enmiendas (<%= amends %>)</h2>
           <%= render layout: "public/components/collapsible-list", locals: { text: raw("<u>Muestra #{amends - 4} otras enmiendas</u>"), size: 4, classText: "" } do %>
-            <div class="row small-up-1 medium-up-2">
+            <div class="row small-up-1 medium-up-2 card-grid">
               <% amends.times do %>
               <!-- If you append .collapse, you'll hide those as well -->
               <div class="column collapse">
                 <article class="card card--proposal warning">
+                  <div class="card__top">
+                    <div class="card__content text-small">
+                      <span class="muted">Proceso:</span>&nbsp;<%= link_to Faker::Hipster.sentence, page_path("info"), class: "card__link text-ellipsis" %>
+                    </div>
+                  </div>
                   <div class="card__content">
                     <div class="card__header">
                       <%= link_to page_path("proposal-view"), class: "card__link" do %>
@@ -76,15 +80,24 @@
                       </h5>
                       <% end %>
                       <div class="card__author">
-                        <%= partial "author_data" %>
+                        <%= partial "author_data", { nick: false } %>
                       </div>
                     </div>
                     <div class="card__text">
                       <div class="card__text--paragraph">
                         <span class="card__text--status warning">Evaluando</span><%= Faker::Hipster.paragraph[0..140] %>
                       </div>
-                      <a class="card__text--category"><%= Faker::Lovecraft.tome %></a>
                     </div>
+                    <ul class="tags tags--proposal">
+                      <li>
+                        <a href="#">
+                          El Raval
+                        </a>
+                      </li>
+                      <li>
+                        <a href="#">Transició ecològica</a>
+                      </li>
+                    </ul>
                   </div>
                   <div class="card__status">
                     <ul class="card-data">

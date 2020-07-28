@@ -21,34 +21,80 @@
       letter-spacing: 0;
     }
   }
+
+  &.button--right{
+    float: right;
+  }
+}
+
+.button{
+  background-color: var(--primary);
+
+  &:hover,
+  &:focus{
+    background-color: var(--primary);
+    filter: brightness(120%);
+  }
+
+  &.hollow{
+    background-color: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  &.secondary{
+    &:hover,
+    &:focus{
+      filter: brightness(120%);
+    }
+
+    &.hollow{
+      background-color: transparent;
+      color: var(--secondary);
+      border-color: var(--secondary);
+    }
+  }
+}
+
+.progress-meter{
+  background-color: var(--primary);
 }
 
 // Overwrite Foundation hover styles in hollow disabled buttons
 .button.hollow:disabled:hover,
 .button.hollow.disabled:hover{
   background-color: transparent;
-  border-color: inherit;
-  color: $primary;
+  border-color: var(--primary);
+  color: var(--primary);
 
   &.secondary{
-    color: $secondary;
+    border-color: var(--secondary);
+    color: var(--secondary);
   }
 
   &.success{
-    color: $success;
+    border-color: var(--success);
+    color: var(--success);
   }
 
   &.alert{
-    color: $alert;
+    border-color: var(--alert);
+    color: var(--alert);
   }
 
   &.warning{
-    color: $warning;
+    border-color: var(--warning);
+    color: var(--warning);
   }
 }
 
 .button.light:not(.hollow){
   @include modifiers(color, (success: $white, secondary: $white));
+}
+
+.button.light.hollow{
+  border-color: $white;
+  color: $white;
 }
 
 // Button groups
@@ -112,12 +158,40 @@
 .button--icon{
   display: flex;
   align-items: center;
+  position: relative;
+
+  .icon-wrap{
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: .85em;
+    border-right: 1px solid var(--secondary);
+    height: 100%;
+    min-width: 3.5em;
+    white-space: no-wrap;
+    padding-right: 5px;
+
+    .icon{
+      margin: 0;
+      vertical-align: bottom;
+    }
+  }
+
+  .text-wrap{
+    display: block;
+    margin-left: 2rem;
+  }
 
   .icon{
     margin: 0 2px;
   }
 
   &.small{
+    .icon-wrap{
+      padding: .5rem;
+      min-width: 2.5rem;
+    }
+
     .icon{
       width: 12px;
       height: 12px;
@@ -131,14 +205,14 @@
 
 .button--frosted{
   background-color: rgba($white, .65);
-  color: $primary;
+  color: var(--primary);
 }
 
 .button--muted{
   background-color: $muted;
 
   &:hover{
-    background-color: $secondary;
+    background-color: var(--secondary);
   }
 
   &.hollow{
@@ -165,6 +239,7 @@
 }
 
 .link{
+  cursor: pointer;
   color: $anchor-color;
   font-weight: 600;
 }
@@ -203,25 +278,70 @@
 }
 
 .button--twitter{
-  background-color: $twitter;
+  background-color: var(--twitter);
 
   &:hover{
-    background-color: lighten($twitter, 5);
+    background-color: var(--twitter);
+    filter: brightness(90%);
   }
 }
 
 .button--facebook{
-  background-color: $facebook;
+  background-color: var(--facebook);
 
   &:hover{
-    background-color: lighten($facebook, 5);
+    background-color: var(--facebook);
+    filter: brightness(90%);
   }
 }
 
 .button--google{
-  background-color: $google;
+  background-color: var(--google);
+  font-family: Roboto;
 
   &:hover{
-    background-color: lighten($google, 5);
+    background-color: var(--google);
+    filter: brightness(90%);
+  }
+
+  .button--social__icon{
+    padding: 0;
+
+    svg.icon{
+      fill: inherit;
+      width: inherit;
+      height: inherit;
+      margin-top: 2px;
+
+      /*
+       * This is a hack to comply with google guidelines
+       * https://developers.google.com/identity/branding-guidelines
+       * Currently the icons.svg file have the wrong google icon, until that's fixed
+       * google icon can be specified in secrets.yml with icon_path: decidim/brands/google.svg
+       * however to facilitate upgrades this provides a fallback
+       */
+      max-width: 42px;
+      max-height: 42px;
+
+      &.icon--google{
+        > use{
+          display: none;
+        }
+
+        background-image: image-url("decidim/brands/google.svg");
+      }
+    }
+  }
+
+  &.button--social--mini{
+    .button--social__icon{
+      font-size: 0;
+      min-width: auto;
+      padding: 0;
+
+      svg.icon{
+        margin: 1px;
+      }
+    }
   }
 }

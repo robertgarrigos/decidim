@@ -4,21 +4,22 @@ module Decidim
   module Initiatives
     # Helper methods for the create initiative wizard.
     module CreateInitiativeHelper
-      def signature_type_options
-        return online_signature_type_options unless Decidim::Initiatives.face_to_face_voting_allowed
-        return offline_signature_type_options unless Decidim::Initiatives.online_voting_allowed
+      def signature_type_options(initiative_form)
+        return all_signature_type_options unless initiative_form.signature_type_updatable?
 
-        options = []
-        Initiative.signature_types.each_key do |type|
-          options << [
-            I18n.t(
-              type,
-              scope: %w(activemodel attributes initiative signature_type_values)
-            ), type
-          ]
+        type = ::Decidim::InitiativesType.find(initiative_form.type_id)
+        allowed_signatures = type.allowed_signature_types_for_initiatives
+
+        if allowed_signatures == %w(online)
+          online_signature_type_options
+        elsif allowed_signatures == %w(offline)
+          offline_signature_type_options
+        else
+          all_signature_type_options
         end
-        options
       end
+
+      private
 
       def online_signature_type_options
         [
@@ -40,6 +41,17 @@ module Decidim
             ), "offline"
           ]
         ]
+      end
+
+      def all_signature_type_options
+        Initiative.signature_types.keys.map do |type|
+          [
+            I18n.t(
+              type,
+              scope: %w(activemodel attributes initiative signature_type_values)
+            ), type
+          ]
+        end
       end
     end
   end

@@ -68,19 +68,36 @@ module Decidim
 
       def user
         @user ||= if creating_managed_user?
-                    new_managed_user
+                    existing_managed_user || new_managed_user
                   else
                     current_organization.users.find(params[:impersonatable_user_id])
                   end
       end
 
+      def existing_managed_user
+        handler = Decidim::AuthorizationHandler.handler_for(
+          handler_name,
+          params.dig(:impersonate_user, :authorization)
+        )
+        return nil unless handler.unique_id
+
+        existing_authorization = Authorization.find_by(
+          name: handler_name,
+          unique_id: handler.unique_id
+        )
+        return nil unless existing_authorization
+        return nil unless existing_authorization.user.managed?
+
+        existing_authorization.user
+      end
+
       def new_managed_user
-        Decidim::User.find_or_initialize_by(
+        Decidim::User.new(
           organization: current_organization,
           managed: true,
           name: params.dig(:impersonate_user, :name)
         ) do |u|
-          u.nickname = User.nicknamize(u.name, organization: current_organization)
+          u.nickname = UserBaseEntity.nicknamize(u.name, organization: current_organization)
           u.admin = false
           u.tos_agreement = true
         end

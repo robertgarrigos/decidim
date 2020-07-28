@@ -6,8 +6,8 @@ ru:
         description: Описание
         offline_votes: Выражения поддержки на личных встречах
         scope_id: Охват
-        signature_end_time: Конец периода сбора подписей
-        signature_start_time: Начало периода сбора подписей
+        signature_end_date: Конец периода сбора подписей
+        signature_start_date: Начало периода сбора подписей
         signature_type: Вид сбора подписей
         signature_type_values:
           any: Смешанный
@@ -53,6 +53,16 @@ ru:
     admin:
       actions:
         new_initiative_type: Добавить вид почина
+      filters:
+        state_eq:
+          label: Cостояние
+          values:
+            accepted: Принятые
+            created: Созданные
+            discarded: Отброшенные
+            published: Обнародовано
+            rejected: Отклоненные
+            validating: Техническая проверка
       menu:
         initiatives: Почины
         initiatives_types: Виды починов
@@ -61,7 +71,7 @@ ru:
           fields:
             created_at: 'Создано:'
             state: Cостояние
-            supports_count: Выражений поддержки
+            supports_count: Подписей
             title: Почины
         initiatives_type_scope:
           fields:
@@ -84,12 +94,17 @@ ru:
           email_subject: Срок сбора подписей в поддержку почина продлен!
           notification_title: Срок сбора подписей в поддержку почина <a href="%{resource_path}">%{resource_title}</a> продлен.
         milestone_completed:
-          email_intro: Почин %{resource_title} достиг %{percentage}% подписей!
-          email_outro: Вы получили это уведомление, потому что вы следите за «%{resource_title}». Вы можете отписаться от уведомлений, перейдя по приведенной выше ссылке.
-          email_subject: Достигнута новая веха!
-          notification_title: Почин <a href="%{resource_path}">%{resource_title}</a> достиг %{percentage}% подписей.
+          affected_user:
+            email_subject: Достигнута новая веха!
+          follower:
+            email_intro: Почин %{resource_title} достиг %{percentage}% подписей!
+            email_subject: Достигнута новая веха!
+            notification_title: Почин <a href="%{resource_path}">%{resource_title}</a> достиг %{percentage}% подписей.
     initiatives:
       admin:
+        answers:
+          info_initiative:
+            state: Cостояние
         committee_requests:
           index:
             approve: Одобрить
@@ -112,18 +127,8 @@ ru:
             title: Общие сведения
           index:
             actions_title: Действие
-            filter:
-              accepted: Принято
-              all: Все
-              created: Созданные
-              discarded: Отброшенные
-              published: Обнародованные
-              rejected: Отклоненные
-              validating: Техническая проверка
-            filter_by: 'Отобрать по признаку:'
             preview: Предпросмотр
             print: Распечатать
-            search: Поиск
           show:
             print: Распечатать
           update:
@@ -178,7 +183,7 @@ ru:
         accepted: Принятые
         created: Созданные
         discarded: Отброшенные
-        published: Обнародованные
+        published: Обнародовано
         rejected: Отклоненные
         validating: Техническая проверка
       committee_requests:
@@ -187,6 +192,9 @@ ru:
           help_text: Вы собираетесь подать запрос на членство в рабочей группе по продвижению этого почина
         spawn:
           success: Ваш запрос отправлен автору почина.
+      content_blocks:
+        highlighted_initiatives:
+          name: Рекомендуемые почины
       create_initiative:
         fill_data:
           back: Вернуться
@@ -215,12 +223,10 @@ ru:
           more_information: "(Дополнительные сведения)"
         promotal_committee:
           back: Вернуться
-          individual_help_text: Для гражданских починов нужна рабочая группа по продвижению, состоящая как минимум из трех человек (удостоверяющих лиц). Вы должны поделиться следующей ссылкой с другими людьми, которые занимаются этим почином. Когда они получат эту ссылку, им нужно будет пройти указанные там шаги.
           more_information: "(Дополнительные сведения)"
         select_initiative_type:
           back: Вернуться
           more_information: "(Дополнительные сведения)"
-          select: Выбрать
           select_initiative_type_help: Гражданские почины - это средство, с помощью которого граждане могут вмешиваться в то, чтобы Городской Совет предпринимал действия в защиту общих интересов, относящихся к сфере городских полномочий. Какой почин вы хотите запустить?
         share_committee_link:
           continue: Продолжить
@@ -285,7 +291,6 @@ ru:
           random: Произвольно
           recent: Самые последние
         result:
-          initiative_accepted_reason: Этот почин был принят, потому что
           initiative_rejected_reason: Этот почин был отвергнут из-за недостатка поддержки.
         show:
           any_vote_method: Эта гражданская инициатива собирает поддержку в онлайне, а также лицом к лицу.
@@ -297,11 +302,6 @@ ru:
           few: " подписи"
           many: " подписей"
           other: " подписей"
-        statistics:
-          assistants_count_title: Помощников
-          comments_count_title: Комментариев
-          meetings_count_title: Встреч
-          supports_count_title: Подписей
         supports:
           title: Список подписей
         vote_cabin:
@@ -355,7 +355,6 @@ ru:
         show_similar_initiatives: Сравнить
       initiative_header:
         initiative_menu_item: Почин
-        unfold: Развернуть
       initiatives:
         initiative:
           check: Проверьте это

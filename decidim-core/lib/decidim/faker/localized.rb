@@ -135,7 +135,7 @@ module Decidim
         end.with_indifferent_access
       end
 
-      # Wrapps a text build by the block with some other text.o
+      # Wrapps a text build by the block with some other text.
       #
       # before - The String text to inject at the begining of each value.
       # after  - The String text to inject at the end of each value.
@@ -155,7 +155,10 @@ module Decidim
         end
       end
 
-      # nodoc
+      # Runs the given block for each of the available locales in Decidim,
+      # momentarilly setting the locale to the current one.
+      #
+      # Returns a Hash with a value for each locale.
       def self.localized
         Decidim.available_locales.inject({}) do |result, locale|
           text = ::Faker::Base.with_locale(locale) do
@@ -166,7 +169,15 @@ module Decidim
         end.with_indifferent_access
       end
 
-      private_class_method :localized
+      # Prefixes the +msg+ for each available locale and returns as a Hash
+      # of the form `locale => prefixed_msg`.
+      #
+      # Return a Hash with a value for each locale.
+      def self.prefixed(msg, locales = Decidim.available_locales)
+        locales.inject({}) do |result, locale|
+          result.update(locale => "#{locale.to_s.upcase}: #{msg}")
+        end.with_indifferent_access
+      end
     end
   end
 end

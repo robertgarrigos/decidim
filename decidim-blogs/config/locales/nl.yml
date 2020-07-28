@@ -37,6 +37,8 @@ nl:
           update:
             invalid: Er zijn fouten opgetreden bij het opslaan van het bericht.
             success: Bericht succesvol opgeslagen
+      last_activity:
+        new_post_at_html: "<span>Nieuw bericht op %{link}</span>"
       models:
         post:
           fields:
@@ -46,7 +48,7 @@ nl:
             title: titel
       posts:
         show:
-          view: Uitzicht
+          view: Bekijk
         sidebar_blog:
           comments: reacties
           most_commented_posts: Bericht met meeste reacties
@@ -74,4 +76,4 @@ nl:
           posts_count: berichten
     participatory_processes:
       statistics:
-        posts_count: berichten
+        posts_count: Berichten

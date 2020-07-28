@@ -2,13 +2,15 @@
 
 Decidim.register_participatory_space(:consultations) do |participatory_space|
   participatory_space.icon = "decidim/consultations/icon.svg"
-  participatory_space.model_class_name = "Decidim::Consultations::Question"
+  participatory_space.model_class_name = "Decidim::Consultation"
   participatory_space.permissions_class_name = "Decidim::Consultations::Permissions"
   participatory_space.stylesheet = "decidim/consultations/consultations"
 
   participatory_space.participatory_spaces do |organization|
-    Decidim::Consultations::Question.where(organization: organization)
+    Decidim::Consultation.where(organization: organization)
   end
+
+  participatory_space.query_type = "Decidim::Consultations::ConsultationType"
 
   participatory_space.context(:public) do |context|
     context.engine = Decidim::Consultations::Engine
@@ -24,6 +26,12 @@ Decidim.register_participatory_space(:consultations) do |participatory_space|
   participatory_space.register_resource(:consultation) do |resource|
     resource.model_class_name = "Decidim::Consultation"
     resource.card = "decidim/consultations/consultation"
+    resource.searchable = true
+  end
+
+  participatory_space.register_resource(:question) do |resource|
+    resource.model_class_name = "Decidim::Consultations::Question"
+    resource.actions = %w(vote)
   end
 
   participatory_space.seeds do
@@ -31,7 +39,7 @@ Decidim.register_participatory_space(:consultations) do |participatory_space|
     organization = Decidim::Organization.first
 
     # Active consultation
-    active_consultation = Decidim::Consultation.create!(
+    active_consultation_params = {
       slug: Faker::Internet.unique.slug(nil, "-"),
       title: Decidim::Faker::Localized.sentence(3),
       subtitle: Decidim::Faker::Localized.sentence(3),
@@ -45,9 +53,19 @@ Decidim.register_participatory_space(:consultations) do |participatory_space|
       introductory_video_url: "https://www.youtube.com/embed/zhMMW0TENNA",
       decidim_highlighted_scope_id: Decidim::Scope.reorder(Arel.sql("RANDOM()")).first.id,
       organization: organization
-    )
+    }
 
-    finished_consultation = Decidim::Consultation.create!(
+    active_consultation = Decidim.traceability.perform_action!(
+      "publish",
+      Decidim::Consultation,
+      organization.users.first,
+      visibility: "all"
+    ) do
+      Decidim::Consultation.create!(active_consultation_params)
+    end
+    active_consultation.add_to_index_as_search_resource
+
+    finished_consultation_params = {
       slug: Faker::Internet.unique.slug(nil, "-"),
       title: Decidim::Faker::Localized.sentence(3),
       subtitle: Decidim::Faker::Localized.sentence(3),
@@ -62,9 +80,19 @@ Decidim.register_participatory_space(:consultations) do |participatory_space|
       introductory_video_url: "https://www.youtube.com/embed/zhMMW0TENNA",
       decidim_highlighted_scope_id: Decidim::Scope.reorder(Arel.sql("RANDOM()")).first.id,
       organization: organization
-    )
+    }
 
-    upcoming_consultation = Decidim::Consultation.create!(
+    finished_consultation = Decidim.traceability.perform_action!(
+      "publish",
+      Decidim::Consultation,
+      organization.users.first,
+      visibility: "all"
+    ) do
+      Decidim::Consultation.create!(finished_consultation_params)
+    end
+    finished_consultation.add_to_index_as_search_resource
+
+    upcoming_consultation_params = {
       slug: Faker::Internet.unique.slug(nil, "-"),
       title: Decidim::Faker::Localized.sentence(3),
       subtitle: Decidim::Faker::Localized.sentence(3),
@@ -78,11 +106,21 @@ Decidim.register_participatory_space(:consultations) do |participatory_space|
       introductory_video_url: "https://www.youtube.com/embed/zhMMW0TENNA",
       decidim_highlighted_scope_id: Decidim::Scope.reorder(Arel.sql("RANDOM()")).first.id,
       organization: organization
-    )
+    }
+
+    upcoming_consultation = Decidim.traceability.perform_action!(
+      "publish",
+      Decidim::Consultation,
+      organization.users.first,
+      visibility: "all"
+    ) do
+      Decidim::Consultation.create!(upcoming_consultation_params)
+    end
+    upcoming_consultation.add_to_index_as_search_resource
 
     [finished_consultation, active_consultation, upcoming_consultation].each do |consultation|
       4.times do
-        question = Decidim::Consultations::Question.create!(
+        params = {
           consultation: consultation,
           slug: Faker::Internet.unique.slug(nil, "-"),
           decidim_scope_id: Decidim::Scope.reorder(Arel.sql("RANDOM()")).first.id,
@@ -100,7 +138,16 @@ Decidim.register_participatory_space(:consultations) do |participatory_space|
           participatory_scope: Decidim::Faker::Localized.sentence(3),
           published_at: Time.now.utc,
           organization: organization
-        )
+        }
+
+        question = Decidim.traceability.perform_action!(
+          "publish",
+          Decidim::Consultations::Question,
+          organization.users.first,
+          visibility: "all"
+        ) do
+          Decidim::Consultations::Question.create!(params)
+        end
 
         2.times do
           Decidim::Consultations::Response.create(

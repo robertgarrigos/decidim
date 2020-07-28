@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 shared_examples "manage assembly members examples" do
-  let!(:assembly_member) { create(:assembly_member, assembly: assembly) }
-
   before do
     switch_to_host(organization.host)
     login_as user, scope: :user
@@ -10,17 +8,13 @@ shared_examples "manage assembly members examples" do
     click_link "Members"
   end
 
-  it "shows assembly members list" do
-    within "#assembly_members table" do
-      expect(page).to have_content(assembly_member.full_name)
-    end
-  end
-
   context "without existing user" do
+    let!(:assembly_member) { create(:assembly_member, assembly: assembly) }
+
     it "creates a new assembly member" do
       find(".card-title a.new").click
 
-      execute_script("$('#date_field_assembly_member_designation_date').focus()")
+      execute_script("$('#assembly_member_designation_date').focus()")
       find(".datepicker-days .active").click
 
       within ".new_assembly_member" do
@@ -49,11 +43,11 @@ shared_examples "manage assembly members examples" do
     it "creates a new assembly member" do
       find(".card-title a.new").click
 
-      execute_script("$('#date_field_assembly_member_designation_date').focus()")
+      execute_script("$('#assembly_member_designation_date').focus()")
       find(".datepicker-days .active").click
 
       within ".new_assembly_member" do
-        select "Existing user", from: :assembly_member_existing_user
+        select "Existing participant", from: :assembly_member_existing_user
         autocomplete_select "#{member_user.name} (@#{member_user.nickname})", from: :user_id
 
         select "President", from: :assembly_member_position
@@ -71,8 +65,16 @@ shared_examples "manage assembly members examples" do
   end
 
   describe "when managing other assembly members" do
+    let!(:assembly_member) { create(:assembly_member, assembly: assembly) }
+
     before do
       visit current_path
+    end
+
+    it "shows assembly members list" do
+      within "#assembly_members table" do
+        expect(page).to have_content(assembly_member.full_name)
+      end
     end
 
     it "updates an assembly member" do
@@ -107,6 +109,26 @@ shared_examples "manage assembly members examples" do
       within "#assembly_members table" do
         expect(page).to have_no_content(assembly_member.full_name)
       end
+    end
+  end
+
+  context "when paginating" do
+    let!(:collection_size) { 20 }
+    let!(:collection) { create_list(:assembly_member, collection_size, assembly: assembly) }
+    let!(:resource_selector) { "#assembly_members tbody tr" }
+
+    before do
+      visit current_path
+    end
+
+    it "lists 15 members per page by default" do
+      expect(page).to have_css(resource_selector, count: 15)
+      expect(page).to have_css(".pagination .page", count: 2)
+      click_link "Next"
+
+      expect(page).to have_selector(".pagination .current", text: "2")
+
+      expect(page).to have_css(resource_selector, count: 5)
     end
   end
 end

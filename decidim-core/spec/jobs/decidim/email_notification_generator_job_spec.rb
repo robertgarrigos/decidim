@@ -17,18 +17,31 @@ describe Decidim::EmailNotificationGeneratorJob do
     let(:event_class_name) { "Decidim::Events::BaseEvent" }
     let(:resource) { double :resource }
     let(:generator) { double :generator }
-    let(:recipient_ids) { [1, 2, 3] }
+    let(:affected_user) { double :user, id: 1 }
+    let(:affected_users) { [affected_user] }
+    let(:follower) { double :user, id: 2 }
+    let(:followers) { [follower] }
     let(:extra) { double }
 
     it "delegates the work to the class" do
       expect(Decidim::EmailNotificationGenerator)
         .to receive(:new)
-        .with(event, event_class, resource, recipient_ids, extra)
+        .with(event, event_class, resource, followers, affected_users, extra)
         .and_return(generator)
       expect(generator)
         .to receive(:generate)
 
-      subject.perform_now(event, event_class_name, resource, recipient_ids, extra)
+      subject.perform_now(event, event_class_name, resource, followers, affected_users, extra)
+    end
+
+    context "when event_class_name is nil" do
+      let(:event_class_name) { nil }
+
+      it "does not raise error" do
+        expect do
+          subject.perform_now(event, event_class_name, resource, followers, affected_users, extra)
+        end.not_to raise_error
+      end
     end
   end
 end

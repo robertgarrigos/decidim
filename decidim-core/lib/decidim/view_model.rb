@@ -11,8 +11,16 @@ module Decidim
     include Decidim::ActionAuthorizationHelper
     include Decidim::ReplaceButtonsHelper
 
+    delegate :current_organization, to: :controller
+
     def current_user
-      context[:current_user]
+      context&.dig(:current_user) || controller&.current_user
+    end
+
+    private
+
+    def decidim
+      Decidim::Core::Engine.routes.url_helpers
     end
   end
 end

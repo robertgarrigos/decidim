@@ -29,9 +29,10 @@ module Decidim
         type !types[!CommentType]
 
         argument :orderBy, types.String, "Order the comments"
+        argument :singleCommentId, types.String, "ID of the single comment to look at"
 
         resolve lambda { |obj, args, _ctx|
-          SortedComments.for(obj, order_by: args[:orderBy])
+          SortedComments.for(obj, order_by: args[:orderBy], id: args[:singleCommentId])
         }
       end
 
@@ -47,6 +48,12 @@ module Decidim
       field :hasComments, !types.Boolean, "Check if the commentable has comments" do
         resolve lambda { |obj, _args, _ctx|
           obj.comment_threads.size.positive?
+        }
+      end
+
+      field :userAllowedToComment, !types.Boolean, "Check if the current user can comment" do
+        resolve lambda { |obj, _args, ctx|
+          obj.commentable? && obj.user_allowed_to_comment?(ctx[:current_user])
         }
       end
     end

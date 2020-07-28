@@ -6,11 +6,13 @@
            locals: {
                initiative: current_initiative,
                vote_label: current_user.name,
-               unvote_label: current_user.name
-           } unless current_initiative.offline? %>
+               unvote_label: current_user.name,
+               verification_label: current_user.name,
+               steps: signature_has_steps?
+           } unless current_initiative.offline_signature_type? %>
 
-<% current_user.user_groups.verified.each do |g| %>
-  <br />
+<% Decidim::UserGroups::ManageableUserGroups.for(current_user).verified.each do |g| %>
+  <br>
   <% if @voted_groups.include? g.id %>
     <%= button_to(
       g.name,
@@ -18,15 +20,23 @@
       method: :delete,
       remote: true,
       data: { disable: true },
-      class: "card__button button expanded button--sc success"
+      class: "button expanded light button--sc success"
     ) %>
   <% else %>
-    <%= button_to(
-      g.name,
-      initiative_initiative_vote_path(initiative_slug: current_initiative.slug, group_id: g.id),
-      remote: true,
-      data: { disable: true },
-      class: "card__button button expanded button--sc"
-    ) %>
+    <% if signature_has_steps? %>
+      <%= link_to(
+        g.name,
+        initiative_initiative_signatures_path(initiative_slug: current_initiative.slug, group_id: g.id),
+        class: "button expanded light button--sc"
+      ) %>
+    <% else %>
+      <%= button_to(
+        g.name,
+        initiative_initiative_signatures_path(initiative_slug: current_initiative.slug, group_id: g.id),
+        remote: true,
+        data: { disable: true },
+        class: "button expanded light button--sc"
+      ) %>
+    <% end %>
   <% end %>
 <% end %>

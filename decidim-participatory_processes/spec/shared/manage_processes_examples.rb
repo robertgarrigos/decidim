@@ -1,6 +1,55 @@
 # frozen_string_literal: true
 
 shared_examples "manage processes examples" do
+  context "when viewing the processes list" do
+    let!(:process_group) { create(:participatory_process_group, organization: organization) }
+    let!(:process_with_group) { create(:participatory_process, organization: organization, participatory_process_group: process_group) }
+    let!(:process_without_group) { create(:participatory_process, organization: organization) }
+    let(:model_name) { participatory_process.class.model_name }
+
+    def filter_by_group(group_name)
+      visit current_path
+      within(".card-title") do
+        click_button("Process Groups")
+        click_link(group_name)
+      end
+    end
+
+    it "allows the user to filter processes by process_group" do
+      filter_by_group(translated(process_group.name))
+
+      expect(page).to have_content(translated(process_with_group.title))
+      expect(page).not_to have_content(translated(process_without_group.title))
+    end
+
+    describe "listing processes" do
+      it_behaves_like "filtering collection by published/unpublished"
+      it_behaves_like "filtering collection by private/public"
+    end
+
+    context "when processes are filtered by process_group" do
+      before { filter_by_group(translated(process_group.name)) }
+
+      it "allows the user to edit the process_group" do
+        click_link translated(process_group.name)
+
+        expect(page).to have_content("EDIT PROCESS GROUP")
+      end
+
+      describe "listing processes filtered by group" do
+        it_behaves_like "filtering collection by published/unpublished" do
+          let!(:published_space) { process_with_group }
+          let!(:unpublished_space) { create(:participatory_process, :unpublished, organization: organization, participatory_process_group: process_group) }
+        end
+
+        it_behaves_like "filtering collection by private/public" do
+          let!(:public_space) { process_with_group }
+          let!(:private_space) { create(:participatory_process, :private, organization: organization, participatory_process_group: process_group) }
+        end
+      end
+    end
+  end
+
   context "when previewing processes" do
     context "when the process is unpublished" do
       let!(:participatory_process) { create(:participatory_process, :unpublished, organization: organization) }
@@ -18,7 +67,7 @@ shared_examples "manage processes examples" do
     context "when the process is published" do
       let!(:participatory_process) { create(:participatory_process, organization: organization) }
 
-      it "allows the user to preview the unpublished process" do
+      it "allows the user to preview the published process" do
         within find("tr", text: translated(participatory_process.title)) do
           click_link "Preview"
         end
@@ -53,7 +102,7 @@ shared_examples "manage processes examples" do
       )
       attach_file :participatory_process_banner_image, image3_path
 
-      page.execute_script("$('#date_field_participatory_process_end_date').focus()")
+      page.execute_script("$('#participatory_process_end_date').focus()")
       page.find(".datepicker-dropdown .day", text: "22").click
 
       within ".edit_participatory_process" do
@@ -78,7 +127,7 @@ shared_examples "manage processes examples" do
 
     it "publishes the process" do
       click_link "Publish"
-      expect(page).to have_content("published successfully")
+      expect(page).to have_content("successfully published")
       expect(page).to have_content("Unpublish")
       expect(page).to have_current_path decidim_admin_participatory_processes.edit_participatory_process_path(participatory_process)
 
@@ -96,7 +145,7 @@ shared_examples "manage processes examples" do
 
     it "unpublishes the process" do
       click_link "Unpublish"
-      expect(page).to have_content("unpublished successfully")
+      expect(page).to have_content("successfully unpublished")
       expect(page).to have_content("Publish")
       expect(page).to have_current_path decidim_admin_participatory_processes.edit_participatory_process_path(participatory_process)
 

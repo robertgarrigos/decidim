@@ -22,7 +22,19 @@ module Decidim
               organization_admin_name: "Fiorello Henry La Guardia",
               organization_admin_email: "f.laguardia@gotham.gov",
               available_locales: ["en"],
-              default_locale: "en"
+              default_locale: "en",
+              users_registration_mode: "enabled",
+              force_users_to_authenticate_before_access_organization: "false",
+              smtp_settings: {
+                "address" => "mail.gotham.gov",
+                "port" => "25",
+                "user_name" => "f.laguardia",
+                "password" => Decidim::AttributeEncryptor.encrypt("password"),
+                "from" => "decide@gotham.gov"
+              },
+              omniauth_settings_facebook_enabled: true,
+              omniauth_settings_facebook_app_id: "facebook-app-id",
+              omniauth_settings_facebook_app_secret: "facebook-app-secret"
             }
           end
 
@@ -37,6 +49,14 @@ module Decidim
             expect(organization.name).to eq("Gotham City")
             expect(organization.host).to eq("decide.gotham.gov")
             expect(organization.secondary_hosts).to match_array(["foo.gotham.gov", "bar.gotham.gov"])
+
+            expect(organization.omniauth_settings["omniauth_settings_facebook_enabled"]).to eq(true)
+            expect(
+              Decidim::AttributeEncryptor.decrypt(organization.omniauth_settings["omniauth_settings_facebook_app_id"])
+            ).to eq("facebook-app-id")
+            expect(
+              Decidim::AttributeEncryptor.decrypt(organization.omniauth_settings["omniauth_settings_facebook_app_secret"])
+            ).to eq("facebook-app-secret")
           end
 
           it "invites a user as organization admin" do
@@ -60,7 +80,22 @@ module Decidim
           it "creates the default content pages for the organization" do
             command.call
             organization = Organization.last
-            expect(organization.static_pages.count).to eq(Decidim::StaticPage::DEFAULT_PAGES.length)
+            expect(organization.static_pages).not_to be_empty
+          end
+
+          it "creates the default content blocks" do
+            command.call
+            organization = Organization.last
+            expect(Decidim::ContentBlock.where(organization: organization)).to be_any
+          end
+
+          it "sets the organizations TOS version" do
+            command.call
+            organization = Organization.last
+            tos_page = Decidim::StaticPage.find_by(slug: "terms-and-conditions", organization: organization)
+
+            expect(organization.tos_version).not_to be_nil
+            expect(organization.tos_version).to eq(tos_page.updated_at)
           end
         end
 

@@ -34,9 +34,11 @@ module Decidim
     # Renders a scopes picker field in a form.
     # form - FormBuilder object
     # name - attribute name
+    # options       - An optional Hash with options:
+    # - checkboxes_on_top - Show checked picker values on top (default) or below the picker prompt
     #
     # Returns nothing.
-    def scopes_picker_field(form, name, root: false, options: {})
+    def scopes_picker_field(form, name, root: false, options: { checkboxes_on_top: true })
       root = current_participatory_space.scope if root == false
       form.scopes_picker name, options do |scope|
         { url: decidim.scopes_picker_path(root: root, current: scope&.id, field: form.label_for(name)),
@@ -62,16 +64,25 @@ module Decidim
     # Renders a scopes picker field in a filter form.
     # form - FilterFormBuilder object
     # name - attribute name
+    # checkboxes_on_top - Show picker values on top (default) or below the picker prompt
     #
     # Returns nothing.
-    def scopes_picker_filter(form, name)
-      form.scopes_picker name, multiple: true, legend_title: I18n.t("decidim.scopes.scopes"), label: false do |scope|
+    def scopes_picker_filter(form, name, checkboxes_on_top = true)
+      options = {
+        multiple: true,
+        legend_title: I18n.t("decidim.scopes.scopes"),
+        label: false,
+        checkboxes_on_top: checkboxes_on_top
+      }
+
+      form.scopes_picker name, options do |scope|
         {
           url: decidim.scopes_picker_path(
-            root: try(:current_participatory_space)&.scope,
+            root: try(:current_participatory_space).try(:scope),
             current: scope&.id,
             title: I18n.t("decidim.scopes.prompt"),
-            global_value: "global"
+            global_value: "global",
+            max_depth: try(:current_participatory_space).try(:scope_type_max_depth)
           ),
           text: scope_name_for_picker(scope, I18n.t("decidim.scopes.prompt"))
         }

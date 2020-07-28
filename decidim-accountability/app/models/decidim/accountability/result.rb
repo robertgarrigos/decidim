@@ -14,6 +14,8 @@ module Decidim
       include Decidim::Traceable
       include Decidim::Loggable
       include Decidim::DataPortability
+      include Decidim::Randomable
+      include Decidim::Searchable
 
       component_manifest_name "accountability"
 
@@ -27,12 +29,13 @@ module Decidim
 
       after_save :update_parent_progress, if: -> { parent_id.present? }
 
-      def self.order_randomly(seed)
-        transaction do
-          connection.execute("SELECT setseed(#{connection.quote(seed)})")
-          order(Arel.sql("RANDOM()")).load
-        end
-      end
+      searchable_fields(
+        scope_id: :decidim_scope_id,
+        participatory_space: { component: :participatory_space },
+        A: :title,
+        D: :description,
+        datetime: :start_date
+      )
 
       def self.log_presenter_class_for(_log)
         Decidim::Accountability::AdminLog::ResultPresenter
@@ -76,10 +79,18 @@ module Decidim
         true
       end
 
+      # Public: Whether the object can have new comments or not.
+      def user_allowed_to_comment?(user)
+        can_participate_in_space?(user)
+      end
+
       private
 
       # Private: When a row uses weight 1 and there's more than one, weight shouldn't be considered
+      # Handle special case when all children weight are nil
       def children_use_weighted_progress?
+        return false if children.pluck(:weight).all?(&:nil?)
+
         children.length == 1 || children.pluck(:weight).none? { |weight| weight == 1.0 }
       end
     end

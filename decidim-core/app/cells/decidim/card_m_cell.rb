@@ -10,6 +10,7 @@ module Decidim
     include Decidim::SanitizeHelper
     include Decidim::CardHelper
     include Decidim::LayoutHelper
+    include Decidim::SearchesHelper
 
     def show
       render
@@ -29,17 +30,25 @@ module Decidim
       false
     end
 
+    def has_children?
+      false
+    end
+
     def has_link_to_resource?
       true
     end
 
     def has_label?
+      return true if model.respond_to?("emendation?") && model.emendation?
+
       context[:label].presence
     end
 
     def label
       return if [false, "false"].include? context[:label]
+      return @label ||= t("decidim/amendment", scope: "activerecord.models", count: 1) if model.respond_to?("emendation?") && model.emendation?
       return @label ||= t(model.class.model_name.i18n_key, scope: "activerecord.models", count: 1) if [true, "true"].include? context[:label]
+
       context[:label]
     end
 
@@ -52,10 +61,6 @@ module Decidim
       text = translated_attribute(attribute)
 
       decidim_sanitize(html_truncate(text, length: 100))
-    end
-
-    def decidim
-      Decidim::Core::Engine.routes.url_helpers
     end
 
     def has_authors?
@@ -84,7 +89,9 @@ module Decidim
 
     def card_classes
       classes = [base_card_class]
+      classes = classes.concat(["card--stack"]).join(" ") if has_children?
       return classes unless has_state?
+
       classes.concat(state_classes).join(" ")
     end
 
@@ -97,13 +104,15 @@ module Decidim
     end
 
     def comments_count
+      return model.comments.not_hidden.count if model.comments.respond_to? :not_hidden
+
       model.comments.count
     end
 
     def statuses
       collection = [:creation_date]
       collection << :follow if model.is_a?(Decidim::Followable) && model != try(:current_user)
-      collection << :comments_count if model.is_a?(Decidim::Comments::Commentable)
+      collection << :comments_count if model.is_a?(Decidim::Comments::Commentable) && model.commentable?
       collection
     end
 
@@ -131,6 +140,14 @@ module Decidim
 
     def render_authorship
       cell("decidim/coauthorships", model, extra_small: true, has_actions: has_actions?)
+    end
+
+    def render_space?
+      context[:show_space].presence && model.respond_to?(:participatory_space) && model.participatory_space.present?
+    end
+
+    def render_top?
+      render_space?
     end
   end
 end

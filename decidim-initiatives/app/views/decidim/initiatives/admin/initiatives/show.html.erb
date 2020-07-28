@@ -75,7 +75,7 @@
     </div>
   </div>
 </div>
-<br /><br />
+<br><br>
 <div class="print-table">
   <div class="print-table-header">
     Membres de la comissió promotora de la iniciativa
@@ -99,11 +99,14 @@
 <h2 class="print-section-title">Sol·liciten que sigui admesa a tràmit la Iniciativa Ciutadana que porta el títol de:</h2>
 <%= translated_attribute(current_initiative.title) %>
 
+<h2 class="print-section-title">Tipus de la Iniciativa:</h2>
+<%= translated_attribute(current_initiative.type.title) %>
+
 <h2 class="print-section-title">Definició de la Iniciativa:</h2>
 <%= decidim_sanitize translated_attribute(current_initiative.description) %>
 
 <h2 class="print-section-title">Exposició de motius:</h2>
-<br /><br /><br /><br /><br />
+<br><br><br><br><br>
 
 <h2 class="print-section-title page-break">En cas de Consulta, especificar:</h2>
 <ul>
@@ -158,7 +161,7 @@
     </div>
   </div>
 </div>
-<br />
+<br>
 <div class="print-table no-border">
   <div class="print-table-row no-border">
     <div class="print-table-cell w50 no-border" style="font-weight: bold">Lloc i data de la sol·licitud</div>

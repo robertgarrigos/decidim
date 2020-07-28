@@ -8,8 +8,8 @@ describe "Postal letter management", type: :system do
   end
 
   let(:admin) { create(:user, :confirmed, :admin, organization: organization) }
-  let(:user) { create :user, organization: organization }
-  let(:user2) { create :user, organization: organization }
+  let(:user) { create :user, :confirmed, organization: organization }
+  let(:user2) { create :user, :confirmed, organization: organization }
 
   let!(:letter_not_sent) do
     create(
@@ -68,7 +68,7 @@ describe "Postal letter management", type: :system do
 
     within "table tbody tr", text: letter_not_sent.user.name do
       expect(page).not_to have_selector("td a.action-icon--verify")
-      expect(page).to have_selector("td", text: /\d+ \w+ \d+:\d+/)
+      expect(page).to have_selector("td", text: %r{\d+/\d+/\d+ \d+:\d+})
     end
   end
 end

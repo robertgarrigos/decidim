@@ -10,6 +10,16 @@ module Decidim
   end
 
   module DummyResources
+    include ActiveSupport::Configurable
+
+    # Settings needed to compare emendations in Decidim::SimilarEmendations
+    config_accessor :similarity_threshold do
+      0.25
+    end
+    config_accessor :similarity_limit do
+      10
+    end
+
     # Dummy engine to be able to test components.
     class DummyEngine < Rails::Engine
       engine_name "dummy"
@@ -38,6 +48,7 @@ module Decidim
 
     class DummyResource < ApplicationRecord
       include HasComponent
+      include HasReference
       include Resourceable
       include Reportable
       include Authorable
@@ -49,6 +60,10 @@ module Decidim
       include Publicable
       include Decidim::DataPortability
       include Searchable
+      include Paddable
+      include Amendable
+      include Decidim::NewsletterParticipant
+      include Hashtaggable
 
       searchable_fields(
         scope_id: { scope: :id },
@@ -58,18 +73,34 @@ module Decidim
         datetime: :published_at
       )
 
+      amendable(
+        fields: [:title],
+        form: "Decidim::DummyResources::DummyResourceForm"
+      )
+
       component_manifest_name "dummy"
 
       def reported_content_url
         ResourceLocatorPresenter.new(self).url
       end
 
+      def allow_resource_permissions?
+        component.settings.resources_permissions_enabled
+      end
+
       def self.user_collection(user)
-        where(decidim_author_id: user.id)
+        where(decidim_author_id: user.id, decidim_author_type: "Decidim::User")
       end
 
       def self.export_serializer
         DummySerializer
+      end
+
+      def self.newsletter_participant_ids(component)
+        Decidim::DummyResources::DummyResource.where(component: component).joins(:component)
+                                              .where(decidim_author_type: Decidim::UserBaseEntity.name)
+                                              .where.not(author: nil)
+                                              .pluck(:decidim_author_id).flatten.compact.uniq
       end
     end
   end
@@ -94,22 +125,35 @@ Decidim.register_component(:dummy) do |component|
 
   component.actions = %w(foo bar)
 
+  component.newsletter_participant_entities = ["Decidim::DummyResources::DummyResource"]
+
   component.settings(:global) do |settings|
     settings.attribute :comments_enabled, type: :boolean, default: true
+    settings.attribute :resources_permissions_enabled, type: :boolean, default: true
     settings.attribute :dummy_global_attribute_1, type: :boolean
     settings.attribute :dummy_global_attribute_2, type: :boolean
+    settings.attribute :enable_pads_creation, type: :boolean, default: false
+    settings.attribute :amendments_enabled, type: :boolean, default: false
+    settings.attribute :dummy_global_translatable_text, type: :text, translated: true, editor: true, required: true
   end
 
   component.settings(:step) do |settings|
     settings.attribute :comments_blocked, type: :boolean, default: false
     settings.attribute :dummy_step_attribute_1, type: :boolean
     settings.attribute :dummy_step_attribute_2, type: :boolean
+    settings.attribute :dummy_step_translatable_text, type: :text, translated: true, editor: true, required: true
+    settings.attribute :amendment_creation_enabled, type: :boolean, default: true
+    settings.attribute :amendment_reaction_enabled, type: :boolean, default: true
+    settings.attribute :amendment_promotion_enabled, type: :boolean, default: true
+    settings.attribute :amendments_visibility, type: :string, default: "all"
   end
 
   component.register_resource(:dummy_resource) do |resource|
     resource.name = :dummy
     resource.model_class_name = "Decidim::DummyResources::DummyResource"
     resource.template = "decidim/dummy_resource/linked_dummys"
+    resource.actions = %w(foo)
+    resource.searchable = true
   end
 
   component.register_stat :dummies_count_high, primary: true, priority: Decidim::StatsRegistry::HIGH_PRIORITY do |components, _start_at, _end_at|
@@ -134,7 +178,9 @@ RSpec.configure do |config|
     ActiveRecord::Migration.suppress_messages do
       unless ActiveRecord::Base.connection.data_source_exists?("decidim_dummy_resources_dummy_resources")
         ActiveRecord::Migration.create_table :decidim_dummy_resources_dummy_resources do |t|
+          t.jsonb :translatable_text
           t.string :title
+          t.string :body
           t.text :address
           t.float :latitude
           t.float :longitude
@@ -142,9 +188,12 @@ RSpec.configure do |config|
           t.integer :coauthorships_count, null: false, default: 0
 
           t.references :decidim_component, index: false
-          t.references :decidim_author, index: false
+          t.integer :decidim_author_id, index: false
+          t.string :decidim_author_type, index: false
+          t.integer :decidim_user_group_id, index: false
           t.references :decidim_category, index: false
           t.references :decidim_scope, index: false
+          t.string :reference
 
           t.timestamps
         end

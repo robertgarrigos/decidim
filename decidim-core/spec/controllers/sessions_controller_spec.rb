@@ -27,7 +27,7 @@ module Decidim
 
           context "and is not an admin" do
             context "when it is the first time to log in" do
-              let(:user) { build(:user, sign_in_count: 1) }
+              let(:user) { build(:user, :confirmed, sign_in_count: 1) }
 
               context "when there are authorization handlers" do
                 before do
@@ -44,9 +44,17 @@ module Decidim
 
                   it { is_expected.to eq account_path }
                 end
+
+                context "when the user hasn't confirmed their email" do
+                  before do
+                    user.confirmed_at = nil
+                  end
+
+                  it { is_expected.to eq("/") }
+                end
               end
 
-              context "otherwise", with_authorization_workflows: [] do
+              context "and otherwise", with_authorization_workflows: [] do
                 it { is_expected.to eq("/") }
               end
             end

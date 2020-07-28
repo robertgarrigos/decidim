@@ -17,13 +17,16 @@ it:
         banner_image: Immagine banner
         decidim_scope_id: Area comunale
         hashtag: hashtag
-        hero_image: Immagine domestica
+        hero_image: Immagine della home page
         i_frame_url: URL del sistema di votazione esterno
+        instructions: Istruzioni aggiuntive per la votazione
+        max_votes: Massimo numero di voti
+        min_votes: Minimo numero di voti
         origin_scope: Scopo
         origin_title: Origine
         origin_url: URL di origine
         participatory_scope: Scopo partecipativo
-        promoter_group: Gruppo promotore
+        promoter_group: Promotore
         question_context: Contesto
         reference: Riferimento
         scope: Area comunale
@@ -32,13 +35,26 @@ it:
         title: Titolo
         vote: Sistema di voto esterno
         what_is_decided: Cosa è deciso
+      response:
+        decidim_consultations_response_group_id: Gruppo
     errors:
+      models:
+        question:
+          attributes:
+            max_votes:
+              lower_than_min: Il numero massimo di voti deve essere maggiore o uguale al minimo.
       vote:
         decidim_consultations_response_id:
           not_found: Risposta non trovata
   activerecord:
+    errors:
+      models:
+        decidim/consultations/vote:
+          attributes:
+            question:
+              invalid_num_votes: Numero di voti non valido
     models:
-      decidim/consultations:
+      decidim/consultation:
         one: Consultazione
         other: consultazioni
       decidim/consultations/question:
@@ -49,14 +65,17 @@ it:
         other: risposte
       decidim/consultations/vote:
         one: Votazione
-        other: voti
+        other: Votazione
   decidim:
     admin:
       actions:
+        back_to_responses: Torna alle risposte
         new_consultation: Nuova consultazione
         new_question: Nuova domanda
         new_response: Nuova risposta
+        new_response_group: Nuovo gruppo
         publish_results: Pubblica risultati
+        response_groups: Gestione gruppi di risposte
         unpublish_results: Annulla pubblicazione dei risultati
       consultation_publications:
         create:
@@ -76,8 +95,6 @@ it:
         create:
           error: Si è verificato un errore durante la creazione di una nuova consultazione.
           success: Consultazione creata con successo.
-        destroy:
-          success: Consultazione cancellata con successo.
         edit:
           update: Aggiornare
         form:
@@ -89,6 +106,10 @@ it:
         new:
           create: Creare
           title: Nuova consultazione
+        results:
+          not_visible: I risultati saranno disponibili alla chiusura delle consultazioni
+          participants: "%{count} partecipanti"
+          total_votes: 'Totale: %{count} voti'
         update:
           error: Si è verificato un errore durante l'aggiornamento di questa consultazione.
           success: Consultazione aggiornata con successo.
@@ -97,8 +118,10 @@ it:
         consultations_submenu:
           info: Informazione
           questions: Domande
+          results: Risultati
         questions_submenu:
           components: componenti
+          configuration: Configurazione
           consultation: Consultazione
           info: Informazione
           responses: risposte
@@ -122,10 +145,16 @@ it:
         response:
           fields:
             created_at: Creato a
+            response_group: Gruppo
             title: Titolo
           name:
             one: Risposta
             other: risposte
+      question_configuration:
+        disable_external_voting: Si prega di disabilitare il voto esterno per configurazioni avanzate
+        form:
+          help: Imposta domande di scelta multipla aumentando il numero massimo di risposte che un partecipante può scegliere. Valore massimo predefinito è 1, il che significa che può essere votata solo una risposta.
+          title: Configurazione avanzata
       question_publications:
         create:
           error: Si è verificato un errore durante la pubblicazione di questa domanda.
@@ -152,6 +181,24 @@ it:
         update:
           error: Si è verificato un errore durante l'aggiornamento di questa domanda.
           success: Domanda aggiornata correttamente.
+      response_groups:
+        create:
+          error: Si è verificato un problema durante la creazione di un nuovo gruppo di risposta.
+          success: Gruppo di risposta creato con successo.
+        destroy:
+          error: Si è verificato un problema durante la rimozione del gruppo di risposta. Controlla che nessuna risposta dipenda da esso.
+          success: Gruppo di varianti rimosso con successo.
+        edit:
+          update: Aggiorna
+        form:
+          title: Informazioni Generali
+        help: Utilizza i gruppi per organizzare domande di scelta multipla in pacchetti.
+        new:
+          create: Crea
+          title: Nuovo gruppo di risposta
+        update:
+          error: C'è stato un problema durante l'aggiornamento di questa risposta.
+          success: Risposta aggiornata correttamente.
       responses:
         create:
           error: Si è verificato un errore durante la creazione di una nuova risposta.
@@ -172,8 +219,14 @@ it:
       titles:
         consultations: consultazioni
         questions: Domande
+        response_groups: Gruppi di risposta
         responses: risposte
+        results: Risultati
     consultations:
+      admin:
+        content_blocks:
+          highlighted_consultations:
+            max_results: Quantità massima di elementi da mostrare
       consultation:
         start_voting_date: Inizia la votazione
         view_results: Vedi i risultati
@@ -184,6 +237,9 @@ it:
           label: 'Ordina le consultazioni per:'
           random: Casuale
           recent: Piu recente
+      content_blocks:
+        highlighted_consultations:
+          name: Consultazioni evidenziate
       count:
         title:
           one: "%{count} consultazione"
@@ -204,15 +260,46 @@ it:
         title: Domande da %{scope_name}
       index:
         title: consultazioni
+      last_activity:
+        new_consultation: Nuova consultazione
+        new_question_at_html: "<span>Nuova domanda al %{link}</span>"
+      pages:
+        home:
+          highlighted_consultations:
+            active_consultations: Consultazioni attive
+            see_all_consultations: Vedi tutte le consultazioni
+            voting_ends_in:
+              one: La votazione termina <strong>domani</strong>
+              other: La votazione termina tra <strong>%{count} giorni</strong>
+            voting_ends_today: La votazione termina <strong>oggi</strong>
       question:
         take_part: Prendere parte
         view_results: Vedi i risultati
         votes_out_of:
           one: votare fuori
           other: voti fuori
+      question_multiple_votes:
+        results_rules:
+          minimum_votes_per_user:
+            description: I partecipanti potrebbero distribuire un minimo di %{votes} voti tra diverse opzioni.
+          title: In questa domanda sono consentite scelte multiple
+          total_participants: Un totale di %{count} persone hanno partecipato alla votazione.
+          vote_limit:
+            description: I partecipanti possono votare fino a %{limit} opzioni.
+        voting_rules:
+          minimum_votes_per_user:
+            description: Devi distribuire un minimo di %{votes} voti tra diverse proposte.
+          title: 'Il voto è soggetto alle seguenti regole:'
+          vote_limit:
+            description: Puoi votare fino a %{limit} proposte.
+            left: Restano
+            votes: Voti
       question_votes:
         create:
           error: Ci sono stati errori nel votare la domanda
+          success: La modifica può essere effettuata fino al termine della consultazione. Solo l'ultimo voto sarà accettato.
+          title_error: Errore di voto!
+          title_success: Voto registrato con successo
       regular_questions:
         title: Domande per questa consultazione
       show:
@@ -227,6 +314,12 @@ it:
           view_results: Vedi i risultati
           vote: Votazione
         unspecified: Non specificato
+    help:
+      participatory_spaces:
+        consultations:
+          contextual: "<p>consultazioni sono uno spazio che ti consente di porre una domanda chiara a tutte le persone che formano un'organizzazione, fare una chiamata per partecipare alla consultazione, accendere e ordinare il dibattito a favore o contro una risposta. Quando arriva la data della consultazione, puoi votare e pubblicare i risultati dei voti.</p> <p>Esempi: le consultazioni possono riguardare quasi tutti gli aspetti che riguardano un'organizzazione: alcuni esempi stanno cambiando il nome o il logo dell'organizzazione che offre diverse alternative, decidendo Sì o No per diventare parte di un'organizzazione più grande, convalidare o rifiutare una nuova strategia piano o il risultato di un gruppo di lavoro, o definire se le posizioni devono rimanere al massimo di 1, 2 o 3 mandati.</p>\n"
+          page: "<p>consultazioni sono uno spazio che ti permette di porre una domanda chiara a tutte le persone che formano un'organizzazione, fare una chiamata a partecipare alla consultazione, accendere e ordinare il dibattito a favore o contro una risposta. Quando arriva la data della consultazione, puoi votare e pubblicare i risultati dei voti.</p> <p>Esempi: le consultazioni possono riguardare quasi tutti gli aspetti che riguardano un'organizzazione: alcuni esempi stanno cambiando il nome o il logo dell'organizzazione che offre diverse alternative, decidendo Sì o No per diventare parte di un'organizzazione più grande, convalidare o rifiutare una nuova strategia piano o il risultato di un gruppo di lavoro, o definire se le posizioni dovrebbero rimanere al massimo di 1, 2 o 3 mandati nell'organizzazione.</p>\n"
+          title: Quali sono le consultazioni?
     menu:
       consultations: consultazioni
     pages:
@@ -234,6 +327,8 @@ it:
         statistics:
           consultations_count: consultazioni
     questions:
+      next_button: Domanda successiva
+      previous_button: Domanda precedente
       results:
         title: risultati
       show:
@@ -241,7 +336,7 @@ it:
       statistics:
         assistants_count_title: assistenti
         comments_count_title: Commenti
-        meetings_count_title: incontri
+        meetings_count_title: Incontri
         supports_count_title: supporti
       technical_info:
         technical_data: Dati tecnici
@@ -249,6 +344,7 @@ it:
         already_voted: Già votato
         already_voted_hover: Revoca il supporto
         starting_from: A partire da %{date}
+        verification_required: Verifica il tuo account per votare
         vote: Votazione
       vote_modal:
         contextual_help: Per favore selezionate un'opzione.
@@ -258,6 +354,10 @@ it:
         confirm: Confermare
         contextual_help: Si prega di confermare l'opzione selezionata.
         title: 'Consultazione: conferma il supporto'
+    resources:
+      consultations:
+        actions:
+          vote: Vota
   layouts:
     decidim:
       admin:
@@ -271,3 +371,4 @@ it:
         unfold: spiegare
       question_header:
         back_to_consultation: Vedi tutte le consultazioni
+        back_to_question: Torna alla domanda

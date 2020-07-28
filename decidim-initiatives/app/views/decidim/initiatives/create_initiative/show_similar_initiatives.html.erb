@@ -1,5 +1,5 @@
 <% content_for :back_link do %>
-  <%= link_to :back, class: "muted-link" do %>
+  <%= link_to :back do %>
     <%= icon "chevron-left", class: "icon--small" %>
     <%= t(".back") %>
   <% end %>
@@ -10,7 +10,7 @@
     <%= link_to t(".more_information"), decidim.page_path("initiatives"), target: "_blank" %>.
   </div>
 </div>
-<br />
+<br>
 
 <div class="row small-up-1 medium-up-2 card-grid">
   <%= render similar_initiatives %>

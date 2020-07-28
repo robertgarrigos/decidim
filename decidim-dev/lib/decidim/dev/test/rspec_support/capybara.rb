@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "selenium-webdriver"
+require "system_test_html_screenshots"
 
 module Decidim
   # Helpers meant to be used only during capybara test runs.
@@ -31,6 +32,19 @@ Capybara.register_driver :headless_chrome do |app|
   )
 end
 
+Capybara.register_driver :iphone do |app|
+  options = ::Selenium::WebDriver::Chrome::Options.new
+  options.args << "--headless"
+  options.args << "--no-sandbox"
+  options.add_emulation(device_name: "iPhone 6")
+
+  Capybara::Selenium::Driver.new(
+    app,
+    browser: :chrome,
+    options: options
+  )
+end
+
 Capybara.server = :puma, { Silent: true }
 
 Capybara.asset_host = "http://localhost:3000"
@@ -48,7 +62,7 @@ RSpec.configure do |config|
   end
 
   config.around :each, :slow do |example|
-    max_wait_time_for_slow_specs = 7
+    max_wait_time_for_slow_specs = 30
 
     using_wait_time(max_wait_time_for_slow_specs) do
       example.run

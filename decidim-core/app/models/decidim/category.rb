@@ -9,6 +9,8 @@ module Decidim
     belongs_to :parent, class_name: "Decidim::Category", foreign_key: "parent_id", inverse_of: :subcategories, optional: true
     has_many :categorizations, foreign_key: "decidim_category_id", class_name: "Decidim::Categorization", dependent: :destroy
 
+    default_scope { order(arel_table[:parent_id].asc, arel_table[:weight].asc) }
+
     validate :forbid_deep_nesting
     before_validation :subcategories_have_same_participatory_space
 
@@ -34,6 +36,7 @@ module Decidim
 
     private
 
+    # This is done since we only allow one level of subcategories.
     def forbid_deep_nesting
       return unless parent
       return if parent.parent.blank?
@@ -43,6 +46,7 @@ module Decidim
 
     def subcategories_have_same_participatory_space
       return unless parent
+
       self.participatory_space = parent.participatory_space
     end
   end

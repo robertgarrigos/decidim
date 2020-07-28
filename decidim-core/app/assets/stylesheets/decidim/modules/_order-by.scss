@@ -2,13 +2,25 @@
 $order-border: $border;
 
 /* Order by styles */
+.diff-view-by,
 .order-by{
   margin-bottom: 1rem;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
+
+  & + &{
+    @include breakpoint(medium){
+      margin-left: $global-margin;
+    }
+
+    @include breakpoint(large){
+      margin-left: $global-margin * 3;
+    }
+  }
 }
 
+.diff-view-by__dropdown,
 .order-by__dropdown{
   display: flex;
   flex-wrap: wrap;

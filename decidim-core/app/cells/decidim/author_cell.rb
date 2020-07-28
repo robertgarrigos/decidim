@@ -10,8 +10,11 @@ module Decidim
     include ::Devise::Controllers::Helpers
     include ::Devise::Controllers::UrlHelpers
     include Messaging::ConversationHelper
+    include ERB::Util
 
     property :profile_path
+    property :can_be_contacted?
+    property :has_tooltip?
 
     delegate :current_user, to: :controller, prefix: false
 
@@ -46,14 +49,17 @@ module Decidim
     end
 
     def withdraw_path
+      return decidim.withdraw_amend_path(from_context.amendment) if from_context.emendation?
+
       from_context_path + "/withdraw"
     end
 
     def creation_date?
       return true if posts_controller?
       return unless from_context
-      return unless proposals_controller?
+      return unless proposals_controller? || collaborative_drafts_controller?
       return unless show_action?
+
       true
     end
 
@@ -69,6 +75,7 @@ module Decidim
 
     def commentable?
       return unless posts_controller?
+
       true
     end
 
@@ -79,6 +86,7 @@ module Decidim
     def actionable?
       return false if options[:has_actions] == false
       return true if user_author? && posts_controller?
+
       true if withdrawable? || flagable?
     end
 
@@ -87,7 +95,13 @@ module Decidim
     end
 
     def profile_path?
+      return false if options[:skip_profile_link] == true
+
       profile_path.present?
+    end
+
+    def raw_model
+      model.try(:__getobj__) || model
     end
   end
 end

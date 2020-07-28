@@ -6,7 +6,7 @@ module Decidim
   module Comments
     describe CreateOmniauthRegistration do
       describe "call" do
-        let(:organization) { create(:organization, :with_tos) }
+        let(:organization) { create(:organization) }
         let(:email) { "user@from-facebook.com" }
         let(:provider) { "facebook" }
         let(:uid) { "12345" }
@@ -35,17 +35,17 @@ module Decidim
         end
         let(:command) { described_class.new(form, verified_email) }
 
+        before do
+          stub_request(:get, "http://www.example.com/foo.jpg")
+            .to_return(status: 200, body: File.read("spec/assets/avatar.jpg"), headers: { "Content-Type" => "image/jpeg" })
+        end
+
         describe "when the form oauth_signature cannot ve verified" do
           let(:oauth_signature) { "1234" }
 
           it "raises a InvalidOauthSignature exception" do
             expect { command.call }.to raise_error InvalidOauthSignature
           end
-        end
-
-        before do
-          stub_request(:get, "http://www.example.com/foo.jpg")
-            .to_return(status: 200, body: File.read("spec/assets/avatar.jpg"), headers: { "Content-Type" => "image/jpeg" })
         end
 
         context "when the form is not valid" do
@@ -86,6 +86,28 @@ module Decidim
             expect(user.valid_password?("abcde1234")).to eq(true)
           end
 
+          it "notifies about registration with oauth data" do
+            user = create(:user, email: email, organization: organization)
+            identity = Decidim::Identity.new(id: 1234)
+            expect(command).to receive(:create_identity).and_return(identity)
+
+            expect(ActiveSupport::Notifications)
+              .to receive(:publish)
+              .with(
+                "decidim.user.omniauth_registration",
+                user_id: user.id,
+                identity_id: 1234,
+                provider: provider,
+                uid: uid,
+                email: email,
+                name: "Facebook User",
+                nickname: "facebook_user",
+                avatar_url: "http://www.example.com/foo.jpg",
+                raw_data: {}
+              )
+            command.call
+          end
+
           describe "user linking" do
             context "with a verified email" do
               let(:verified_email) { email }
@@ -95,6 +117,14 @@ module Decidim
                 expect { command.call }.to change(User, :count).by(0)
 
                 expect(user.identities.length).to eq(1)
+              end
+
+              it "confirms a previously existing user" do
+                create(:user, email: email, organization: organization)
+                expect { command.call }.to change(User, :count).by(0)
+
+                user = User.find_by(email: email)
+                expect(user).to be_confirmed
               end
             end
 
@@ -106,6 +136,14 @@ module Decidim
                 expect { command.call }.to broadcast(:error)
 
                 expect(user.identities.length).to eq(0)
+              end
+
+              it "doesn't confirm a previously existing user" do
+                create(:user, email: email, organization: organization)
+                expect { command.call }.to broadcast(:error)
+
+                user = User.find_by(email: email)
+                expect(user).not_to be_confirmed
               end
             end
           end
@@ -129,11 +167,33 @@ module Decidim
         end
 
         context "when a user exists with that identity" do
-          it "broadcasts ok" do
+          before do
             user = create(:user, email: email, organization: organization)
             create(:identity, user: user, provider: provider, uid: uid)
+          end
 
+          it "broadcasts ok" do
             expect { command.call }.to broadcast(:ok)
+          end
+
+          context "with the same email as reported by the identity" do
+            it "confirms the user" do
+              command.call
+
+              user = User.find_by(email: email)
+              expect(user).to be_confirmed
+            end
+          end
+
+          context "with another email than in the one reported by the identity" do
+            let(:verified_email) { "other@email.com" }
+
+            it "doesn't confirm the user" do
+              command.call
+
+              user = User.find_by(email: email)
+              expect(user).not_to be_confirmed
+            end
           end
         end
       end

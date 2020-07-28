@@ -10,7 +10,7 @@ pt-BR:
   decidim:
     blogs:
       actions:
-        confirm_destroy: Tem certeza de que deseja excluir esta postagem?
+        confirm_destroy: Deseja mesmo excluir este post?
         destroy: Excluir
         edit: Editar
         new: Nova postagem
@@ -37,6 +37,8 @@ pt-BR:
           update:
             invalid: Falha ao salvar o post.
             success: Post salvo com sucesso
+      last_activity:
+        new_post_at_html: "<span>Nova postagem em %{link}</span>"
       models:
         post:
           fields:

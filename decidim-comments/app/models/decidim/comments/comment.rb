@@ -11,6 +11,8 @@ module Decidim
       include Decidim::Comments::Commentable
       include Decidim::FriendlyDates
       include Decidim::DataPortability
+      include Decidim::Traceable
+      include Decidim::Loggable
 
       # Limit the max depth of a comment tree. If C is a comment and R is a reply:
       # C          (depth 0)
@@ -35,11 +37,40 @@ module Decidim
 
       before_save :compute_depth
 
-      delegate :organization, :component, to: :commentable
+      delegate :organization, to: :commentable
+
+      def self.positive
+        where(alignment: 1)
+      end
+
+      def self.neutral
+        where(alignment: 0)
+      end
+
+      def self.negative
+        where(alignment: -1)
+      end
+
+      def participatory_space
+        return root_commentable if root_commentable.is_a?(Decidim::Participable)
+
+        root_commentable.participatory_space
+      end
+
+      def component
+        commentable.component if commentable.respond_to?(:component)
+      end
 
       # Public: Override Commentable concern method `accepts_new_comments?`
       def accepts_new_comments?
-        depth < MAX_DEPTH
+        root_commentable.accepts_new_comments? && depth < MAX_DEPTH
+      end
+
+      # Public: Override comment threads to exclude hidden ones.
+      #
+      # Returns comment.
+      def comment_threads
+        super.reject(&:hidden?)
       end
 
       # Public: Override Commentable concern method `users_to_notify_on_comment_created`.
@@ -73,13 +104,24 @@ module Decidim
 
       # Public: Returns the comment message ready to display (it is expected to include HTML)
       def formatted_body
-        @formatted_body ||= Decidim::ContentProcessor.render(sanitized_body)
+        @formatted_body ||= Decidim::ContentProcessor.render(sanitized_body, "div")
       end
-
-      delegate :participatory_space, to: :root_commentable
 
       def self.export_serializer
         Decidim::Comments::CommentSerializer
+      end
+
+      def self.newsletter_participant_ids(space)
+        Decidim::Comments::Comment.includes(:root_commentable).not_hidden
+                                  .where("decidim_comments_comments.decidim_author_id IN (?)", Decidim::User.where(organization: space.organization).pluck(:id))
+                                  .where("decidim_comments_comments.decidim_author_type IN (?)", "Decidim::UserBaseEntity")
+                                  .map(&:author).pluck(:id).flatten.compact.uniq
+      end
+
+      def can_participate?(user)
+        return true unless root_commentable&.respond_to?(:can_participate?)
+
+        root_commentable.can_participate?(user)
       end
 
       private
@@ -87,7 +129,7 @@ module Decidim
       # Private: Check if commentable can have comments and if not adds
       # a validation error to the model
       def commentable_can_have_comments
-        errors.add(:commentable, :cannot_have_comments) unless commentable.accepts_new_comments?
+        errors.add(:commentable, :cannot_have_comments) unless root_commentable.accepts_new_comments?
       end
 
       # Private: Compute comment depth inside the current comment tree
@@ -95,9 +137,22 @@ module Decidim
         self.depth = commentable.depth + 1 if commentable.respond_to?(:depth)
       end
 
-      # Private: Returns the comment body sanitized, stripping HTML tags
+      # Private: Returns the comment body sanitized, sanitizing HTML tags
       def sanitized_body
-        Rails::Html::Sanitizer.full_sanitizer.new.sanitize(body)
+        Rails::Html::WhiteListSanitizer.new.sanitize(
+          render_markdown(body),
+          scrubber: Decidim::Comments::UserInputScrubber.new
+        ).try(:html_safe)
+      end
+
+      # Private: Initializes the Markdown parser
+      def markdown
+        @markdown ||= Decidim::Comments::Markdown.new
+      end
+
+      # Private: converts the string from markdown to html
+      def render_markdown(string)
+        markdown.render(string)
       end
     end
   end

@@ -43,6 +43,15 @@ module Decidim
         include TranslatableAttributes
 
         cattr_accessor :manifest
+        attr_reader :default_locale
+
+        # Overwrites Virtus::InstanceMethods::Constructor#initialize to allow
+        # passing a default_locale needed to validate translatable attributes.
+        # See TranslatablePresenceValidator#default_locale_for(record).
+        def initialize(attributes = nil, default_locale = nil)
+          @default_locale = default_locale
+          super(attributes)
+        end
 
         def self.model_name
           ActiveModel::Name.new(self, nil, "Settings")
@@ -67,6 +76,10 @@ module Decidim
       @schema
     end
 
+    def required_attributes_for_authorization
+      attributes.select { |_, attribute| attribute.required_for_authorization? }
+    end
+
     # Semi-private: Attributes are an abstraction used by SettingsManifest
     # to encapsulate behavior related to each individual settings field. Shouldn't
     # be used from the outside.
@@ -78,14 +91,16 @@ module Decidim
         boolean: { klass: Boolean, default: false },
         integer: { klass: Integer, default: 0 },
         string: { klass: String, default: nil },
-        text: { klass: String, default: nil }
+        text: { klass: String, default: nil },
+        array: { klass: Array, default: [] }
       }.freeze
 
       attribute :type, Symbol, default: :boolean
       attribute :default
       attribute :translated, Boolean, default: false
       attribute :editor, Boolean, default: false
-      attribute :required, Boolean, default: true
+      attribute :required, Boolean, default: false
+      attribute :required_for_authorization, Boolean, default: false
 
       validates :type, inclusion: { in: TYPES.keys }
 

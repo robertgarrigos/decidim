@@ -30,6 +30,10 @@ describe "Invite process administrator", type: :system do
       expect(page).to have_current_path "/admin/"
       expect(page).to have_content("DASHBOARD")
 
+      visit decidim_admin.admin_terms_show_path
+
+      find_button("I agree this admin terms").click
+
       click_link "Processes"
 
       within "#processes" do
@@ -38,7 +42,7 @@ describe "Invite process administrator", type: :system do
       end
 
       within ".secondary-nav" do
-        expect(page.text).to eq "Info\nSteps\nComponents\nCategories\nAttachments\nFolders\nFiles\nProcess users\nModerations"
+        expect(page.text).to eq "View public page\nInfo\nPhases\nComponents\nCategories\nAttachments\nFolders\nFiles\nProcess admins\nModerations"
       end
     end
   end
@@ -47,7 +51,7 @@ describe "Invite process administrator", type: :system do
     let(:email) { "administrator@example.org" }
 
     let!(:administrator) do
-      create :user, :confirmed, email: email, organization: organization
+      create :user, :confirmed, :admin_terms_accepted, email: email, organization: organization
     end
 
     before do
@@ -68,7 +72,7 @@ describe "Invite process administrator", type: :system do
       end
 
       within ".secondary-nav" do
-        expect(page.text).to eq "Info\nSteps\nComponents\nCategories\nAttachments\nFolders\nFiles\nProcess users\nModerations"
+        expect(page.text).to eq "View public page\nInfo\nPhases\nComponents\nCategories\nAttachments\nFolders\nFiles\nProcess admins\nModerations"
       end
     end
   end

@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 shared_examples "manage projects" do
+  describe "admin form" do
+    before { click_on "New project" }
+
+    it_behaves_like "having a rich text editor", "new_project", "full"
+  end
+
   it "updates a project" do
     within find("tr", text: translated(project.title)) do
       click_link "Edit"
@@ -64,7 +70,7 @@ shared_examples "manage projects" do
   end
 
   it "creates a new project", :slow do
-    find(".card-title a.button").click
+    find(".card-title a.button.new").click
 
     within ".new_project" do
       fill_in_i18n(

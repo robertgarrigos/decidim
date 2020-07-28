@@ -11,6 +11,10 @@ Decidim.register_component(:budgets) do |component|
 
   component.data_portable_entities = ["Decidim::Budgets::Order"]
 
+  component.newsletter_participant_entities = ["Decidim::Budgets::Order"]
+
+  component.query_type = "Decidim::Budgets::BudgetsType"
+
   component.actions = %(vote)
 
   component.on(:before_destroy) do |instance|
@@ -21,6 +25,8 @@ Decidim.register_component(:budgets) do |component|
     resource.model_class_name = "Decidim::Budgets::Project"
     resource.template = "decidim/budgets/projects/linked_projects"
     resource.card = "decidim/budgets/project"
+    resource.actions = %(vote)
+    resource.searchable = true
   end
 
   component.register_stat :projects_count, primary: true, priority: Decidim::StatsRegistry::LOW_PRIORITY do |components, start_at, end_at|
@@ -39,11 +45,17 @@ Decidim.register_component(:budgets) do |component|
     Decidim::Comments::Comment.where(root_commentable: projects).count
   end
 
+  component.register_stat :followers_count, tag: :followers, priority: Decidim::StatsRegistry::LOW_PRIORITY do |components, start_at, end_at|
+    projects_ids = Decidim::Budgets::FilteredProjects.for(components, start_at, end_at).pluck(:id)
+    Decidim::Follow.where(decidim_followable_type: "Decidim::Budgets::Project", decidim_followable_id: projects_ids).count
+  end
+
   component.settings(:global) do |settings|
     settings.attribute :projects_per_page, type: :integer, default: 12
     settings.attribute :total_budget, type: :integer, default: 100_000_000
     settings.attribute :vote_threshold_percent, type: :integer, default: 70
     settings.attribute :comments_enabled, type: :boolean, default: true
+    settings.attribute :resources_permissions_enabled, type: :boolean, default: true
     settings.attribute :announcement, type: :text, translated: true, editor: true
   end
 

@@ -1,20 +1,27 @@
-<%= filter_form_for filter do |form| %>
-  <div class="filters-controls">
-    <div class="filters__section">
-      <div class="filters__search">
-        <div class="input-group">
-          <%= form.search_field :term, label: false, class: "input-group-field", placeholder: t(".search") %>
-          <div class="input-group-button">
-            <button type="submit" class="button button--muted">
-              <%= icon "magnifying-glass", aria_label: t(".search") %>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-      <%= form.collection_radio_buttons :resource_type,searchable_resources_as_options(t("all", scope: "decidim.search.filter")), :first, :last, legend_title: t("component", scope: "decidim.search.filter") %>
-
-      <%= scopes_picker_filter form, :decidim_scope_id %>
-  </div>
+<label class="text-medium mb-s"><%= t(".jump_to") %></label>
+<% if params.dig(:filter, :resource_type).present? %>
+  <p class="text-secondary">
+    <%= link_to main_search_path do %>
+      <%= icon "caret-left", class: "icon--small" %>&nbsp;<%= t(".back") %>
+    <% end %>
+  </p>
 <% end %>
+<%= render partial: "resources_filter_block", locals: { sections: @sections, types: Decidim::Searchable.searchable_resources_of_type_participant } %>
+<%= render partial: "resources_filter_block", locals: { sections: @sections, types: Decidim::Searchable.searchable_resources_of_type_participatory_space } %>
+<%= render partial: "resources_filter_block", locals: { sections: @sections, types: Decidim::Searchable.searchable_resources_of_type_component } %>
+<div class="card card--secondary">
+  <%= filter_form_for filter do |form| %>
+    <%= scopes_picker_filter form, :decidim_scope_id %>
+    <%= form.hidden_field :term %>
+  <% end %>
+</div>
+<div class="row collapse order-by">
+  <div class="text-uppercase text-right">
+    <span class="order-by__tabs">
+      <%= search_path_by_state_link(:past) %>
+      <%= search_path_by_state_link(:future) %>
+      <%= search_path_by_state_link(:active) %>
+      <%= search_path_by_state_link(nil) %>
+    </span>
+  </div>
+</div>

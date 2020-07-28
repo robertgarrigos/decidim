@@ -7,8 +7,8 @@
 <%= partial "template_top" %>
 
 <main>
+  <%= partial "process_header" %>
   <div class="wrapper">
-    <%= partial "process_header" %>
     <div class="row column">
       <div class="callout secondary mb-sm">
         <p>This is a <strong>collaborative draft</strong> for a proposal. This means that you can help their authors to shape the proposal using the comment section below or improve it directly by requesting access to edit it. Once the authors grant you access, you’ll be able to make changes to this draft.</p>
@@ -90,12 +90,7 @@
             particularitats orogràfiques al barri de Roquetes.
           </p>
           <figure>
-            <figcaption class="text-uppercase"><strong>Arxivat a</strong></figcaption>
-            <ul>
-              <li><a href="">Transició ecológica</a>&nbsp;<small class="text-small">(ha canviat de <u>Justícia Climàtica</u> per un administrador)</small></li>
-              <li><a href="">Mobilitat sostenible</a></li>
-              <li><a href="">Barri de Sarrià</a></li>
-            </ul>
+            <%= partial "proposal-tags-list" %>
           </figure>
         </div>
       </div>

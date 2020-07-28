@@ -32,9 +32,7 @@ module Decidim
         attr_reader :result
 
         def create_result
-          @result = Decidim.traceability.create!(
-            Result,
-            @form.current_user,
+          params = {
             component: @form.current_component,
             scope: @form.scope,
             category: @form.category,
@@ -47,6 +45,13 @@ module Decidim
             decidim_accountability_status_id: @form.decidim_accountability_status_id,
             external_id: @form.external_id.presence,
             weight: @form.weight
+          }
+
+          @result = Decidim.traceability.create!(
+            Result,
+            @form.current_user,
+            params,
+            visibility: "all"
           )
         end
 
@@ -82,12 +87,12 @@ module Decidim
 
         def notify_proposal_followers
           proposals.each do |proposal|
-            authors_ids = proposal.authors.pluck(:id)
             Decidim::EventsManager.publish(
               event: "decidim.events.accountability.proposal_linked",
               event_class: Decidim::Accountability::ProposalLinkedEvent,
               resource: result,
-              recipient_ids: authors_ids + proposal.followers.pluck(:id),
+              affected_users: proposal.notifiable_identities,
+              followers: proposal.followers - proposal.notifiable_identities,
               extra: {
                 proposal_id: proposal.id
               }

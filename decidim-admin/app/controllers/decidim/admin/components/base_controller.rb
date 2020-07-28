@@ -5,7 +5,7 @@ module Decidim
     module Components
       # This controller is the abstract class from which all component
       # controllers in their admin engines should inherit from.
-      class BaseController < Admin::ApplicationController
+      class BaseController < Decidim::Admin::ApplicationController
         include Settings
 
         include Decidim::Admin::ParticipatorySpaceAdminContext
@@ -15,13 +15,14 @@ module Decidim
         helper Decidim::ResourceHelper
         helper Decidim::Admin::ExportsHelper
         helper Decidim::Admin::BulkActionsHelper
+        helper Decidim::Admin::ResourcePermissionsHelper
 
         helper_method :current_component,
                       :current_participatory_space,
                       :parent_path
 
         before_action except: [:index, :show] do
-          enforce_permission_to :manage, :component, component: current_component
+          enforce_permission_to :manage, :component, component: current_component unless skip_manage_component_permission
         end
 
         before_action on: [:index, :show] do
@@ -29,7 +30,10 @@ module Decidim
         end
 
         def permissions_context
-          super.merge(participatory_space: current_participatory_space)
+          super.merge(
+            current_participatory_space: current_participatory_space,
+            participatory_space: current_participatory_space
+          )
         end
 
         def permission_class_chain
@@ -53,7 +57,11 @@ module Decidim
         end
 
         def parent_path
-          @parent_path ||= EngineRouter.admin_proxy(current_participatory_space).components_path
+          @parent_path ||= ::Decidim::EngineRouter.admin_proxy(current_participatory_space).components_path
+        end
+
+        def skip_manage_component_permission
+          false
         end
       end
     end

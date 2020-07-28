@@ -3,7 +3,7 @@
 shared_examples "manage impersonations examples" do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:organization) { create(:organization, :with_tos, available_authorizations: available_authorizations) }
+  let(:organization) { create(:organization, available_authorizations: available_authorizations) }
   let(:available_authorizations) { ["dummy_authorization_handler"] }
   let(:document_number) { "123456789X" }
 
@@ -26,7 +26,7 @@ shared_examples "manage impersonations examples" do
     before do
       navigate_to_impersonations_page
 
-      click_link "Impersonate new managed user"
+      click_link "Manage new participant"
 
       fill_in_the_impersonation_form(document_number, name: "Rigoberto")
     end
@@ -50,7 +50,7 @@ shared_examples "manage impersonations examples" do
 
   shared_examples_for "impersonating a user" do
     it "can impersonate the user filling in the correct authorization" do
-      expect(page).to have_content("You are impersonating the user #{impersonated_user.name}")
+      expect(page).to have_content("You are managing the participant #{impersonated_user.name}")
       expect(page).to have_content("Your session will expire in #{Decidim::ImpersonationLog::SESSION_TIME_IN_MINUTES} minutes")
     end
 
@@ -69,7 +69,9 @@ shared_examples "manage impersonations examples" do
           participatory_space: participatory_space,
           permissions: {
             "foo" => {
-              "authorization_handler_name" => authorization_handler
+              "authorization_handlers" => {
+                authorization_handler => {}
+              }
             }
           }
         )
@@ -133,7 +135,7 @@ shared_examples "manage impersonations examples" do
 
     it "does not offer authorization handler selection" do
       navigate_to_impersonations_page
-      click_link "Impersonate new managed user"
+      click_link "Manage new participant"
 
       expect(page).not_to have_select("Authorization method")
     end
@@ -149,7 +151,7 @@ shared_examples "manage impersonations examples" do
     it "allows selecting the preferred authorization handler" do
       navigate_to_impersonations_page
 
-      click_link "Impersonate new managed user"
+      click_link "Manage new participant"
       expect(page).to have_select("Authorization method")
       expect(page).to have_field("Document number").and have_no_field("Passport number")
 
@@ -159,7 +161,9 @@ shared_examples "manage impersonations examples" do
   end
 
   describe "impersonation" do
-    let!(:impersonated_user) { create(:user, managed: managed, name: "Rigoberto", organization: organization) }
+    let!(:impersonated_user) do
+      create(:user, managed: managed, name: "Rigoberto", organization: organization)
+    end
 
     context "when impersonating a previously authorized user" do
       let!(:authorization) { create(:authorization, user: impersonated_user, name: "dummy_authorization_handler") }
@@ -191,7 +195,7 @@ shared_examples "manage impersonations examples" do
 
         context "and no reason is provided" do
           it "prevents submissions and shows an error" do
-            expect(page).to have_content("You need to provide a reason when impersonating a non managed user")
+            expect(page).to have_content("You need to provide a reason when managing a non managed participant")
           end
         end
 
@@ -268,7 +272,7 @@ shared_examples "manage impersonations examples" do
       fill_in(:impersonate_user_reason, with: reason) if reason
       fill_in :impersonate_user_authorization_document_number, with: document_number
       fill_in :impersonate_user_authorization_postal_code, with: "08224"
-      page.execute_script("$('#impersonate_user_authorization_birthday').siblings('input:first').focus()")
+      page.execute_script("$('#impersonate_user_authorization_birthday').focus()")
     end
 
     page.find(".datepicker-dropdown .day", text: "12").click

@@ -25,8 +25,12 @@ module Decidim
           resource :consultation_widget, only: :show, path: "embed"
 
           resources :questions, only: [:show], param: :slug, path: "questions", shallow: true do
+            member do
+              get :authorization_vote_modal, to: "authorization_vote_modals#show"
+            end
             resource :question_widget, only: :show, path: "embed"
             resource :question_votes, only: [:create, :destroy], path: "vote"
+            resource :question_multiple_votes, only: [:create, :show], path: "multivote"
           end
         end
 
@@ -71,6 +75,18 @@ module Decidim
                     position: 2.7,
                     if: Decidim::Consultation.where(organization: current_organization).published.any?,
                     active: :inclusive
+        end
+      end
+
+      initializer "decidim_consultations.content_blocks" do
+        Decidim.content_blocks.register(:homepage, :highlighted_consultations) do |content_block|
+          content_block.cell = "decidim/consultations/content_blocks/highlighted_consultations"
+          content_block.public_name_key = "decidim.consultations.content_blocks.highlighted_consultations.name"
+          content_block.settings_form_cell = "decidim/consultations/content_blocks/highlighted_consultations_settings_form"
+
+          content_block.settings do |settings|
+            settings.attribute :max_results, type: :integer, default: 4
+          end
         end
       end
     end

@@ -2,17 +2,17 @@ fr:
   activemodel:
     attributes:
       result:
-        decidim_accountability_status_id: Statut
+        decidim_accountability_status_id: Progression
         decidim_category_id: Catégorie
         decidim_scope_id: Périmètre d'application
         description: Description
-        end_date: Date et heure de fin
+        end_date: Date de fin
         progress: Avancement
         project_ids: Projets inclus
         proposals: Propositions incluses
         start_date: Date de début
         title: Titre
-        updated_at: Mis à jour à
+        updated_at: Mise à jour à
       status:
         description: Description
         key: Clé
@@ -22,7 +22,8 @@ fr:
         description: Description
         entry_date: Date
     models:
-      decidim/accountability/proposal_linked_event: Proposition incluse dans un résultat
+      decidim/accountability/proposal_linked_event: Proposition incluse dans une réalisation
+      decidim/accountability/result_progress_updated_event: Résultat du progrès mis à jour
   activerecord:
     models:
       decidim/accountability/result:
@@ -36,7 +37,7 @@ fr:
         edit: Modifier
         new: Nouveau %{name}
         preview: Aperçu
-        timeline_entries: Evolution du projet
+        timeline_entries: Évolution de la réalisation
         title: Actions
       admin:
         exports:
@@ -45,12 +46,12 @@ fr:
           result:
             name: Réalisation
           status:
-            name: Statut
+            name: Progression
           timeline_entry:
-            name: Elément de chronologie
+            name: Élément de chronologie
         results:
           create:
-            invalid: Un problème est survenu lors de la création de ce résultat
+            invalid: Un problème est survenu lors de la création de cette réalisation
             success: Réalisation créée avec succès
           destroy:
             success: Réalisation supprimée avec succès
@@ -73,7 +74,7 @@ fr:
             success: Réalisation mise à jour avec succès
         shared:
           subnav:
-            statuses: Statuts
+            statuses: Progrès
         statuses:
           create:
             invalid: Un problème est survenu lors de la création de ce statut
@@ -93,21 +94,21 @@ fr:
             success: Statut mis à jour avec succès
         timeline_entries:
           create:
-            invalid: Un problème est survenu lors de la création de cette entrée
-            success: Entrée créée avec succès
+            invalid: Un problème est survenu lors de la création de cette élément de chronologie
+            success: Élément de chronologie créé avec succès
           destroy:
-            success: Entrée supprimée avec succès
+            success: Élément de chronologie supprimé avec succès
           edit:
-            title: Modifier l'entrée
-            update: Mise à jour de l'entrée
+            title: Modifier l'élément de chronologie
+            update: Mise à jour de l'élément de chronologie
           index:
-            title: Entrées de la chronologie du projet
+            title: Étapes-clés de la réalisation
           new:
-            create: Créer une entrée
-            title: Nouvelle entrée
+            create: Créer un élément de chronologie
+            title: Nouvel élément de chronologie
           update:
-            invalid: Un problème est survenu lors de la mise à jour de cette entrée
-            success: Entrée mise à jour avec succès
+            invalid: Un problème est survenu lors de la mise à jour de cet élément de chronologie
+            success: Élément de chronologie mis à jour avec succès
       admin_log:
         result:
           create: "%{user_name} a créé la réalisation %{resource_name} dans %{space_name}"
@@ -116,6 +117,8 @@ fr:
         value_types:
           parent_presenter:
             not_found: 'Le parent n''a pas été trouvé dans la base de données (ID: %{id})'
+      last_activity:
+        new_result_at_html: "<span>Nouvelle réalisation %{link}</span>"
       models:
         result:
           fields:
@@ -137,8 +140,8 @@ fr:
       results:
         count:
           results_count:
-            one: 1 résultat
-            other: "%{count} résultats"
+            one: 1 réalisation
+            other: "%{count} réalisations"
         filters:
           all: Tous
           scopes: Périmètre d'application
@@ -146,11 +149,11 @@ fr:
           categories_label: Catégories
           subcategories_label: Sous-catégories
         home_header:
-          global_status: État d'exécution globale
+          global_status: État d'exécution global
         nav_breadcrumb:
           global: Exécution globale
         search:
-          search: Rechercher des actions
+          search: Rechercher des réalisations
         show:
           stats:
             attendees: Participants
@@ -167,9 +170,9 @@ fr:
             version_created_at: Version créée le
             version_number: Numéro de version
             version_number_out_of_total: "%{current_version} sur %{total_count}"
-            votes: Soutiens
+            votes: Votes
         timeline:
-          title: Evolution du projet
+          title: Évolution du projet
       versions:
         index:
           changes_at_title: Changements à "%{title}"
@@ -195,18 +198,27 @@ fr:
     events:
       accountability:
         proposal_linked:
-          email_intro: 'La proposition "%{proposal_title}" a été incluse dans un résultat. Vous pouvez le voir sur cette page :'
+          email_intro: 'La proposition "%{proposal_title}" a été incluse dans une réalisation. Vous pouvez le voir sur cette page :'
           email_outro: Vous avez reçu cette notification parce que vous suivez "%{proposal_title}". Vous pouvez arrêter de recevoir des notifications à partir du lien précédent.
           email_subject: Une mise à jour de %{proposal_title}
-          notification_title: La proposition <a href="%{proposal_path}">%{proposal_title}</a> a été incluse dans le résultat <a href="%{resource_path}">%{resource_title}</a>.
+          notification_title: La proposition <a href="%{proposal_path}">%{proposal_title}</a> a été incluse dans la réalisation <a href="%{resource_path}">%{resource_title}</a>.
+        result_progress_updated:
+          email_intro: 'Le résultat "%{resource_title}", qui inclut la proposition "%{proposal_title}", est maintenant terminé à %{progress}%. Vous pouvez le voir sur cette page:'
+          email_outro: Vous avez reçu cette notification car vous suivez "%{proposal_title}" et cette proposition est incluse dans le résultat "%{resource_title}". Vous pouvez cesser de recevoir des notifications en suivant le lien précédent.
+          email_subject: Une mise à jour à %{resource_title} progress
+          notification_title: Le résultat <a href="%{resource_path}">%{resource_title}</a>, qui inclut la proposition <a href="%{proposal_path}">%{proposal_title}</a>, est désormais achevé à %{progress}%.
+    metrics:
+      results:
+        description: Nombre de résultats générés
+        object: résultats
+        title: Résultats
     participatory_processes:
       participatory_process_groups:
         highlighted_results:
           results: Réalisations
     participatory_spaces:
       highlighted_results:
-        results: Réalisations
-        see_all_results: Voir toutes les réalisations
+        see_all: Tout voir (%{count})
     resource_links:
       included_projects:
         result_project: Projets inclus dans cette réalisation

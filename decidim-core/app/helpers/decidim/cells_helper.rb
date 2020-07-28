@@ -10,6 +10,10 @@ module Decidim
       context[:controller].class.to_s == "Decidim::Proposals::ProposalsController"
     end
 
+    def collaborative_drafts_controller?
+      context[:controller].class.to_s == "Decidim::Proposals::CollaborativeDraftsController"
+    end
+
     def posts_controller?
       context[:controller].class.to_s == "Decidim::Blogs::PostsController"
     end
@@ -30,14 +34,15 @@ module Decidim
       return unless from_context
       return unless proposals_controller?
       return if index_action?
+
       from_context.withdrawable_by?(current_user)
     end
 
     def flagable?
       return unless from_context
-      return unless proposals_controller?
+      return unless proposals_controller? || collaborative_drafts_controller?
       return if index_action?
-      return if from_context.official?
+
       true
     end
   end

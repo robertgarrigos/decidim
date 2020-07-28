@@ -17,7 +17,13 @@ shared_examples "create an initiative type" do
       {
         title: Decidim::Faker::Localized.sentence(5),
         description: Decidim::Faker::Localized.sentence(25),
-        banner_image: Decidim::Dev.test_file("city2.jpeg", "image/jpeg")
+        signature_type: "online",
+        undo_online_signatures_enabled: true,
+        promoting_committee_enabled: true,
+        minimum_committee_members: 7,
+        banner_image: Decidim::Dev.test_file("city2.jpeg", "image/jpeg"),
+        collect_user_extra_fields: true,
+        extra_fields_legal_information: Decidim::Faker::Localized.sentence(25)
       }
     end
 

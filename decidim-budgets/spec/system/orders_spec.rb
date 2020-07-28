@@ -6,6 +6,7 @@ describe "Orders", type: :system do
   include_context "with a component"
   let(:manifest_name) { "budgets" }
 
+  let(:organization) { create :organization }
   let!(:user) { create :user, :confirmed, organization: organization }
   let(:project) { projects.first }
 
@@ -65,7 +66,9 @@ describe "Orders", type: :system do
       before do
         permissions = {
           vote: {
-            authorization_handler_name: "dummy_authorization_handler"
+            authorization_handlers: {
+              "dummy_authorization_handler" => {}
+            }
           }
         }
 

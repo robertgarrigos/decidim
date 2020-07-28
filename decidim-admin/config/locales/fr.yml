@@ -2,7 +2,7 @@ fr:
   activemodel:
     attributes:
       area:
-        area_type: Type de zone d'application
+        area_type: Périmètre d'assemblée
         name: Titre
         organization: Organisation
       area_type:
@@ -36,13 +36,18 @@ fr:
         organization_url: URL de l'organisation
         redirect_uri: Rediriger l'URI
       organization:
+        address: Nom de l'hôte SMTP
+        alert_color: Alerte
+        badges_enabled: Activer les badges
         cta_button_path: Chemin du bouton d'action
         cta_button_text: Texte du bouton d'action
+        customize_welcome_notification: Personnaliser le mail de bienvenue
         default_locale: Langue par défaut
         description: Description
         enable_omnipresent_banner: Montrer une bannière d'actualités
         facebook_handler: Gestionnaire Facebook
         favicon: Icône
+        from: Adresse e-mail de l’expéditeur
         github_handler: Gestionnaire GitHub
         header_snippets: Éléments à ajouter entre les balises HTML
         highlighted_content_banner_action_subtitle: Sous-titre du bouton d'action
@@ -52,7 +57,6 @@ fr:
         highlighted_content_banner_image: Image
         highlighted_content_banner_short_description: Brève description
         highlighted_content_banner_title: Titre
-        homepage_image: Image de la page d'accueil
         instagram_handler: Gestionnaire Instagram
         logo: Logo
         name: Nom
@@ -62,19 +66,29 @@ fr:
         omnipresent_banner_short_description: Brève description
         omnipresent_banner_title: Titre
         omnipresent_banner_url: URL
+        password: Mot de passe
+        port: Port
+        primary_color: Primaire
         reference_prefix: Préfixe de référence
+        secondary_color: Secondaire
+        send_welcome_notification: Envoyer un mail de bienvenue
         show_statistics: Montrer les statistiques
+        success_color: Succès
         tos_version: Version des conditions d'utilisation
         twitter_handler: Gestionnaire Twitter
-        welcome_text: Texte de bienvenue
+        user_groups_enabled: Activer les groupes d'utilisateurs
+        user_name: Nom d'utilisateur
+        warning_color: Attention
+        welcome_notification_body: Corps du mail de bienvenue
+        welcome_notification_subject: Objet du mail de bienvenue
         youtube_handler: Gestionnaire YouTube
       scope:
         code: Code
         name: Titre
         organization: Organisation
         parent_id: Parent
-        scope_type: Type de périmètre d'application
-        scope_type_id: Type de périmètre d'application
+        scope_type: Type de secteur
+        scope_type_id: Type de secteur
       scope_type:
         name: Titre
         organization: Organisation
@@ -83,44 +97,31 @@ fr:
         changed_notably: Il y a eu des changements notables.
         content: Contenu
         organization: Organisation
+        show_in_footer: Montrer dans le pied de page
         slug: Identifiant
         title: Titre
+        weight: Poids
+      static_page_topic:
+        description: La description
+        show_in_footer: Montrer dans le pied de page
+        title: Titre
+        weight: Poids
+      user_group_csv_verification:
+        file: Fichier
     errors:
       models:
         oauth_application:
           attributes:
             redirect_uri:
               must_be_ssl: L'URI de redirection doit être un URI SSL
+        organization:
+          attributes:
+            official_img_footer:
+              allowed_file_content_types: Fichier image invalide
+            official_img_header:
+              allowed_file_content_types: Fichier image invalide
   activerecord:
     attributes:
-      decidim/participatory_process:
-        banner_image: Image d'en-tête
-        description: Description
-        developer_group: Organisateur
-        domain: Domaine
-        end_date: Date de fin
-        hashtag: Hashtag
-        hero_image: Image de la page d'accueil
-        local_area: Espace d'organisation
-        meta_scope: Échelle
-        participatory_scope: Objectif
-        participatory_structure: Modalités
-        promoted: Mis en avant
-        scope: Périmètre d’application
-        short_description: Résumé
-        slug: Identifiant
-        start_date: Date de début
-        subtitle: Sous-titre
-        target: Participants
-        title: Titre
-      decidim/participatory_process_group:
-        description: Description
-        hero_image: Image de la page d'accueil
-        name: Nom
-        participatory_processes: Processus participatifs
-      decidim/participatory_process_step:
-        end_date: Date de fin
-        start_date: Date de début
       decidim/static_page:
         content: Contenu
         slug: Identifiant
@@ -133,9 +134,6 @@ fr:
         organization_url: URL de l'organisation
         redirect_uri: Rediriger l'URI
         site: Site Internet
-  date:
-    formats:
-      datepicker: "%d/%m/%Y"
   decidim:
     admin:
       actions:
@@ -143,30 +141,31 @@ fr:
         browse: Parcourir
         export: Exporter
         manage: Gérer
-        new: Nouveau %{name}
+        new: Nouvelle %{name}
         permissions: Autorisations
         reject: Rejeter
         verify: Vérifier
       area_types:
         create:
-          error: Une erreur s'est produite lors de la création d'un nouveau type de zone d'application.
-          success: Le type de zone d'application a été créé avec succès.
+          error: Une erreur s'est produite lors de la création d'un nouveau périmètre d'assemblée.
+          success: Le type de périmètre d'assemblée a été créé avec succès.
         destroy:
-          success: Le type de zone d'application a bien été supprimé.
+          success: Le type de périmètre d'assemblée a bien été supprimé
         edit:
-          title: Modifier le type de zone d'application
+          title: Modifier le type de périmètre d'assemblée
           update: Mettre à jour
         new:
-          create: Créer un type de zone d'application
-          title: Nouveau type de zone d'application
+          create: Créer un type de périmètre d'assemblée
+          title: Nouveau type de périmètre d'assemblée
         update:
-          error: Une erreur s'est produite lors de la mise à jour de ce type de zone d'application.
-          success: Le type de zone d'application a été mis à jour avec succès.
+          error: Une erreur s'est produite lors de la mise à jour de ce type de périmètre d'assemblée.
+          success: Le type de périmètre d'assemblée a été mis à jour avec succès
       areas:
         create:
           error: Une erreur s'est produite lors de la création d'une nouvelle zone d'application.
           success: Zone d'application créée avec succès.
         destroy:
+          has_spaces: Le secteur a des sous-secteur dépendants, il ne doit pas avoir de dépendances pour être supprimé.
           success: La zone d'application a bien été supprimée
         edit:
           title: Modifier la zone d'application
@@ -236,10 +235,6 @@ fr:
           error: Une erreur s'est produite lors de la mise à jour de cette catégorie.
           success: Catégorie mise à jour avec succès.
       component_permissions:
-        edit:
-          everyone: Tout le monde
-          submit: Enregistrer les autorisations
-          title: Modifier les autorisations
         update:
           success: Autorisations mises à jour avec succès.
       components:
@@ -280,6 +275,20 @@ fr:
       exports:
         export_as: "%{name} en format %{export_format}"
         notice: Votre exportation est en cours. Vous recevrez un e-mail quand elle sera terminée.
+      filters:
+        category_id_eq:
+          label: Catégorie
+        officialized_at_null:
+          label: État
+          values:
+            'false': Validé
+            'true': Non validé
+        search_label: Rechercher
+      help_sections:
+        error: Une erreur s'est produite lors de la mise à jour des sections d'aide.
+        form:
+          save: sauvegarder
+        success: Les sections d'aide ont été mises à jour avec succès
       impersonatable_users:
         index:
           filter:
@@ -294,7 +303,7 @@ fr:
           needs_authorization_warning: Vous avez besoin d'au moins une autorisation activée pour cette organisation.
           not_managed: Non représenté
           promote: Promouvoir
-          search: Chercher
+          search: Rechercher
           status: Statut
           view_logs: Consultez les journaux d'activité
       impersonations:
@@ -329,15 +338,17 @@ fr:
         admin_log: Journal d'activité personnel
         admins: Administrateurs
         appearance: Apparence
-        area_types: Types de zone d'application
+        area_types: Types de périmètre d'assemblée
         areas: Zones d'application
         configuration: Configuration
         dashboard: Tableau de bord
+        help_sections: Sections d'aide
+        homepage: Page d'accueil
         impersonations: Utilisateurs représentés
         newsletters: Bulletins d'information (newsletter)
         oauth_applications: Applications OAuth
-        officializations: Validation d'utilisateurs
-        scope_types: Types de périmètre d'application
+        participants: Participants
+        scope_types: Types de secteur
         scopes: Périmètres d’application
         settings: Paramètres
         static_pages: Pages
@@ -346,7 +357,7 @@ fr:
       models:
         area:
           fields:
-            area_type: Type de zone d'application
+            area_type: Type de périmètre d'assemblée
             name: Titre
         area_type:
           fields:
@@ -376,6 +387,7 @@ fr:
             created_at: Créée le
             progress: Avancement
             sent_at: Envoyé à
+            sent_to: Envoyé à
             subject: Objet
           name: Bulletin d'information (newsletter)
         oauth_application:
@@ -388,7 +400,7 @@ fr:
         scope:
           fields:
             name: Titre
-            scope_type: Type de périmètre d'application
+            scope_type: Type de secteur
         scope_type:
           fields:
             name: Titre
@@ -430,7 +442,7 @@ fr:
           error: Il y a eu une erreur lors de la création de cette newsletter.
           success: Newsletter créée avec succès. Veuillez la vérifier avant de l'envoyer.
         deliver:
-          error: Erreur lors de l'envoi de cette newsletter.
+          error: Il y a eu une erreur lors de l'envoi de cette newsletter.
           success: Newsletter envoyée avec succès.
         destroy:
           error_already_sent: 'Suppression impossible car la newsletter a déjà été envoyée.'
@@ -439,17 +451,44 @@ fr:
           save_and_preview: Enregistrer et prévisualiser
           title: Modifier la newsletter
         form:
-          interpolations_hint: 'Astuce : Vous pouvez utiliser "%{name}" n''importe où dans le corps ou le sujet et il sera remplacé par le nom du destinataire.'
+          interpolations_hint: 'Astuce : Vous pouvez utiliser "%{name}" (sans les guillemets) n''importe où dans le corps ou le sujet et il sera remplacé par le nom du destinataire.'
         index:
+          all: tous
+          all_users: 'Tous les utilisateurs '
+          and: 'et '
           confirm_delete: Êtes-vous sûr de vouloir supprimer cette newsletter ?
+          followers: 'abonnés '
+          has_been_sent_to: 'A été envoyé à : '
+          no_scopes: Aucun secteur
+          not_sent: Envoi non effectué
+          participants: 'participants '
+          segmented_to: 'Segmenté à %{subject}: '
           title: Newsletters
         new:
           save: Enregistrer
           title: Nouvelle newsletter
-        show:
+        select_recipients_to_deliver:
+          all_spaces: Tous
+          all_users_help: Envoie la newsletter à tous les utilisateurs confirmés.
           confirm_deliver: Êtes-vous sûr de vouloir envoyer cette newsletter ? Cette action ne peut pas être annulée.
           deliver: Envoyer la newsletter
+          followers_help: Envoie la newsletter à tous les utilisateurs confirmés qui suivent les espaces participatifs sélectionnés dans la liste.
+          none: Aucun
+          participants_help: Envoie la newsletter à tous les utilisateurs confirmés qui ont participé à l'un des espaces participatifs sélectionnés dans la liste.
+          scopes_help: Envoie la newsletter aux utilisateurs qui ont un secteur sélectionné dans les paramètres "Mes intérêts".
+          select_scopes: Filtrer pour les utilisateurs ayant activé un secteur dans les paramètres "Mes intérêts".
+          select_spaces: Sélectionnez les espaces pour segmenter la newsletter
+          select_users: Sélectionnez les utilisateurs à qui vous souhaitez envoyer la newsletter
+          send_to_all_users: Envoyer à tous
+          send_to_followers: Envoyer aux abonnés
+          send_to_participants: Envoyer aux participants
+          title: Sélectionner les destinataires
+          warning: "<strong>Attention :</strong> Cette newsletter ne sera envoyée qu'aux utilisateurs qui ont activé <em>Je veux recevoir newsletters</em> dans leurs paramètres de notifications."
+        send:
+          no_recipients: Aucun destinataire pour cette sélection
+        show:
           preview: Aperçu
+          select_recipients_to_deliver: Sélectionner les destinataires
           subject: Objet
         update:
           error: Erreur lors de la mise à jour de la newsletter.
@@ -482,18 +521,12 @@ fr:
           actions: Actions
           badge: Badge
           created_at: Créée le
-          filter:
-            all: Tout
-            not_officialized: Non validé
-            officialized: Validé
-          filter_by: Filtrer par
           name: Nom
           nickname: Pseudonyme
           not_officialized: Non validé
           officialize: Valider
           officialized: Validé
           reofficialize: De nouveau validé
-          search: Chercher
           status: Statut
           unofficialize: Invalider
         new:
@@ -519,6 +552,7 @@ fr:
         edit:
           update: Mettre à jour
         form:
+          colors_title: Couleurs de l'organisation
           cta_button_path_help: 'Vous pouvez remplacer le lien vers lequel renvoie le bouton de la page d''accueil. Utilisez ici des chemins partiels et non des URL complets. Il accepte les lettres, les chiffres, les tirets et les barres obliques, et doit commencer par une lettre. Le bouton apparaît sur la page d''accueil entre le texte de bienvenue et la description. Exemple : %{url}'
           cta_button_text_help: Vous pouvez remplacer le texte du bouton dans la page d'accueil pour chaque langue disponible dans votre organisation. Si elle n'est pas définie, la valeur par défaut sera utilisée. Le bouton apparaît sur la page d'accueil entre le texte de bienvenue et la description.
           header_snippets_help: Utilisez ce champ pour ajouter des éléments entre les balises HTML <head> </head>. L'utilisation la plus courante de champs consiste à intégrer des services tiers nécessitant du JavaScript ou du CSS supplémentaire. Vous pouvez aussi l'utiliser pour ajouter des méta-tags supplémentaires au code HTML. Notez que cela ne fonctionnera que dans sur les pages publiques, et non dans la section admin.
@@ -526,32 +560,55 @@ fr:
           homepage_highlighted_content_banner_title: Bannière de contenu mis en valeur
           layout_appearance_title: Modifier l’aspect de la mise en page
           omnipresent_banner_appearance_title: Modifier la bannière permanente
+      organization_homepage:
+        edit:
+          active_content_blocks: Blocs de contenu actif
+          inactive_content_blocks: Blocs de contenu inactif
+      organization_homepage_content_blocks:
+        edit:
+          update: Mettre à jour
       participatory_space_private_users:
         create:
           error: Une erreur s'est produite lors de l'ajout d'un utilisateur pour cet espace participatif.
           success: L'accès utilisateur à l'espace participatif privé a été créé avec succès.
         destroy:
+          error: Une erreur s'est produite lors de la suppression d'un utilisateur privé pour cet espace participatif.
           success: L'accès utilisateur à l'espace participatif privé a été supprimé avec succès.
         index:
+          import_via_csv: Importer via csv
           title: Utilisateur privé de l'espace participatif
         new:
           create: Créer
           title: Nouvel utilisateur privé de l'espace participatif.
+      participatory_space_private_users_csv_imports:
+        create:
+          invalid: Il y a eu un problème de lecture du fichier CSV.
+          success: Fichier CSV a été transféré avec succès, nous envoyons un courriel d'invitation aux participants. Cela peut prendre un certain temps.
+        new:
+          explanation: Téléchargez votre fichier CSV. Il doit comprendre deux colonnes avec l'email dans la première colonne du fichier et le nom dans la dernière colonne du fichier (email, nom) des utilisateurs que vous souhaitez ajouter à l'espace participatif, sans en-tête.
+          title: Téléchargez votre fichier CSV
+          upload: Télécharger
+      resource_permissions:
+        edit:
+          submit: Soumettre
+          title: Modifier les autorisations
+        update:
+          success: Autorisations mises à jour avec succès.
       scope_types:
         create:
-          error: Une erreur s'est produite lors de la création d'un nouveau type de périmètre d'application.
-          success: Type de périmètre d'application créé avec succès.
+          error: Une erreur s'est produite lors de la création d'un nouveau type de secteur.
+          success: Type de secteur créé avec succès.
         destroy:
-          success: Le type de périmètre d'application a été supprimé avec succès
+          success: Le type de secteur a été supprimé avec succès
         edit:
-          title: Modifier le type de périmètre d'application
+          title: Modifier le type de secteur
           update: Mettre à jour
         new:
-          create: Créer un type de périmètre d'application
-          title: Nouveau périmètre d'application
+          create: Créer un type de secteur
+          title: Nouveau secteur
         update:
-          error: Une erreur s'est produite lors de la mise à jour de ce périmètre d'application.
-          success: Type de périmètre d'application mis à jour avec succès
+          error: Une erreur s'est produite lors de la mise à jour de ce type de secteur.
+          success: Type de secteur mis à jour avec succès
       scopes:
         create:
           error: Une erreur s'est produite lors de la création d'un nouveau périmètre d’application.
@@ -568,6 +625,21 @@ fr:
         update:
           error: Une erreur s'est produite lors de la mise à jour de ce périmètre d'application.
           success: Périmètre d'application mis à jour avec succès
+      static_page_topics:
+        create:
+          error: Une erreur s'est produite lors de la création d'un nouveau sujet.
+          success: Sujet créé avec succès.
+        destroy:
+          success: Sujet détruit avec succès
+        edit:
+          title: Modifier le sujet
+          update: Mettre à jour le sujet
+        new:
+          create: Créer un sujet
+          title: Nouveau sujet
+        update:
+          error: Une erreur s'est produite lors de la mise à jour de ce sujet.
+          success: Sujet mis à jour avec succès
       static_pages:
         actions:
           view: Voir la page publique
@@ -580,29 +652,40 @@ fr:
           changed_notably_help: Si cette case est cochée, les utilisateurs devront accepter les nouvelles conditions d'utilisation.
           title: Modifier la page
           update: Mettre à jour
+        form:
+          none: Aucun
+          slug_help: 'Utilisez des chemins partiels, pas des URL complètes ici. Accepte les lettres, les chiffres, les tirets et les barres obliques et doit commencer par une lettre. Si non défini, le bouton ne sera pas affiché. Exemple: %{url}'
         index:
           last_notable_change: Dernier changement notable
         new:
-          create: Créer
+          create: Créer une page
           title: Nouvelle page
+        topic:
+          destroy: Supprimer le sujet
+          edit: Modifier le sujet
+          empty: Il n'y a pas de page dans cette thématique
+          without_topic: Pages sans sujet
         update:
           error: Une erreur s'est produite lors de la mise à jour de cette page.
           success: Page mise à jour avec succès
       titles:
         admin_log: Journal d'administration
-        area_types: Types de zone d'application
+        area_types: Types de périmètre d'assemblée
         areas: Zones d'application
         authorization_workflows: Méthodes de vérification
         dashboard: Tableau de bord
-        impersonatable_users: Utilisateurs représentés
-        impersonations: Représentations d'utilisateurs
-        officializations: Validation d'utilisateurs
-        scope_types: Types de périmètre d'application
+        impersonatable_users: Utilisateurs gérables
+        impersonations: Gestion des utilisateurs
+        participants: Utilisateurs
+        scope_types: Types de secteur
         scopes: Périmètres d'application
         static_pages: Pages
         user_groups: Groupes d'utilisateurs
         users: Utilisateurs
       user_group:
+        csv_verify:
+          invalid: Une erreur s'est produite lors de la lecture du fichier CSV.
+          success: Le fichier CSV a été chargé avec succès, nous vérifions les groupes d'utilisateurs correspondant aux critères. Cela pourrait prendre un moment.
         reject:
           invalid: Une erreur s'est produite lors du refus de ce groupe d'utilisateurs.
           success: Groupe d'utilisateurs refusé avec succès
@@ -614,14 +697,20 @@ fr:
           filter:
             all: Tous
             pending: En attente
-            rejected: Non retenu
+            rejected: Non validés
             verified: Vérifié
           filter_by: Filtrer par
           search: Rechercher
           state:
             pending: En attente
-            rejected: Non retenu
+            rejected: Non validés
             verified: Vérifié
+          verify_via_csv: Vérifier via CSV
+      user_groups_csv_verifications:
+        new:
+          explanation: Téléchargez votre fichier CSV. Les courriels officiels des groupes d'utilisateurs de votre organisation doivent figurer dans la première colonne du fichier, sans en-tête. Seuls les groupes d'utilisateurs ayant confirmé leur courrier électronique et ayant un courrier électronique dans le fichier CSV seront validés.
+          title: Téléchargez votre fichier CSV
+          upload: Télécharger
       users:
         create:
           error: Une erreur s'est produite lors de l'invitation de cet utilisateur.
@@ -636,6 +725,7 @@ fr:
         new:
           create: Inviter
           title: Inviter l'utilisateur en tant qu'administrateur
+      view_public_page: Voir la page publique
     forms:
       errors:
         impersonate_user:
@@ -646,15 +736,19 @@ fr:
         hide: Masquer
         not_hidden: Visibles
         title: Actions
+        unhide: Afficher
         unreport: Annuler le signalement
       admin:
         reportable:
           hide:
-            invalid: Il y a eu un problème au moment de masquer la ressource.
-            success: Ressource masquée avec succès.
+            invalid: Il y a eu un problème au moment de masquer le contenu.
+            success: Contenu masqué avec succès.
+          unhide:
+            invalid: Il y a eu un problème pour découvrir la ressource.
+            success: Ressource non cachée avec succès.
           unreport:
-            invalid: Il y a eu un problème lors de l'annulation du signalement de la ressource.
-            success: La ressource n'est plus signalée.
+            invalid: Il y a eu un problème lors de l'annulation du signalement du contenu.
+            success: Le contenu n'est plus signalé.
       models:
         moderation:
           fields:
@@ -676,7 +770,3 @@ fr:
           title: Paramètres
         users:
           title: Utilisateurs
-  time:
-    formats:
-      datepicker: "%d/%m/%Y"
-      timepicker: "%d/%m/%Y %H:%M"

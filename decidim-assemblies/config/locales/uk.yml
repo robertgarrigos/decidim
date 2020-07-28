@@ -9,13 +9,14 @@ uk:
         closing_date: Дата закриття
         closing_date_reason: Причина дати закриття
         composition: Склад
-        copy_categories: Скопіювати розряди
+        copy_categories: Скопіювати категорії
         copy_components: Копіювати складові
         copy_features: Скопіювати складові
         created_by: 'Автор:'
         created_by_other: Створено кимось іншим
         creation_date: Дата створення
         decidim_area_id: Дільниця
+        decidim_assemblies_type_id: Різновид зборів
         decidim_scope_id: Обсяг
         description: Опис
         developer_group: Робочий гурт з просування
@@ -29,13 +30,13 @@ uk:
         instagram: Інстаграм
         internal_organisation: Внутрішня організація
         is_transparent: Є прозорими
-        local_area: Місцева дільниця
+        local_area: Дільниця організації
         meta_scope: Метавідомості обсягу
         participatory_processes_ids: Пов'язані рухи співучасті
-        participatory_scope: Обсяг співучасті
-        participatory_structure: Структура співучасті
+        participatory_scope: Що вирішується
+        participatory_structure: Як це вирішується
         private_space: Приватний простір
-        promoted: Рекламується
+        promoted: Висвітлено
         published_at: 'Оприлюднено:'
         purpose_of_action: Мета дії
         scope_id: Обсяг
@@ -45,7 +46,7 @@ uk:
         slug: Скорочена веб-адреса
         special_features: Особливості
         subtitle: Підзаголовок
-        target: Мета
+        target: Хто бере участь
         title: Назва
         twitter: Твіттер
         youtube: ЮТуб
@@ -87,12 +88,8 @@ uk:
         create:
           error: При спробі додати нові збори сталася помилка.
           success: Збори успішно додано.
-        destroy:
-          success: Збори успішно видалено.
         edit:
           update: Оновити
-        form:
-          title: Загальні відомості
         index:
           not_published: Не оприлюднено
           private: Приватні
@@ -108,6 +105,9 @@ uk:
         create:
           error: При спробі створити копію цих зборів сталася помилка.
           success: Успішно створено копію зборів.
+      assemblies_types:
+        new:
+          create: Додати
       assembly_copies:
         new:
           copy: Скопіювати
@@ -162,12 +162,16 @@ uk:
           attachment_collections: Теки
           attachment_files: Вкладені файли
           attachments: Вкладені файли
-          categories: Розряди
+          categories: Категорії
           components: Складові
           info: Відомості
           moderations: Дії з модерації
           private_users: Приватні учасники
       models:
+        assemblies_types:
+          fields:
+            created_at: 'Додано:'
+            title: Назва
         assembly:
           fields:
             created_at: 'Додано:'
@@ -225,6 +229,10 @@ uk:
             select_an_assembly_type: Оберіть різновид зборів
             slug_help: 'Cкорочені веб-адреси використовуються для створення посилань на ці збори. В них припустимі лише букви, цифри та тире, і вони мають починатися з букви. Приклад: %{url}'
             social_handlers: Соціальні мережі
+            title: Загальні відомості
+        assemblies_types:
+          form:
+            title: Назва
         assembly_copies:
           form:
             slug_help: 'Cкорочені веб-адреси використовуються для створення посилань на ці збори. В них припустимі лише букви, цифри та тире, і вони мають починатися з букви. Приклад: %{url}'
@@ -253,6 +261,9 @@ uk:
         others: Інші
         participatory: Співучасні
         working_group: Робочий гурт
+      content_blocks:
+        highlighted_assemblies:
+          name: Висвітлені збори
       created_by:
         city_council: Міська рада
         others: Інші
@@ -283,9 +294,9 @@ uk:
         is_transparent:
           'false': непрозорі
           'true': прозорі
-        local_area: Місцева дільниця
-        participatory_scope: Обсяг співучасті
-        participatory_structure: Структура співучасті
+        local_area: Дільниця організації
+        participatory_scope: Що вирішується
+        participatory_structure: Як це вирішується
         private_space: Це приватні збори
         purpose_of_action: Мета дії
         read_less: Читати менше
@@ -293,7 +304,7 @@ uk:
         related_participatory_processes: Пов'язані рухи співучасті
         scope: Обсяг
         social_networks: Соціальні мережі
-        target: Мета
+        target: Хто бере участь
       statistics:
         answers_count: Відповідей
         assemblies_count: Зборів
@@ -304,7 +315,7 @@ uk:
         meetings_count: Зустрічей
         orders_count: Голосів
         pages_count: Сторінок
-        projects_count: Задумів
+        projects_count: Проектів
         proposals_count: Пропозицій
         results_count: Підсумків
         surveys_count: Опитувань
@@ -340,10 +351,8 @@ uk:
         promoted_assembly:
           more_info: Додаткові відомості
           take_part: Взяти участь
-      assembly_header:
-        assembly_member_menu_item: Члени президії
+      assembly_navigation:
         assembly_menu_item: Збори
-        unfold: Розгорнути
       assembly_widgets:
         show:
           take_part: Взяти участь

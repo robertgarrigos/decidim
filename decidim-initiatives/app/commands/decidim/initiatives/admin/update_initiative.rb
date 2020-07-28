@@ -44,21 +44,24 @@ module Decidim
           attrs = {
             title: form.title,
             description: form.description,
-            signature_type: form.signature_type,
-            hashtag: form.hashtag,
-            answer: form.answer,
-            answer_url: form.answer_url
+            hashtag: form.hashtag
           }
 
-          attrs[:answered_at] = DateTime.current if form.answer.present?
+          if form.signature_type_updatable?
+            attrs[:signature_type] = form.signature_type
+            attrs[:scoped_type_id] = form.scoped_type_id if form.scoped_type_id
+          end
 
           if current_user.admin?
-            attrs[:signature_start_time] = form.signature_start_time
-            attrs[:signature_end_time] = form.signature_end_time
-            attrs[:offline_votes] = form.offline_votes
+            attrs[:signature_start_date] = form.signature_start_date
+            attrs[:signature_end_date] = form.signature_end_date
+            attrs[:offline_votes] = form.offline_votes if form.offline_votes
+            attrs[:state] = form.state if form.state
 
-            @notify_extended = true if form.signature_end_time != initiative.signature_end_time &&
-                                       form.signature_end_time > initiative.signature_end_time
+            if initiative.published?
+              @notify_extended = true if form.signature_end_date != initiative.signature_end_date &&
+                                         form.signature_end_date > initiative.signature_end_date
+            end
           end
 
           attrs
@@ -69,7 +72,7 @@ module Decidim
             event: "decidim.events.initiatives.initiative_extended",
             event_class: Decidim::Initiatives::ExtendInitiativeEvent,
             resource: initiative,
-            recipient_ids: initiative.followers.pluck(:id)
+            followers: initiative.followers - [initiative.author]
           )
         end
       end

@@ -31,9 +31,9 @@ module Decidim
     include Decidim::Loggable
     include Decidim::ParticipatorySpaceResourceable
     include Decidim::HasPrivateUsers
+    include Decidim::Searchable
 
     SOCIAL_HANDLERS = [:twitter, :facebook, :instagram, :youtube, :github].freeze
-    ASSEMBLY_TYPES = %w(government executive consultative_advisory participatory working_group commission others).freeze
     CREATED_BY = %w(city_council public others).freeze
 
     belongs_to :organization,
@@ -42,6 +42,10 @@ module Decidim
     belongs_to :area,
                foreign_key: "decidim_area_id",
                class_name: "Decidim::Area",
+               optional: true
+    belongs_to :assembly_type,
+               foreign_key: "decidim_assemblies_type_id",
+               class_name: "Decidim::AssembliesType",
                optional: true
     has_many :categories,
              foreign_key: "decidim_participatory_space_id",
@@ -59,26 +63,62 @@ module Decidim
     has_many :children, foreign_key: "parent_id", class_name: "Decidim::Assembly", inverse_of: :parent, dependent: :destroy
     belongs_to :parent, foreign_key: "parent_id", class_name: "Decidim::Assembly", inverse_of: :children, optional: true, counter_cache: :children_count
 
-    validates :slug, uniqueness: { scope: :organization }
-    validates :slug, presence: true, format: { with: Decidim::Assembly.slug_format }
-
     mount_uploader :hero_image, Decidim::HeroImageUploader
     mount_uploader :banner_image, Decidim::BannerImageUploader
 
-    scope :visible_for, lambda { |user|
-                          joins("LEFT JOIN decidim_participatory_space_private_users ON
-                          decidim_participatory_space_private_users.privatable_to_id = #{table_name}.id")
-                            .where("(private_space = ? and decidim_participatory_space_private_users.decidim_user_id = ?)
-                            or private_space = ? or (private_space = ? and is_transparent = ?)", true, user, false, true, true).distinct
-                        }
+    validates :slug, uniqueness: { scope: :organization }
+    validates :slug, presence: true, format: { with: Decidim::Assembly.slug_format }
 
     after_create :set_parents_path
     after_update :set_parents_path, :update_children_paths, if: :saved_change_to_parent_id?
+
+    searchable_fields({
+                        scope_id: :decidim_scope_id,
+                        participatory_space: :itself,
+                        A: :title,
+                        B: :subtitle,
+                        C: :short_description,
+                        D: :description,
+                        datetime: :published_at
+                      },
+                      index_on_create: ->(_assembly) { false },
+                      index_on_update: ->(assembly) { assembly.visible? })
+
+    # Overwriting existing method Decidim::HasPrivateUsers.visible_for
+    def self.visible_for(user)
+      if user
+        return all if user.admin?
+
+        left_outer_joins(:participatory_space_private_users).where(
+          %{private_space = false OR
+          (private_space = true AND is_transparent = true) OR
+          decidim_participatory_space_private_users.decidim_user_id = ?}, user.id
+        ).distinct
+      else
+        public_spaces
+      end
+    end
+
+    # Overwriting existing method Decidim::HasPrivateUsers.public_spaces
+    def self.public_spaces
+      where(private_space: false).or(where(private_space: true).where(is_transparent: true)).published
+    end
+
     # Scope to return only the promoted assemblies.
     #
     # Returns an ActiveRecord::Relation.
     def self.promoted
       where(promoted: true)
+    end
+
+    # Return parent assemblies.
+    def self.parent_assemblies
+      where(parent_id: nil)
+    end
+
+    # Return child assemblies.
+    def self.child_assemblies
+      where.not(parent_id: nil)
     end
 
     def self.log_presenter_class_for(_log)
@@ -101,18 +141,21 @@ module Decidim
       self_and_ancestors.where.not(id: id)
     end
 
-    def self.private_assemblies
-      where(private_space: true)
+    def translated_title
+      Decidim::AssemblyPresenter.new(self).translated_title
     end
 
-    def self.public_spaces
-      super.where(private_space: false).or(Decidim::Assembly.where(private_space: true).where(is_transparent: true))
+    def closed?
+      return false if closing_date.blank?
+
+      closing_date < Date.current
     end
 
-    def can_participate?(user)
-      return true unless private_space?
-      return true if private_space? && users.include?(user)
-      return false if private_space? && is_transparent?
+    def user_roles(role_name = nil)
+      roles = Decidim::AssemblyUserRole.where(assembly: self)
+      return roles if role_name.blank?
+
+      roles.where(role: role_name)
     end
 
     private
@@ -165,5 +208,10 @@ module Decidim
       )
     end
     # rubocop:enable Rails/SkipsModelValidations
+
+    # Allow ransacker to search for a key in a hstore column (`title`.`en`)
+    ransacker :title do |parent|
+      Arel::Nodes::InfixOperation.new("->>", parent.table[:title], Arel::Nodes.build_quoted(I18n.locale.to_s))
+    end
   end
 end

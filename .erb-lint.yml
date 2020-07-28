@@ -10,6 +10,12 @@ linters:
   SpaceAroundErbTag:
     enabled: true
 
+  AllowedScriptType:
+    enabled: true
+    allowed_types:
+      - text/javascript
+      - text/template
+
   Rubocop:
     enabled: true
 
@@ -19,3 +25,6 @@ linters:
 
       Style/StringLiterals:
         EnforcedStyle: double_quotes
+
+      Layout/SpaceInsideHashLiteralBraces:
+        Enabled: true

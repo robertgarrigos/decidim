@@ -4,13 +4,18 @@ module Decidim
   module Proposals
     # A command with all the business logic when a user creates a new proposal.
     class CreateProposal < Rectify::Command
+      include AttachmentMethods
+      include HashtagsMethods
+
       # Public: Initializes the command.
       #
       # form         - A form object with the params.
       # current_user - The current user.
-      def initialize(form, current_user)
+      # coauthorships - The coauthorships of the proposal.
+      def initialize(form, current_user, coauthorships = nil)
         @form = form
         @current_user = current_user
+        @coauthorships = coauthorships
       end
 
       # Executes the command. Broadcasts these events:
@@ -27,14 +32,8 @@ module Decidim
           return broadcast(:invalid)
         end
 
-        if process_attachments?
-          build_attachment
-          return broadcast(:invalid) if attachment_invalid?
-        end
-
         transaction do
           create_proposal
-          create_attachment if process_attachments?
         end
 
         broadcast(:ok, proposal)
@@ -44,53 +43,34 @@ module Decidim
 
       attr_reader :form, :proposal, :attachment
 
+      # Prevent PaperTrail from creating an additional version
+      # in the proposal multi-step creation process (step 1: create)
+      #
+      # A first version will be created in step 4: publish
+      # for diff rendering in the proposal version control
       def create_proposal
-        @proposal = Proposal.create!(
-          title: form.title,
-          body: form.body,
-          category: form.category,
-          scope: form.scope,
-          component: form.component,
-          address: form.address,
-          latitude: form.latitude,
-          longitude: form.longitude
-        )
-        proposal.add_coauthor(@current_user, decidim_user_group_id: form.user_group_id)
-      end
-
-      def build_attachment
-        @attachment = Attachment.new(
-          title: form.attachment.title,
-          file: form.attachment.file,
-          attached_to: @proposal
-        )
-      end
-
-      def attachment_invalid?
-        if attachment.invalid? && attachment.errors.has_key?(:file)
-          form.attachment.errors.add :file, attachment.errors[:file]
-          true
+        PaperTrail.request(enabled: false) do
+          @proposal = Decidim.traceability.perform_action!(
+            :create,
+            Decidim::Proposals::Proposal,
+            @current_user,
+            visibility: "public-only"
+          ) do
+            proposal = Proposal.new(
+              title: title_with_hashtags,
+              body: body_with_hashtags,
+              component: form.component
+            )
+            proposal.add_coauthor(@current_user, user_group: user_group)
+            proposal.save!
+            proposal
+          end
         end
       end
 
-      def attachment_present?
-        form.attachment.file.present?
-      end
-
-      def create_attachment
-        attachment.attached_to = proposal
-        attachment.save!
-      end
-
-      def attachments_allowed?
-        form.current_component.settings.attachments_allowed?
-      end
-
-      def process_attachments?
-        attachments_allowed? && attachment_present?
-      end
-
       def proposal_limit_reached?
+        return false if @coauthorships.present?
+
         proposal_limit = form.current_component.settings.proposal_limit
 
         return false if proposal_limit.zero?

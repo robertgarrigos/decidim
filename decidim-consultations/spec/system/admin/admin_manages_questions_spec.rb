@@ -101,7 +101,7 @@ describe "Admin manages questions", type: :system do
         find("*[type=submit]").click
       end
 
-      expect(page).to have_admin_callout("error")
+      expect(page).to have_admin_callout("problem")
     end
   end
 
@@ -126,7 +126,7 @@ describe "Admin manages questions", type: :system do
       expect(page).to have_admin_callout("successfully")
 
       within ".container" do
-        expect(page).to have_i18n_content("My new title")
+        expect(page).to have_content("My new title")
         expect(page).not_to have_css("img[src*='#{image2_filename}']")
         expect(page).to have_css("img[src*='#{image3_filename}']")
       end
@@ -152,7 +152,7 @@ describe "Admin manages questions", type: :system do
         find("*[type=submit]").click
       end
 
-      expect(page).to have_admin_callout("error")
+      expect(page).to have_admin_callout("problem")
     end
   end
 
@@ -228,7 +228,7 @@ describe "Admin manages questions", type: :system do
       visit decidim_admin_consultations.consultation_questions_path(consultation)
       click_link translated(question.title)
       click_link "Publish"
-      expect(page).to have_content("published successfully")
+      expect(page).to have_content("successfully published")
       expect(page).to have_content("Unpublish")
       expect(page).to have_current_path decidim_admin_consultations.edit_question_path(question)
 
@@ -246,7 +246,7 @@ describe "Admin manages questions", type: :system do
       visit decidim_admin_consultations.consultation_questions_path(consultation)
       click_link translated(question.title)
       click_link "Unpublish"
-      expect(page).to have_content("unpublished successfully")
+      expect(page).to have_content("successfully unpublished")
       expect(page).to have_content("Publish")
       expect(page).to have_current_path decidim_admin_consultations.edit_question_path(question)
 

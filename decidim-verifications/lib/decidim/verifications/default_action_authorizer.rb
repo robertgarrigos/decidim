@@ -8,12 +8,14 @@ module Decidim
       #
       # authorization - The existing authorization record to be evaluated. Can be nil.
       # options       - A hash with options related only to the current authorization process.
-      # component     - The component where the authorization is taking place
+      # component     - The component where the authorization is taking place.
+      # resouce       - The resource where the authorization is taking place. Can be nil.
       #
-      def initialize(authorization, options, component)
+      def initialize(authorization, options, component, resource)
         @authorization = authorization
         @options = options.deep_dup || {} # options hash is cloned to allow changes applied to it without risks
-        @component = component
+        @component = resource.try(:component) || component
+        @resource = resource
       end
 
       #
@@ -65,20 +67,33 @@ module Decidim
 
       protected
 
-      attr_reader :authorization, :options, :component
+      attr_reader :authorization, :options, :component, :resource
 
       def unmatched_fields
-        @unmatched_fields ||= (options.keys & authorization.metadata.to_h.keys).each_with_object({}) do |field, unmatched|
-          unmatched[field] = options[field] if authorization.metadata[field] != options[field]
+        @unmatched_fields ||= (valued_options_keys & authorization.metadata.to_h.keys).each_with_object({}) do |field, unmatched|
+          required_value = options[field].respond_to?(:value) ? options[field].value : options[field]
+          unmatched[field] = required_value if authorization.metadata[field] != required_value
           unmatched
         end
       end
 
       def missing_fields
-        @missing_fields ||= options.keys.each_with_object([]) do |field, missing|
+        @missing_fields ||= valid_options_keys.each_with_object([]) do |field, missing|
           missing << field if authorization.metadata[field].blank?
           missing
         end
+      end
+
+      def valid_options_keys
+        @valid_options_keys ||= options.map do |key, value|
+          key if value.present? || value.try(:required_for_authorization?)
+        end.compact
+      end
+
+      def valued_options_keys
+        @valued_options_keys ||= options.map do |key, value|
+          key if value.respond_to?(:value) ? value.value.present? : value.present?
+        end.compact
       end
 
       def authorization_expired?

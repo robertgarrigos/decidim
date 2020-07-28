@@ -38,7 +38,7 @@ eu:
           not_found: Erantzuna ez da aurkitu.
   activerecord:
     models:
-      decidim/consultations:
+      decidim/consultation:
         one: Consulta
         other: kontsultak
       decidim/consultations/question:
@@ -49,7 +49,7 @@ eu:
         other: Erantzunak
       decidim/consultations/vote:
         one: Bozkatu
-        other: Botoak
+        other: Bozkatu
   decidim:
     admin:
       actions:
@@ -76,8 +76,6 @@ eu:
         create:
           error: Errore bat gertatu da kontsulta berri bat sortzean.
           success: Kontsulta sortu da.
-        destroy:
-          success: Kontsulta ezabatu da.
         edit:
           update: eguneratzearen
         form:
@@ -174,6 +172,10 @@ eu:
         questions: Galderak
         responses: Erantzunak
     consultations:
+      admin:
+        content_blocks:
+          highlighted_consultations:
+            max_results: Erakusteko elementu gehienen kopurua
       consultation:
         start_voting_date: Botoa hasten da
         view_results: Ikusi emaitzak
@@ -184,6 +186,9 @@ eu:
           label: 'Ordenatu kontsultak honela:'
           random: Random
           recent: Berrienak
+      content_blocks:
+        highlighted_consultations:
+          name: Nabarmendutako kontsultak
       count:
         title:
           one: "%{count} kontsulta"
@@ -204,6 +209,18 @@ eu:
         title: '%{scope_name}galdera'
       index:
         title: kontsultak
+      last_activity:
+        new_consultation: Kontsulta berria
+        new_question_at_html: "<span>Galdera berria %{link}</span>"
+      pages:
+        home:
+          highlighted_consultations:
+            active_consultations: Aholkularitza aktiboak
+            see_all_consultations: Ikusi kontsulta guztiak
+            voting_ends_in:
+              one: Botoak <strong>amaitzen dira</strong>
+              other: Bozketa amaitzen <strong>%{count} egun</strong>
+            voting_ends_today: Botoak <strong>amaitzen dira gaur</strong>
       question:
         take_part: Parte hartu
         view_results: Ikusi emaitzak
@@ -227,6 +244,12 @@ eu:
           view_results: Ikusi emaitzak
           vote: Bozkatu
         unspecified: Zehaztu gabea
+    help:
+      participatory_spaces:
+        consultations:
+          contextual: "<p>Kontsultak aukera ematen du elkarte bat osatzen duten pertsona guztiei galdera argi bat egiteko, kontsulta egiteko parte hartzeko, txinparta egiteko eta erantzuna emateko edo aurka egiteko. Kontsulta datak iristen direnean, botoen emaitzak bozkatu eta argitaratu ditzakezu.</p> <p>Adibideak: Kontsultak erakundeari eragiten dion alderdi ia guztiak izan ditzake: adibide batzuk erakundearen izena edo logotipoa aldatzen ari dira, aukera ugari eskainiz, Bai edo Ez izaera handiago baten parte hartzea erabakitzeko, baliogabetzeko edo baztertzeko estrategia berri bat plan edo talde lan baten emaitza, edo posizioak 1, 2 edo 3 mandatu gehienez egon behar duten ala ez zehazteko.</p>\n"
+          page: "<p>Kontsultak aukera ematen du erakunde bat osatzen duten pertsona guztiei galdera argi bat egiteko, kontsulta egiteko parte hartzeko, txinparta egiteko eta eztabaida bat egiteko edo aurka egiteko. Kontsulta datak iristen direnean, botoen emaitzak bozkatu eta argitaratu ahal izango dituzu.</p> <p>Adibideak: Kontsultak erakundeari eragiten dion alderdi ia guztiei buruzkoak izan daitezke: adibide batzuk erakundearen izena edo logotipoa aldatzen dute hainbat alternatiba eskainiz, bai eta nolanahi ere, erakunde handiagoa, baliogabetzeko edo baztertzeko estrategia berri bat baztertzeko. plan edo talde lan baten emaitza, edo posizioak antolaketan 1, 2 edo 3 mandatarako gehienez egon behar duten ala ez zehazteko.</p>\n"
+          title: Zer dira kontsultak?
     menu:
       consultations: kontsultak
     pages:

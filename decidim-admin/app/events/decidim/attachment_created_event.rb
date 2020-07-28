@@ -9,7 +9,14 @@ module Decidim
     end
 
     def resource_url
-      @resource.url
+      attached_to_url
+    end
+
+    def resource_text
+      translated_attribute(
+        resource.try(:description) ||
+          resource.try(:body)
+      )
     end
 
     private

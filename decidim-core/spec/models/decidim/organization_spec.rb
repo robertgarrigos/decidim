@@ -3,8 +3,28 @@
 require "spec_helper"
 
 module Decidim
-  describe Organization, processing_uploads_for: Decidim::HomepageImageUploader do
+  describe Organization do
     subject(:organization) { build(:organization) }
+
+    let(:omniauth_secrets) do
+      {
+        facebook: {
+          enabled: true,
+          app_id: "fake-facebook-app-id",
+          app_secret: "fake-facebook-app-secret"
+        },
+        twitter: {
+          enabled: true,
+          api_key: "fake-twitter-api-key",
+          api_secret: "fake-twitter-api-secret"
+        },
+        google_oauth2: {
+          enabled: true,
+          client_id: nil,
+          client_secret: nil
+        }
+      }
+    end
 
     it { is_expected.to be_valid }
     it { is_expected.to be_versioned }
@@ -31,34 +51,42 @@ module Decidim
     end
 
     describe "validations" do
-      context "when the homepage image is not present" do
-        subject do
-          build(
-            :organization,
-            homepage_image: nil
-          )
-        end
-
-        it { is_expected.to be_valid }
-      end
-
-      context "when the homepage image is a malicious image" do
-        subject do
-          build(
-            :organization,
-            homepage_image: Rack::Test::UploadedFile.new(homepage_image_path, "image/jpg")
-          )
-        end
-
-        let(:homepage_image_path) { Decidim::Dev.asset("malicious.jpg") }
-
-        it { is_expected.not_to be_valid }
-      end
-
       it "default locale should be included in available locales" do
         subject.available_locales = [:ca, :es]
         subject.default_locale = :en
         expect(subject).not_to be_valid
+      end
+    end
+
+    describe "enabled omniauth providers" do
+      subject(:enabled_providers) { organization.enabled_omniauth_providers }
+
+      context "when no configuration" do
+        it "returns providers enabled in secrets.yml" do
+          expect(enabled_providers).to eq(omniauth_secrets)
+        end
+      end
+
+      context "when it's overriden" do
+        let(:organization) { create(:organization) }
+        let(:omniauth_settings) do
+          {
+            "omniauth_settings_facebook_enabled" => true,
+            "omniauth_settings_facebook_app_id" => Decidim::AttributeEncryptor.encrypt("overriden-app-id"),
+            "omniauth_settings_facebook_app_secret" => Decidim::AttributeEncryptor.encrypt("overriden-app-secret"),
+            "omniauth_settings_google_oauth2_enabled" => true,
+            "omniauth_settings_google_oauth2_client_id" => Decidim::AttributeEncryptor.encrypt("overriden-client-id"),
+            "omniauth_settings_google_oauth2_client_secret" => Decidim::AttributeEncryptor.encrypt("overriden-client-secret")
+          }
+        end
+
+        before { organization.update!(omniauth_settings: omniauth_settings) }
+
+        it "returns the overriden settings" do
+          expect(subject[:facebook][:app_id]).to eq("overriden-app-id")
+          expect(subject[:twitter][:api_key]).to eq("fake-twitter-api-key") # sacar a otra spec, no esta sobrescrito
+          expect(subject[:google_oauth2][:client_id]).to eq("overriden-client-id")
+        end
       end
     end
   end

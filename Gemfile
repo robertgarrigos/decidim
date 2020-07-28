@@ -5,18 +5,19 @@ source "https://rubygems.org"
 ruby RUBY_VERSION
 
 gem "decidim", path: "."
+gem "decidim-conferences", path: "."
 gem "decidim-consultations", path: "."
 gem "decidim-initiatives", path: "."
 
-gem "bootsnap", "~> 1.3"
+gem "bootsnap", "~> 1.4"
 
-gem "puma", "~> 3.0"
+gem "puma", "~> 4.3.3"
 gem "uglifier", "~> 4.1"
 
-gem "faker", "~> 1.8"
+gem "faker", "~> 1.9"
 
 group :development, :test do
-  gem "byebug", "~> 10.0", platform: :mri
+  gem "byebug", "~> 11.0", platform: :mri
 
   gem "decidim-dev", path: "."
 end

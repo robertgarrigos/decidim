@@ -9,13 +9,7 @@ module Decidim
       end
 
       def query
-        processes = Decidim::ParticipatoryProcess.all
-
-        if @current_user
-          processes.visible_for(@current_user.id)
-        else
-          processes.public_spaces
-        end
+        Decidim::ParticipatoryProcess.visible_for(@current_user)
       end
     end
   end

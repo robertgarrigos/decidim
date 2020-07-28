@@ -43,6 +43,7 @@ module Decidim::Meetings
         services_to_persist: services_to_persist,
         current_user: current_user,
         organizer: meeting.organizer,
+        questionnaire: Decidim::Forms::Questionnaire.new,
         private_meeting: meeting.private_meeting,
         transparent: meeting.transparent,
         current_component: meeting.component
@@ -74,6 +75,23 @@ module Decidim::Meetings
 
       it "broadcasts ok" do
         expect { subject.call }.to broadcast(:ok)
+      end
+    end
+
+    describe "events" do
+      let!(:follow) { create :follow, followable: meeting.participatory_space, user: current_user }
+
+      it "notifies the change" do
+        expect(Decidim::EventsManager)
+          .to receive(:publish)
+          .with(
+            event: "decidim.events.meetings.meeting_created",
+            event_class: CreateMeetingEvent,
+            resource: kind_of(Decidim::Meetings::Meeting),
+            followers: [current_user]
+          )
+
+        subject.call
       end
     end
   end

@@ -6,15 +6,27 @@ module Decidim
     # title, description and any other useful information to render a blog.
     class Post < Blogs::ApplicationRecord
       include Decidim::Resourceable
+      include Decidim::HasAttachments
+      include Decidim::HasAttachmentCollections
       include Decidim::HasComponent
       include Decidim::Authorable
       include Decidim::Comments::Commentable
+      include Decidim::Searchable
+      include Traceable
+      include Loggable
 
       component_manifest_name "blogs"
 
       validates :title, presence: true
 
       scope :created_at_desc, -> { order(arel_table[:created_at].desc) }
+
+      searchable_fields(
+        participatory_space: { component: :participatory_space },
+        A: :title,
+        D: :body,
+        datetime: :created_at
+      )
 
       # Public: Overrides the `commentable?` Commentable concern method.
       def commentable?
@@ -38,6 +50,11 @@ module Decidim
 
       def official?
         author.nil?
+      end
+
+      # Public: Whether the object can have new comments or not.
+      def user_allowed_to_comment?(user)
+        can_participate_in_space?(user)
       end
     end
   end

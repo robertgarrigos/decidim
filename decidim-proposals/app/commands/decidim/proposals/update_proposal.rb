@@ -4,6 +4,9 @@ module Decidim
   module Proposals
     # A command with all the business logic when a user updates a proposal.
     class UpdateProposal < Rectify::Command
+      include AttachmentMethods
+      include HashtagsMethods
+
       # Public: Initializes the command.
       #
       # form         - A form object with the params.
@@ -13,6 +16,7 @@ module Decidim
         @form = form
         @current_user = current_user
         @proposal = proposal
+        @attached_to = proposal
       end
 
       # Executes the command. Broadcasts these events:
@@ -26,8 +30,20 @@ module Decidim
         return broadcast(:invalid) unless proposal.editable_by?(current_user)
         return broadcast(:invalid) if proposal_limit_reached?
 
+        if process_attachments?
+          @proposal.attachments.destroy_all
+
+          build_attachment
+          return broadcast(:invalid) if attachment_invalid?
+        end
+
         transaction do
-          update_proposal
+          if @proposal.draft?
+            update_draft
+          else
+            update_proposal
+          end
+          create_attachment if process_attachments?
         end
 
         broadcast(:ok, proposal)
@@ -35,20 +51,42 @@ module Decidim
 
       private
 
-      attr_reader :form, :proposal, :current_user
+      attr_reader :form, :proposal, :current_user, :attachment
+
+      # Prevent PaperTrail from creating an additional version
+      # in the proposal multi-step creation process (step 3: complete)
+      #
+      # A first version will be created in step 4: publish
+      # for diff rendering in the proposal control version
+      def update_draft
+        PaperTrail.request(enabled: false) do
+          @proposal.update(attributes)
+          @proposal.coauthorships.clear
+          @proposal.add_coauthor(current_user, user_group: user_group)
+        end
+      end
 
       def update_proposal
-        @proposal.update!(
-          title: form.title,
-          body: form.body,
+        @proposal = Decidim.traceability.update!(
+          @proposal,
+          current_user,
+          attributes,
+          visibility: "public-only"
+        )
+        @proposal.coauthorships.clear
+        @proposal.add_coauthor(current_user, user_group: user_group)
+      end
+
+      def attributes
+        {
+          title: title_with_hashtags,
+          body: body_with_hashtags,
           category: form.category,
           scope: form.scope,
           address: form.address,
           latitude: form.latitude,
           longitude: form.longitude
-        )
-        @proposal.coauthorships.clear
-        @proposal.add_coauthor(current_user, decidim_user_group_id: user_group&.id)
+        }
       end
 
       def proposal_limit_reached?
@@ -72,11 +110,11 @@ module Decidim
       end
 
       def current_user_proposals
-        Proposal.from_author(current_user).where(component: form.current_component).published.where.not(id: proposal.id)
+        Proposal.from_author(current_user).where(component: form.current_component).published.where.not(id: proposal.id).except_withdrawn
       end
 
       def user_group_proposals
-        Proposal.from_user_group(user_group).where(component: form.current_component).published.where.not(id: proposal.id)
+        Proposal.from_user_group(user_group).where(component: form.current_component).published.where.not(id: proposal.id).except_withdrawn
       end
     end
   end

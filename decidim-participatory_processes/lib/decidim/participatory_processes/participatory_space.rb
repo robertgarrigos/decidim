@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Decidim.register_participatory_space(:participatory_processes) do |participatory_space|
-  participatory_space.icon = "decidim/participatory_processes/icon.svg"
+  participatory_space.icon = "decidim/participatory_processes/process.svg"
   participatory_space.model_class_name = "Decidim::ParticipatoryProcess"
 
   participatory_space.participatory_spaces do |organization|
@@ -9,17 +9,24 @@ Decidim.register_participatory_space(:participatory_processes) do |participatory
   end
 
   participatory_space.query_type = "Decidim::ParticipatoryProcesses::ParticipatoryProcessType"
+  participatory_space.query_finder = "Decidim::ParticipatoryProcesses::ParticipatoryProcessFinder"
+  participatory_space.query_list = "Decidim::ParticipatoryProcesses::ParticipatoryProcessList"
 
   participatory_space.permissions_class_name = "Decidim::ParticipatoryProcesses::Permissions"
 
   participatory_space.register_resource(:participatory_process) do |resource|
     resource.model_class_name = "Decidim::ParticipatoryProcess"
     resource.card = "decidim/participatory_processes/process"
+    resource.searchable = true
   end
 
   participatory_space.register_resource(:participatory_process_group) do |resource|
     resource.model_class_name = "Decidim::ParticipatoryProcessGroup"
     resource.card = "decidim/participatory_processes/process_group"
+  end
+
+  participatory_space.register_stat :followers_count, tag: :followers, priority: Decidim::StatsRegistry::LOW_PRIORITY do |spaces, _start_at, _end_at|
+    Decidim::Follow.where(followable: spaces).count
   end
 
   participatory_space.context(:public) do |context|
@@ -33,9 +40,25 @@ Decidim.register_participatory_space(:participatory_processes) do |participatory
     context.layout = "layouts/decidim/admin/participatory_process"
   end
 
+  participatory_space.exports :participatory_processes do |export|
+    export.collection do |participatory_process|
+      Decidim::ParticipatoryProcess.where(id: participatory_process.id)
+    end
+
+    export.serializer Decidim::ParticipatoryProcesses::ParticipatoryProcessSerializer
+  end
+
   participatory_space.seeds do
     organization = Decidim::Organization.first
     seeds_root = File.join(__dir__, "..", "..", "..", "db", "seeds")
+
+    Decidim::ContentBlock.create(
+      organization: organization,
+      weight: 31,
+      scope: :homepage,
+      manifest_name: :highlighted_processes,
+      published_at: Time.current
+    )
 
     process_groups = []
     2.times do
@@ -50,7 +73,7 @@ Decidim.register_participatory_space(:participatory_processes) do |participatory
     end
 
     2.times do |n|
-      process = Decidim::ParticipatoryProcess.create!(
+      params = {
         title: Decidim::Faker::Localized.sentence(5),
         slug: Faker::Internet.unique.slug(nil, "-"),
         subtitle: Decidim::Faker::Localized.sentence(2),
@@ -72,11 +95,21 @@ Decidim.register_participatory_space(:participatory_processes) do |participatory
         target: Decidim::Faker::Localized.sentence(3),
         participatory_scope: Decidim::Faker::Localized.sentence(1),
         participatory_structure: Decidim::Faker::Localized.sentence(2),
-        start_date: Time.current,
-        end_date: 2.months.from_now.at_midnight,
+        start_date: Date.current,
+        end_date: 2.months.from_now,
         participatory_process_group: process_groups.sample,
         scope: n.positive? ? nil : Decidim::Scope.reorder(Arel.sql("RANDOM()")).first
-      )
+      }
+
+      process = Decidim.traceability.perform_action!(
+        "publish",
+        Decidim::ParticipatoryProcess,
+        organization.users.first,
+        visibility: "all"
+      ) do
+        Decidim::ParticipatoryProcess.create!(params)
+      end
+      process.add_to_index_as_search_resource
 
       Decidim::ParticipatoryProcessStep.find_or_initialize_by(
         participatory_process: process,
@@ -86,8 +119,8 @@ Decidim.register_participatory_space(:participatory_processes) do |participatory
         description: Decidim::Faker::Localized.wrapped("<p>", "</p>") do
           Decidim::Faker::Localized.paragraph(3)
         end,
-        start_date: 1.month.ago.at_midnight,
-        end_date: 2.months.from_now.at_midnight
+        start_date: 1.month.ago,
+        end_date: 2.months.from_now
       )
 
       # Create users with specific roles

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "decidim/core/test/shared_examples/has_contextual_help"
 
 describe "Assemblies", type: :system do
   let(:organization) { create(:organization) }
@@ -8,6 +9,7 @@ describe "Assemblies", type: :system do
   let(:base_assembly) do
     create(
       :assembly,
+      :with_type,
       organization: organization,
       description: { en: "Description", ca: "Descripció", es: "Descripción" },
       short_description: { en: "Short description", ca: "Descripció curta", es: "Descripción corta" },
@@ -66,11 +68,19 @@ describe "Assemblies", type: :system do
 
   context "when there are some published assemblies" do
     let!(:assembly) { base_assembly }
+    let!(:child_assembly) { create(:assembly, parent: assembly, organization: organization) }
     let!(:promoted_assembly) { create(:assembly, :promoted, organization: organization) }
     let!(:unpublished_assembly) { create(:assembly, :unpublished, organization: organization) }
 
     before do
       visit decidim_assemblies.assemblies_path
+    end
+
+    it_behaves_like "editable content for admins"
+
+    it_behaves_like "shows contextual help" do
+      let(:index_path) { decidim_assemblies.assemblies_path }
+      let(:manifest_name) { :assemblies }
     end
 
     context "and accessing from the homepage" do
@@ -93,16 +103,18 @@ describe "Assemblies", type: :system do
       end
     end
 
-    it "lists all the assemblies" do
-      within "#assemblies-grid" do
-        within "#assemblies-grid h2" do
+    it "lists the parent assemblies" do
+      within "#parent-assemblies" do
+        within "#parent-assemblies h2" do
           expect(page).to have_content("2")
         end
 
         expect(page).to have_content(translated(assembly.title, locale: :en))
         expect(page).to have_content(translated(promoted_assembly.title, locale: :en))
         expect(page).to have_selector("article.card", count: 2)
+        expect(page).to have_selector("article.card.card--stack", count: 1)
 
+        expect(page).not_to have_content(translated(child_assembly.title, locale: :en))
         expect(page).not_to have_content(translated(unpublished_assembly.title, locale: :en))
       end
     end
@@ -111,6 +123,18 @@ describe "Assemblies", type: :system do
       click_link(translated(assembly.title, locale: :en))
 
       expect(page).to have_current_path decidim_assemblies.assembly_path(assembly)
+    end
+
+    it "shows the organizational chart" do
+      within "#assemblies-chart" do
+        within ".js-orgchart" do
+          expect(page).to have_selector(".svg-chart-container")
+
+          within ".svg-chart-container" do
+            expect(page).to have_selector("g.node", count: 2)
+          end
+        end
+      end
     end
   end
 
@@ -126,8 +150,10 @@ describe "Assemblies", type: :system do
       visit decidim_assemblies.assembly_path(assembly)
     end
 
+    it_behaves_like "editable content for admins"
+
     it "shows the details of the given assembly" do
-      within "div.wrapper" do
+      within "main" do
         expect(page).to have_content(translated(assembly.title, locale: :en))
         expect(page).to have_content(translated(assembly.subtitle, locale: :en))
         expect(page).to have_content(translated(assembly.description, locale: :en))
@@ -170,17 +196,48 @@ describe "Assemblies", type: :system do
       end
     end
 
-    context "when the assembly has a child" do
+    context "when the assembly has children assemblies" do
       let!(:child_assembly) { create :assembly, organization: organization, parent: assembly }
+      let!(:unpublished_child_assembly) { create :assembly, :unpublished, organization: organization, parent: assembly }
 
       before do
         visit decidim_assemblies.assembly_path(assembly)
       end
 
-      it "shows the children" do
+      it "shows only the published children assemblies" do
         within("#assemblies-grid") do
           expect(page).to have_link translated(child_assembly.title)
+          expect(page).not_to have_link translated(unpublished_child_assembly.title)
         end
+      end
+    end
+
+    context "when the assembly has children private and transparent assemblies" do
+      let!(:private_transparent_child_assembly) { create :assembly, organization: organization, parent: assembly, private_space: true, is_transparent: true }
+      let!(:private_transparent_unpublished_child_assembly) { create :assembly, :unpublished, organization: organization, parent: assembly, private_space: true, is_transparent: true }
+
+      before do
+        visit decidim_assemblies.assembly_path(assembly)
+      end
+
+      it "shows only the published, private and transparent children assemblies" do
+        within("#assemblies-grid") do
+          expect(page).to have_link translated(private_transparent_child_assembly.title)
+          expect(page).not_to have_link translated(private_transparent_unpublished_child_assembly.title)
+        end
+      end
+    end
+
+    context "when the assembly has children private and not transparent assemblies" do
+      let!(:private_child_assembly) { create :assembly, organization: organization, parent: assembly, private_space: true, is_transparent: false }
+      let!(:private_unpublished_child_assembly) { create :assembly, :unpublished, organization: organization, parent: assembly, private_space: true, is_transparent: false }
+
+      before do
+        visit decidim_assemblies.assembly_path(assembly)
+      end
+
+      it "not shows any children assemblies" do
+        expect(page).not_to have_css("div#assemblies-grid")
       end
     end
   end

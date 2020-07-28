@@ -15,12 +15,7 @@ require "foundation-rails"
 require "foundation_rails_helper"
 require "autoprefixer-rails"
 require "active_link_to"
-
-# Until https://github.com/andypike/rectify/pull/45 is attended, we're shipping
-# with a patched version of rectify
 require "rectify"
-require "decidim/rectify_ext"
-
 require "carrierwave"
 require "rails-i18n"
 require "date_validator"
@@ -42,6 +37,10 @@ require "doorkeeper"
 require "doorkeeper-i18n"
 require "nobspw"
 require "kaminari"
+require "batch-loader"
+require "etherpad-lite"
+require "diffy"
+require "anchored"
 
 require "decidim/api"
 
@@ -59,7 +58,8 @@ module Decidim
       end
 
       initializer "decidim.middleware" do |app|
-        app.config.middleware.use Decidim::CurrentOrganization
+        app.config.middleware.insert_before Warden::Manager, Decidim::CurrentOrganization
+        app.config.middleware.use BatchLoader::Middleware
       end
 
       initializer "decidim.assets" do |app|
@@ -100,13 +100,11 @@ module Decidim
 
       initializer "decidim.geocoding" do
         if Decidim.geocoder.present?
-          Geocoder.configure(
+          config = {
             # geocoding service (see below for supported options):
-            lookup: :here,
+            lookup: :here
             # IP address geocoding service (see below for supported options):
             # :ip_lookup => :maxmind,
-            # to use an API key:
-            api_key: [Decidim.geocoder&.fetch(:here_app_id), Decidim.geocoder&.fetch(:here_app_code)]
             # geocoding service request timeout, in seconds (default 3):
             # :timeout => 5,
             # set default units to kilometers:
@@ -114,7 +112,14 @@ module Decidim
             # caching (see below for details):
             # :cache => Redis.new,
             # :cache_prefix => "..."
-          )
+          }
+          # to use an API key:
+          config[:api_key] = if Decidim.geocoder[:here_api_key].present?
+                               Decidim.geocoder.fetch(:here_api_key)
+                             else
+                               [Decidim.geocoder.fetch(:here_app_id), Decidim.geocoder.fetch(:here_app_code)]
+                             end
+          Geocoder.configure(config)
         end
       end
 
@@ -138,9 +143,9 @@ module Decidim
                     position: 1,
                     active: :exclusive
 
-          menu.item I18n.t("menu.more_information", scope: "decidim"),
+          menu.item I18n.t("menu.help", scope: "decidim"),
                     decidim.pages_path,
-                    position: 3,
+                    position: 7,
                     active: :inclusive
         end
       end
@@ -162,15 +167,19 @@ module Decidim
                       position: 1.2
           end
 
-          if user_groups.any?
+          if current_organization.user_groups_enabled? && user_groups.any?
             menu.item t("user_groups", scope: "layouts.decidim.user_profile"),
                       decidim.own_user_groups_path,
                       position: 1.3
           end
 
+          menu.item t("my_interests", scope: "layouts.decidim.user_profile"),
+                    decidim.user_interests_path,
+                    position: 1.4
+
           menu.item t("my_data", scope: "layouts.decidim.user_profile"),
                     decidim.data_portability_path,
-                    position: 1.4
+                    position: 1.5
 
           menu.item t("delete_my_account", scope: "layouts.decidim.user_profile"),
                     decidim.delete_account_path,
@@ -181,35 +190,19 @@ module Decidim
 
       initializer "decidim.notifications" do
         Decidim::EventsManager.subscribe(/^decidim\.events\./) do |event_name, data|
-          EmailNotificationGeneratorJob.perform_later(
-            event_name,
-            data[:event_class],
-            data[:resource],
-            data[:recipient_ids],
-            data[:extra]
-          )
-          NotificationGeneratorJob.perform_later(
-            event_name,
-            data[:event_class],
-            data[:resource],
-            data[:recipient_ids],
-            data[:extra]
-          )
+          EventPublisherJob.perform_later(event_name, data)
         end
       end
 
       initializer "decidim.content_processors" do |_app|
         Decidim.configure do |config|
-          config.content_processors += [:user]
+          config.content_processors += [:user, :hashtag, :link]
         end
-      end
-
-      initializer "paper_trail" do
-        PaperTrail.config.track_associations = false
       end
 
       initializer "add_cells_view_paths" do
         Cell::ViewModel.view_paths << File.expand_path("#{Decidim::Core::Engine.root}/app/cells")
+        Cell::ViewModel.view_paths << File.expand_path("#{Decidim::Core::Engine.root}/app/cells/amendable")
         Cell::ViewModel.view_paths << File.expand_path("#{Decidim::Core::Engine.root}/app/views") # for partials
       end
 
@@ -239,13 +232,6 @@ module Decidim
           default_scopes :public
           optional_scopes []
 
-          # Change the native redirect uri for client apps
-          # When clients register with the following redirect uri, they won't be redirected to any server and the authorization code will be displayed within the provider
-          # The value can be any string. Use nil to disable this feature. When disabled, clients must provide a valid URL
-          # (Similar behaviour: https://developers.google.com/accounts/docs/OAuth2InstalledApp#choosingredirecturi)
-          #
-          native_redirect_uri "urn:ietf:wg:oauth:2.0:oob"
-
           # Forces the usage of the HTTPS protocol in non-native redirect uris (enabled
           # by default in non-development environments). OAuth2 delegates security in
           # communication to the HTTPS protocol so it is wise to keep this enabled.
@@ -273,7 +259,135 @@ module Decidim
         Decidim.register_resource(:user) do |resource|
           resource.model_class_name = "Decidim::User"
           resource.card = "decidim/user_profile"
+          resource.searchable = true
         end
+
+        Decidim.register_resource(:user_group) do |resource|
+          resource.model_class_name = "Decidim::UserGroup"
+          resource.card = "decidim/user_profile"
+        end
+      end
+
+      initializer "decidim.core.register_metrics" do
+        Decidim.metrics_registry.register(:users) do |metric_registry|
+          metric_registry.manager_class = "Decidim::Metrics::UsersMetricManage"
+
+          metric_registry.settings do |settings|
+            settings.attribute :highlighted, type: :boolean, default: true
+            settings.attribute :scopes, type: :array, default: %w(home)
+            settings.attribute :weight, type: :integer, default: 1
+          end
+        end
+
+        Decidim.metrics_registry.register(:participants) do |metric_registry|
+          metric_registry.manager_class = "Decidim::Metrics::ParticipantsMetricManage"
+
+          metric_registry.settings do |settings|
+            settings.attribute :highlighted, type: :boolean, default: true
+            settings.attribute :scopes, type: :array, default: %w(participatory_process)
+            settings.attribute :weight, type: :integer, default: 1
+            settings.attribute :stat_block, type: :string, default: "big"
+          end
+        end
+
+        Decidim.metrics_registry.register(:followers) do |metric_registry|
+          metric_registry.manager_class = "Decidim::Metrics::FollowersMetricManage"
+
+          metric_registry.settings do |settings|
+            settings.attribute :highlighted, type: :boolean, default: false
+            settings.attribute :scopes, type: :array, default: %w(participatory_process)
+            settings.attribute :weight, type: :integer, default: 10
+            settings.attribute :stat_block, type: :string, default: "medium"
+          end
+        end
+      end
+
+      initializer "decidim.core.content_blocks" do
+        Decidim.content_blocks.register(:homepage, :hero) do |content_block|
+          content_block.cell = "decidim/content_blocks/hero"
+          content_block.settings_form_cell = "decidim/content_blocks/hero_settings_form"
+          content_block.public_name_key = "decidim.content_blocks.hero.name"
+
+          content_block.images = [
+            {
+              name: :background_image,
+              uploader: "Decidim::HomepageImageUploader"
+            }
+          ]
+
+          content_block.settings do |settings|
+            settings.attribute :welcome_text, type: :text, translated: true
+          end
+
+          content_block.default!
+        end
+
+        Decidim.content_blocks.register(:homepage, :sub_hero) do |content_block|
+          content_block.cell = "decidim/content_blocks/sub_hero"
+          content_block.public_name_key = "decidim.content_blocks.sub_hero.name"
+          content_block.default!
+        end
+
+        Decidim.content_blocks.register(:homepage, :highlighted_content_banner) do |content_block|
+          content_block.cell = "decidim/content_blocks/highlighted_content_banner"
+          content_block.public_name_key = "decidim.content_blocks.highlighted_content_banner.name"
+          content_block.default!
+        end
+
+        Decidim.content_blocks.register(:homepage, :how_to_participate) do |content_block|
+          content_block.cell = "decidim/content_blocks/how_to_participate"
+          content_block.public_name_key = "decidim.content_blocks.how_to_participate.name"
+          content_block.default!
+        end
+
+        Decidim.content_blocks.register(:homepage, :last_activity) do |content_block|
+          content_block.cell = "decidim/content_blocks/last_activity"
+          content_block.public_name_key = "decidim.content_blocks.last_activity.name"
+          content_block.default!
+        end
+
+        Decidim.content_blocks.register(:homepage, :stats) do |content_block|
+          content_block.cell = "decidim/content_blocks/stats"
+          content_block.public_name_key = "decidim.content_blocks.stats.name"
+          content_block.default!
+        end
+
+        Decidim.content_blocks.register(:homepage, :metrics) do |content_block|
+          content_block.cell = "decidim/content_blocks/metrics"
+          content_block.public_name_key = "decidim.content_blocks.metrics.name"
+        end
+
+        Decidim.content_blocks.register(:homepage, :footer_sub_hero) do |content_block|
+          content_block.cell = "decidim/content_blocks/footer_sub_hero"
+          content_block.public_name_key = "decidim.content_blocks.footer_sub_hero.name"
+          content_block.default!
+        end
+
+        Decidim.content_blocks.register(:homepage, :html) do |content_block|
+          content_block.cell = "decidim/content_blocks/html"
+          content_block.public_name_key = "decidim.content_blocks.html.name"
+          content_block.settings_form_cell = "decidim/content_blocks/html_settings_form"
+
+          content_block.settings do |settings|
+            settings.attribute :html_content, type: :text, translated: true
+          end
+        end
+      end
+
+      initializer "decidim.core.add_badges" do
+        Decidim::Gamification.register_badge(:invitations) do |badge|
+          badge.levels = [1, 5, 10, 30, 50]
+          badge.reset = ->(user) { Decidim::User.where(invited_by: user.id).count }
+        end
+
+        Decidim::Gamification.register_badge(:followers) do |badge|
+          badge.levels = [1, 15, 30, 60, 100]
+          badge.reset = ->(user) { user.followers.count }
+        end
+      end
+
+      initializer "nbspw" do
+        NOBSPW.configuration.use_ruby_grep = true
       end
     end
   end

@@ -16,6 +16,7 @@ pl:
         created_by_other: Stworzony przez inne
         creation_date: Data utworzenia
         decidim_area_id: Powierzchnia
+        decidim_assemblies_type_id: Typ zespołu
         decidim_scope_id: Zakres
         description: Opis
         developer_group: Grupa promotorów
@@ -29,11 +30,12 @@ pl:
         instagram: Instagram
         internal_organisation: Organizacja wewnętrzna
         is_transparent: Jest przezroczysty
-        local_area: Okolica
+        local_area: Obszar organizacji
         meta_scope: Zakres metadanych
+        parent_id: Montaż rodziców
         participatory_processes_ids: Powiązane procesy uczestnictwa
-        participatory_scope: Zakres partycypacji
-        participatory_structure: Struktura partycypacji
+        participatory_scope: Co postanowiono
+        participatory_structure: Jak to się decyduje
         private_space: Prywatna przestrzeń
         promoted: Lansowany
         published_at: Opublikowano na
@@ -45,7 +47,7 @@ pl:
         slug: Ślimak URL
         special_features: Cechy szczególne
         subtitle: Podtytuł
-        target: Cel
+        target: Kto uczestniczy
         title: Tytuł
         twitter: Świergot
         youtube: Youtube
@@ -87,12 +89,8 @@ pl:
         create:
           error: Podczas tworzenia nowego zestawu wystąpił błąd.
           success: Zgromadzenie zostało utworzone.
-        destroy:
-          success: Zgromadzenie zostało pomyślnie usunięte.
         edit:
           update: Aktualizuj
-        form:
-          title: Informacje ogólne
         index:
           not_published: Nie opublikowane
           private: Prywatny
@@ -108,6 +106,9 @@ pl:
         create:
           error: Podczas duplikowania tego zestawu wystąpił błąd.
           success: Złożenie zostało powielone.
+      assemblies_types:
+        new:
+          create: Utwórz
       assembly_copies:
         new:
           copy: Kopiuj
@@ -168,6 +169,10 @@ pl:
           moderations: Modernizacje
           private_users: Prywatni użytkownicy
       models:
+        assemblies_types:
+          fields:
+            created_at: Utworzono w
+            title: Tytuł
         assembly:
           fields:
             created_at: Utworzono w
@@ -218,13 +223,24 @@ pl:
       admin:
         assemblies:
           form:
+            duration: Trwanie
             duration_help: Jeśli czas trwania tego zestawu jest ograniczony, wybierz datę końcową. W przeciwnym razie pojawi się jako nieokreślony.
+            filters: Filtry
+            images: Obrazy
             included_at_help: Wybierz datę dodania tego zestawu do Decidim. To niekoniecznie musi być takie samo jak data utworzenia.
+            metadata: Metadane
+            other: Inny
             select_a_created_by: Wybierz utworzony przez
             select_an_area: Wybierz obszar
             select_an_assembly_type: Wybierz typ zespołu
+            select_parent_assembly: Wybierz zespół macierzysty
             slug_help: 'Ślimaki URL służą do generowania adresów URL wskazujących ten zespół. Akceptuje tylko litery, cyfry i myślniki i musi zaczynać się od litery. Przykład: %{url}'
             social_handlers: Społeczny
+            title: Informacje ogólne
+            visbility: Widoczność
+        assemblies_types:
+          form:
+            title: Tytuł
         assembly_copies:
           form:
             slug_help: 'Ślimaki URL służą do generowania adresów URL wskazujących ten zespół. Akceptuje tylko litery, cyfry i myślniki i musi zaczynać się od litery. Przykład: %{url}'
@@ -242,6 +258,9 @@ pl:
               not_ceased: Nie przestał
             filter_by: Filtruj według
             search: Szukaj
+        content_blocks:
+          highlighted_assemblies:
+            max_results: Maksymalna ilość elementów do pokazania
       assembly_members:
         index:
           members: Członkowie
@@ -253,12 +272,26 @@ pl:
         others: Inni
         participatory: Uczestniczy
         working_group: Grupa robocza
+      content_blocks:
+        highlighted_assemblies:
+          name: Wyróżnione złożenia
       created_by:
         city_council: Rada Miejska
         others: Inni
         public: Publiczny
+      filter:
+        commission: Komisja
+        consultative_advisory: Konsultacyjne / doradcze
+        executive: Wykonawczy
+        government: Rząd
+        help: 'Pokazać:'
+        others: Inni
+        participatory: Uczestniczy
+        working_group: Grupa robocza
       index:
         title: Zespoły
+      last_activity:
+        new_assembly: Nowy montaż
       pages:
         home:
           highlighted_assemblies:
@@ -283,9 +316,9 @@ pl:
         is_transparent:
           'false': nieprzezroczysty
           'true': przezroczysty
-        local_area: Okolica
-        participatory_scope: Zakres partycypacji
-        participatory_structure: Struktura partycypacji
+        local_area: Obszar organizacji
+        participatory_scope: Co postanowiono
+        participatory_structure: Jak to się decyduje
         private_space: To jest prywatne zgromadzenie
         purpose_of_action: Cel działania
         read_less: Mniej czytać
@@ -293,7 +326,7 @@ pl:
         related_participatory_processes: Powiązane procesy uczestnictwa
         scope: Zakres
         social_networks: Portale społecznościowe
-        target: Cel
+        target: Kto uczestniczy
       statistics:
         answers_count: Odpowiedzi
         assemblies_count: Zespoły
@@ -315,12 +348,23 @@ pl:
         designated_on: Wyznaczony na
       index:
         title: Członkowie
+    help:
+      participatory_spaces:
+        assemblies:
+          contextual: "<p>Zgromadzenie to grupa członków organizacji, którzy okresowo spotykają się, aby podejmować decyzje dotyczące określonego obszaru lub zakresu organizacji.</p> <p>Zgromadzenia organizują spotkania, niektóre są prywatne, a niektóre są otwarte. Jeśli są otwarte, można w nich uczestniczyć (na przykład: uczestniczyć, jeśli pozwala na to przepustowość, dodawać punkty do porządku obrad lub komentować propozycje i decyzje podjęte przez ten organ).</p> <p>Przykłady: zgromadzenie ogólne (które spotyka się raz w roku w celu określenia głównych kierunków działania organizacji, a także jej organów wykonawczych w drodze głosowania), rada doradcza ds. Równości (która zbiera się co dwa miesiące w celu przedstawienia propozycji dotyczących poprawy stosunków między płciami w organizacji), komisje oceniające (które zbierają się co miesiąc w celu monitorowania procesu) lub organ gwarancyjny (który zbiera incydenty, nadużycia lub propozycje ulepszenia procedur decyzyjnych) to przykłady zespołów.</p>\n"
+          page: "<p>Zgromadzenie to grupa członków organizacji, którzy okresowo spotykają się, aby podejmować decyzje dotyczące określonego obszaru lub zakresu organizacji.</p> <p>Zgromadzenia organizują spotkania, niektóre są prywatne, a niektóre są otwarte. Jeśli są otwarte, można w nich uczestniczyć (na przykład: uczestniczyć, jeśli pozwala na to przepustowość, dodawać punkty do porządku obrad lub komentować propozycje i decyzje podjęte przez ten organ).</p> <p>Przykłady: zgromadzenie ogólne (które spotyka się raz w roku w celu określenia głównych kierunków działania organizacji, a także jej organów wykonawczych w drodze głosowania), rada doradcza ds. Równości (która zbiera się co dwa miesiące w celu przedstawienia propozycji dotyczących poprawy stosunków między płciami w organizacji), komisje oceniające (które zbierają się co miesiąc w celu monitorowania procesu) lub organ gwarancyjny (który zbiera incydenty, nadużycia lub propozycje ulepszenia procedur decyzyjnych) to przykłady zespołów.</p>\n"
+          title: Czym są zgromadzenia?
     log:
       value_types:
         assembly_presenter:
           not_found: 'Zestaw nie został znaleziony w bazie danych (ID: %{id})'
     menu:
       assemblies: Zespoły
+    metrics:
+      assemblies:
+        description: Liczba utworzonych złożeń
+        object: zespoły
+        title: Złożenia
   errors:
     messages:
       cannot_be_blank: nie może być puste
@@ -328,9 +372,12 @@ pl:
     decidim:
       assemblies:
         assembly:
+          more_info: Więcej informacji
           take_part: Wziąć udział
         index:
+          organizational_chart: Schemat organizacyjny
           promoted_assemblies: Podświetlone zespoły
+          reset_chart: Nastawić
         order_by_assemblies:
           assemblies:
             one: "%{count} montaż"
@@ -340,10 +387,9 @@ pl:
         promoted_assembly:
           more_info: Więcej informacji
           take_part: Wziąć udział
-      assembly_header:
+      assembly_navigation:
         assembly_member_menu_item: Członkowie
         assembly_menu_item: Zgromadzenie
-        unfold: Rozwiń
       assembly_widgets:
         show:
           take_part: Wziąć udział

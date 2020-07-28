@@ -19,6 +19,7 @@ module Decidim
       helper_method :scopes
       helper_method :current_initiative
       helper_method :initiative_type
+      helper_method :promotal_committee_required?
 
       steps :select_initiative_type,
             :previous_form,
@@ -29,7 +30,7 @@ module Decidim
 
       def show
         enforce_permission_to :create, :initiative
-        send("#{step}_step", initiative: session[:initiative])
+        send("#{step}_step", initiative: session_initiative)
       end
 
       def update
@@ -39,7 +40,7 @@ module Decidim
 
       private
 
-      def select_initiative_type_step(_unused)
+      def select_initiative_type_step(_parameters)
         @form = form(Decidim::Initiatives::SelectInitiativeTypeForm).instance
         session[:initiative] = {}
         render_wizard
@@ -71,7 +72,9 @@ module Decidim
       end
 
       def promotal_committee_step(parameters)
-        if session[:initiative].has_key?(:id)
+        skip_step unless promotal_committee_required?
+
+        if session_initiative.has_key?(:id)
           render_wizard
           return
         end
@@ -108,23 +111,35 @@ module Decidim
       def build_form(klass, parameters)
         @form = form(klass).from_params(parameters)
         attributes = @form.attributes_with_values
-        session[:initiative] = session[:initiative].merge(attributes)
+        session[:initiative] = session_initiative.merge(attributes)
         @form.valid? if params[:validate_form]
 
         @form
       end
 
       def scopes
-        InitiativesType.find(@form.type_id).scopes.includes(:scope)
+        @scopes ||= InitiativesTypeScope.where(decidim_initiatives_types_id: @form.type_id)
       end
 
       def current_initiative
-        initiative = session[:initiative].with_indifferent_access
-        Initiative.find(initiative[:id]) if initiative.has_key?(:id)
+        Initiative.find(session_initiative[:id]) if session_initiative.has_key?(:id)
       end
 
       def initiative_type
-        @initiative_type ||= InitiativesType.find(@form&.type_id)
+        @initiative_type ||= InitiativesType.find(session_initiative[:type_id] || @form&.type_id)
+      end
+
+      def session_initiative
+        session[:initiative] ||= {}
+        session[:initiative].with_indifferent_access
+      end
+
+      def promotal_committee_required?
+        return false unless initiative_type.promoting_committee_enabled?
+
+        minimum_committee_members = initiative_type.minimum_committee_members ||
+                                    Decidim::Initiatives.minimum_committee_members
+        minimum_committee_members.present? && minimum_committee_members.positive?
       end
     end
   end

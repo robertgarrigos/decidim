@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 
+def generate_localized_debate_title
+  Decidim::Faker::Localized.localized { "<script>alert(\"TITLE\");</script> " + generate(:title) }
+end
+
 FactoryBot.define do
   factory :debate, class: "Decidim::Debates::Debate" do
-    title { Decidim::Faker::Localized.sentence(3) }
-    description { Decidim::Faker::Localized.wrapped("<p>", "</p>") { Decidim::Faker::Localized.sentence(4) } }
-    information_updates { Decidim::Faker::Localized.wrapped("<p>", "</p>") { Decidim::Faker::Localized.sentence(4) } }
-    instructions { Decidim::Faker::Localized.wrapped("<p>", "</p>") { Decidim::Faker::Localized.sentence(4) } }
+    title { generate_localized_debate_title }
+    description { Decidim::Faker::Localized.wrapped("<p>", "</p>") { generate_localized_debate_title } }
+    information_updates { Decidim::Faker::Localized.wrapped("<p>", "</p>") { generate_localized_debate_title } }
+    instructions { Decidim::Faker::Localized.wrapped("<p>", "</p>") { generate_localized_debate_title } }
     start_time { 1.day.from_now }
     end_time { start_time.advance(hours: 2) }
     component { build(:component, manifest_name: "debates") }
+    author { component.try(:organization) }
 
     trait :open_ama do
       start_time { 1.day.ago }
@@ -33,7 +38,7 @@ FactoryBot.define do
 
   factory :debates_component, parent: :component do
     name { Decidim::Components::Namer.new(participatory_space.organization.available_locales, :debates).i18n_name }
-    manifest_name :debates
+    manifest_name { :debates }
     participatory_space { create(:participatory_process, :with_steps, organization: organization) }
     settings do
       {

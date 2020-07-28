@@ -4,6 +4,7 @@ module Decidim
   module Consultations
     # The data store for Consultation questions in the Decidim::Consultations component.
     class Question < ApplicationRecord
+      include Decidim::HasResourcePermission
       include Decidim::Participable
       include Decidim::Publicable
       include Decidim::Scopable
@@ -11,6 +12,10 @@ module Decidim
       include Decidim::Followable
       include Decidim::HasAttachments
       include Decidim::HasAttachmentCollections
+      include Decidim::Traceable
+      include Decidim::Loggable
+      include Decidim::ParticipatorySpaceResourceable
+      include Decidim::Randomable
 
       belongs_to :consultation,
                  foreign_key: "decidim_consultation_id",
@@ -34,6 +39,12 @@ module Decidim
                inverse_of: :question,
                dependent: :destroy
 
+      has_many :response_groups,
+               foreign_key: "decidim_consultations_questions_id",
+               class_name: "Decidim::Consultations::ResponseGroup",
+               inverse_of: :question,
+               dependent: :destroy
+
       has_many :categories,
                foreign_key: "decidim_participatory_space_id",
                foreign_type: "decidim_participatory_space_type",
@@ -49,17 +60,54 @@ module Decidim
       delegate :end_voting_date, to: :consultation
       delegate :results_published?, to: :consultation
 
+      alias participatory_space consultation
+
       # Sorted results for the given question.
       def sorted_results
         responses.order(votes_count: :desc)
+      end
+
+      # if results can be shown to admins
+      def publishable_results?
+        consultation.finished? && sorted_results.any?
       end
 
       def most_voted_response
         @most_voted_response ||= responses.order(votes_count: :desc).first
       end
 
+      # Total number of votes, on multiple votes questions does not match users voting
       def total_votes
         @total_votes ||= responses.sum(&:votes_count)
+      end
+
+      # Total number of users voting
+      def total_participants
+        @total_participants ||= votes.select(:decidim_author_id).distinct.count
+      end
+
+      # Multiple answers allowed?
+      def multiple?
+        return false if external_voting
+        return false if max_votes.blank?
+
+        max_votes > 1
+      end
+
+      # Sorted responses by date so admins have a way to predict it
+      def sorted_responses
+        @sorted_responses ||= responses.sort_by(&:created_at)
+      end
+
+      # matrix of responses by group (sorted by configuration)
+      def grouped_responses
+        @grouped_responses ||= sorted_responses.group_by(&:response_group)
+      end
+
+      def grouped?
+        return false unless multiple?
+
+        response_groups_count.positive?
       end
 
       # Public: Overrides the `comments_have_alignment?` Commentable concern method.
@@ -137,11 +185,13 @@ module Decidim
         Decidim.find_participatory_space_manifest(Decidim::Consultation.name.demodulize.underscore.pluralize)
       end
 
-      def self.order_randomly(seed)
-        transaction do
-          connection.execute("SELECT setseed(#{connection.quote(seed)})")
-          select('"decidim_consultations_questions".*, RANDOM()').order(Arel.sql("RANDOM()")).load
-        end
+      def resource_description
+        subtitle
+      end
+
+      # Public: Overrides the `allow_resource_permissions?` Resourceable concern method.
+      def allow_resource_permissions?
+        true
       end
     end
   end

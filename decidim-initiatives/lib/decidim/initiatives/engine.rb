@@ -6,6 +6,8 @@ require "decidim/core"
 require "decidim/initiatives/current_locale"
 require "decidim/initiatives/initiatives_filter_form_builder"
 require "decidim/initiatives/initiative_slug"
+require "decidim/initiatives/api"
+require "decidim/initiatives/query_extensions"
 
 module Decidim
   module Initiatives
@@ -16,6 +18,7 @@ module Decidim
       routes do
         get "/initiative_types/search", to: "initiative_types#search", as: :initiative_types_search
         get "/initiative_type_scopes/search", to: "initiatives_type_scopes#search", as: :initiative_type_scopes_search
+        get "/initiative_type_signature_types/search", to: "initiatives_type_signature_types#search", as: :initiative_type_signature_types_search
 
         resources :create_initiative
 
@@ -30,8 +33,10 @@ module Decidim
         }, constraints: { initiative_id: /[0-9]+/ }
 
         resources :initiatives, param: :slug, only: [:index, :show], path: "initiatives" do
+          resources :initiative_signatures
           member do
             get :signature_identities
+            get :authorization_sign_modal, to: "authorization_sign_modals#show"
           end
 
           resource :initiative_vote, only: [:create, :destroy]
@@ -61,18 +66,15 @@ module Decidim
         )
       end
 
-      initializer "decidim_initiatives.view_hooks" do
-        Decidim.view_hooks.register(:highlighted_elements, priority: Decidim::ViewHooks::MEDIUM_PRIORITY) do |view_context|
-          highlighted_initiatives = OrganizationPrioritizedInitiatives.new(view_context.current_organization)
+      initializer "decidim_initiatives.content_blocks" do
+        Decidim.content_blocks.register(:homepage, :highlighted_initiatives) do |content_block|
+          content_block.cell = "decidim/initiatives/content_blocks/highlighted_initiatives"
+          content_block.public_name_key = "decidim.initiatives.content_blocks.highlighted_initiatives.name"
+          content_block.settings_form_cell = "decidim/initiatives/content_blocks/highlighted_initiatives_settings_form"
 
-          next unless highlighted_initiatives.any?
-
-          view_context.render(
-            partial: "decidim/initiatives/pages/home/highlighted_initiatives",
-            locals: {
-              highlighted_initiatives: highlighted_initiatives
-            }
-          )
+          content_block.settings do |settings|
+            settings.attribute :max_results, type: :integer, default: 4
+          end
         end
       end
 
@@ -87,6 +89,33 @@ module Decidim
                     decidim_initiatives.initiatives_path,
                     position: 2.6,
                     active: :inclusive
+        end
+      end
+
+      initializer "decidim_initiatives.badges" do
+        Decidim::Gamification.register_badge(:initiatives) do |badge|
+          badge.levels = [1, 5, 15, 30, 50]
+
+          badge.valid_for = [:user, :user_group]
+
+          badge.reset = lambda { |model|
+            if model.is_a?(User)
+              Decidim::Initiative.where(
+                author: model,
+                user_group: nil
+              ).published.count
+            elsif model.is_a?(UserGroup)
+              Decidim::Initiative.where(
+                user_group: model
+              ).published.count
+            end
+          }
+        end
+      end
+
+      initializer "decidim_initiatives.query_extensions" do
+        Decidim::Api::QueryType.define do
+          QueryExtensions.define(self)
         end
       end
     end

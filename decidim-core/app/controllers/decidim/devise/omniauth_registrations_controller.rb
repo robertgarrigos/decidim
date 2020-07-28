@@ -24,7 +24,8 @@ module Decidim
               set_flash_message :notice, :success, kind: @form.provider.capitalize
             else
               expire_data_after_sign_in!
-              redirect_to root_path
+              user.resend_confirmation_instructions unless user.confirmed?
+              redirect_to decidim.root_path
               flash[:notice] = t("devise.registrations.signed_up_but_unconfirmed")
             end
           end
@@ -61,11 +62,12 @@ module Decidim
       end
 
       def first_login_and_not_authorized?(user)
-        user.is_a?(User) && user.sign_in_count == 1 && Decidim::Verifications.workflows.any?
+        user.is_a?(User) && user.sign_in_count == 1 && Decidim::Verifications.workflows.any? && user.verifiable?
       end
 
       def action_missing(action_name)
-        return send(:create) if devise_mapping.omniauthable? && User.omniauth_providers.include?(action_name.to_sym)
+        return send(:create) if devise_mapping.omniauthable? && current_organization.enabled_omniauth_providers.keys.include?(action_name.to_sym)
+
         raise AbstractController::ActionNotFound, "The action '#{action_name}' could not be found for Decidim::Devise::OmniauthCallbacksController"
       end
 
@@ -79,13 +81,15 @@ module Decidim
       # Since we are using trusted omniauth data we are generating a valid signature.
       def user_params_from_oauth_hash
         return nil if oauth_data.empty?
+
         {
           provider: oauth_data[:provider],
           uid: oauth_data[:uid],
           name: oauth_data[:info][:name],
           nickname: oauth_data[:info][:nickname],
           oauth_signature: OmniauthRegistrationForm.create_signature(oauth_data[:provider], oauth_data[:uid]),
-          avatar_url: oauth_data[:info][:image]
+          avatar_url: oauth_data[:info][:image],
+          raw_data: oauth_hash
         }
       end
 

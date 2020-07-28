@@ -12,7 +12,8 @@ module Decidim
 
     it { is_expected.to be_versioned }
 
-    include_examples "publicable"
+    it_behaves_like "publicable"
+    it_behaves_like "has private users"
 
     it "overwrites the log presenter" do
       expect(described_class.log_presenter_class_for(:foo))
@@ -53,6 +54,36 @@ module Decidim
         it "returns false" do
           participatory_process.end_date = nil
           expect(participatory_process).not_to be_past
+        end
+      end
+    end
+
+    describe "scopes" do
+      let!(:past) { create :participatory_process, :past }
+      let!(:upcoming) { create :participatory_process, :upcoming }
+      let!(:active) { create :participatory_process, :active }
+
+      describe "active_spaces" do
+        it "returns the currently active ones" do
+          expect(described_class.active_spaces).to include active
+          expect(described_class.active_spaces).not_to include past
+          expect(described_class.active_spaces).not_to include upcoming
+        end
+      end
+
+      describe "future_spaces" do
+        it "returns the future ones" do
+          expect(described_class.future_spaces).not_to include active
+          expect(described_class.future_spaces).not_to include past
+          expect(described_class.future_spaces).to include upcoming
+        end
+      end
+
+      describe "past_spaces" do
+        it "returns the past ones" do
+          expect(described_class.past_spaces).not_to include active
+          expect(described_class.past_spaces).to include past
+          expect(described_class.past_spaces).not_to include upcoming
         end
       end
     end

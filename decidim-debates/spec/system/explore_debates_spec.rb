@@ -134,7 +134,7 @@ describe "Explore debates", type: :system do
           visit_component
 
           within "form.new_filter" do
-            select category.name[I18n.locale.to_s], from: :filter_category_id
+            select category.name[I18n.locale.to_s], from: "filter[category_id]"
           end
 
           expect(page).to have_css(".card--debate", count: 1)
@@ -159,6 +159,12 @@ describe "Explore debates", type: :system do
     end
   end
 
+  context "when component is not commentable" do
+    let(:ressources) { create_list(:debate, 3, component: current_component) }
+
+    it_behaves_like "an uncommentable component"
+  end
+
   describe "show" do
     let(:path) do
       decidim_participatory_process_debates.debate_path(
@@ -176,9 +182,9 @@ describe "Explore debates", type: :system do
 
     it "shows all debate info" do
       expect(page).to have_i18n_content(debate.title)
-      expect(page).to have_i18n_content(debate.description)
-      expect(page).to have_i18n_content(debate.information_updates)
-      expect(page).to have_i18n_content(debate.instructions)
+      expect(page).to have_i18n_content(debate.description, strip_tags: true)
+      expect(page).to have_i18n_content(debate.information_updates, strip_tags: true)
+      expect(page).to have_i18n_content(debate.instructions, strip_tags: true)
 
       within ".section.view-side" do
         expect(page).to have_content(13)
@@ -208,6 +214,29 @@ describe "Explore debates", type: :system do
           expect(page).to have_content(translated(debate.category.name))
         end
       end
+    end
+
+    context "when debate is official" do
+      let(:debate) { create(:debate, author: organization, description: content, component: current_component) }
+
+      it_behaves_like "rendering safe content", ".columns.mediumlarge-8.mediumlarge-pull-4"
+    end
+
+    context "when rich text editor is enabled for participants" do
+      let(:debate) { create(:debate, author: user, description: content, component: current_component) }
+
+      before do
+        organization.update(rich_text_editor_in_public_views: true)
+        visit path
+      end
+
+      it_behaves_like "rendering safe content", ".columns.mediumlarge-8.mediumlarge-pull-4"
+    end
+
+    context "when rich text editor is NOT enabled on the frontend" do
+      let(:debate) { create(:debate, author: user, description: content, component: current_component) }
+
+      it_behaves_like "rendering unsafe content", ".columns.mediumlarge-8.mediumlarge-pull-4"
     end
   end
 end

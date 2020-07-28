@@ -5,6 +5,8 @@ shared_examples "manage assemblies" do
     let(:image3_filename) { "city3.jpeg" }
     let(:image3_path) { Decidim::Dev.asset(image3_filename) }
 
+    let(:assembly_parent_id_options) { page.find("#assembly_parent_id").find_all("option").map(&:value) }
+
     before do
       click_link translated(assembly.title)
     end
@@ -17,9 +19,15 @@ shared_examples "manage assemblies" do
         es: "Mi nuevo título",
         ca: "El meu nou títol"
       )
+
       attach_file :assembly_banner_image, image3_path
 
       within ".edit_assembly" do
+        expect(assembly_parent_id_options).not_to include(assembly.id)
+        fill_in "assembly[creation_date]", with: Date.yesterday
+        fill_in "assembly[included_at]", with: Date.current
+        fill_in "assembly[duration]", with: Date.tomorrow
+        fill_in "assembly[closing_date]", with: Date.tomorrow
         find("*[type=submit]").click
       end
 
@@ -28,6 +36,9 @@ shared_examples "manage assemblies" do
       within ".container" do
         expect(page).to have_selector("input[value='My new title']")
         expect(page).to have_css("img[src*='#{image3_filename}']")
+        expect(page).to have_css("input[value='#{Date.yesterday}']")
+        expect(page).to have_css("input[value='#{Date.current}']")
+        expect(page).to have_css("input[value='#{Date.tomorrow}']", count: 2)
       end
     end
   end
@@ -91,7 +102,7 @@ shared_examples "manage assemblies" do
 
     it "publishes the assembly" do
       click_link "Publish"
-      expect(page).to have_content("published successfully")
+      expect(page).to have_content("successfully published")
       expect(page).to have_content("Unpublish")
       expect(page).to have_current_path decidim_admin_assemblies.edit_assembly_path(assembly)
 
@@ -109,7 +120,7 @@ shared_examples "manage assemblies" do
 
     it "unpublishes the assembly" do
       click_link "Unpublish"
-      expect(page).to have_content("unpublished successfully")
+      expect(page).to have_content("successfully unpublished")
       expect(page).to have_content("Publish")
       expect(page).to have_current_path decidim_admin_assemblies.edit_assembly_path(assembly)
 
@@ -149,5 +160,9 @@ shared_examples "manage assemblies" do
 
       expect(page).to have_admin_callout("successfully")
     end
+  end
+
+  it "shows the Assemblies link to manage nested assemblies" do
+    expect(page).to have_link("Assemblies", href: decidim_admin_assemblies.assemblies_path(q: { parent_id_eq: assembly.id }))
   end
 end

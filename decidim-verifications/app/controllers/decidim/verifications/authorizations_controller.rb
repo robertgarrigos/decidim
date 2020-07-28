@@ -4,7 +4,7 @@ module Decidim
   module Verifications
     # This controller allows users to create and destroy their authorizations. It
     # shouldn't be necessary to expand it to add new authorization schemes.
-    class AuthorizationsController < Decidim::ApplicationController
+    class AuthorizationsController < ApplicationController
       helper_method :handler, :unauthorized_methods
       before_action :valid_handler, only: [:new, :create]
 
@@ -36,7 +36,7 @@ module Decidim
         AuthorizeUser.call(handler) do
           on(:ok) do
             flash[:notice] = t("authorizations.create.success", scope: "decidim.verifications")
-            redirect_to params[:redirect_url] || authorizations_path
+            redirect_to redirect_url || authorizations_path
           end
 
           on(:invalid) do
@@ -88,9 +88,9 @@ module Decidim
       end
 
       def store_current_location
-        return if params[:redirect_url].blank? || !request.format.html?
+        return if redirect_url.blank? || !request.format.html?
 
-        store_location_for(:user, params[:redirect_url])
+        store_location_for(:user, redirect_url)
       end
     end
   end

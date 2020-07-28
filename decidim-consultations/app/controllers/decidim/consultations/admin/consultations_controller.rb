@@ -5,12 +5,13 @@ module Decidim
     module Admin
       # Controller in charge of managing consultation related requests
       class ConsultationsController < Decidim::Consultations::Admin::ApplicationController
+        include Decidim::Consultations::Admin::Filterable
         helper_method :current_consultation, :current_participatory_space
 
         # GET /admin/consultations
         def index
           enforce_permission_to :read, :consultation
-          @consultations = collection
+          @consultations = filtered_collection
         end
 
         # GET /admin/consultations/new
@@ -44,7 +45,7 @@ module Decidim
           render layout: "decidim/admin/consultation"
         end
 
-        # PUT /admin/initiatives/:id
+        # PUT /admin/consultations/:slug
         def update
           enforce_permission_to :update, :consultation, consultation: current_consultation
 
@@ -64,13 +65,10 @@ module Decidim
           end
         end
 
-        def destroy
-          enforce_permission_to :destroy, :consultation, consultation: current_consultation
-          current_consultation.destroy!
-
-          flash[:notice] = I18n.t("consultations.destroy.success", scope: "decidim.admin")
-
-          redirect_to consultations_path
+        # GET /admin/consultations/:slug/results
+        def results
+          enforce_permission_to :read, :consultation, consultation: current_consultation
+          render layout: "decidim/admin/consultation"
         end
 
         private

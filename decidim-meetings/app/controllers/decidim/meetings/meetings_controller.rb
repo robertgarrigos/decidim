@@ -8,13 +8,14 @@ module Decidim
       include Paginable
       helper Decidim::WidgetUrlsHelper
 
-      helper_method :meetings, :geocoded_meetings, :meeting
+      helper_method :meetings, :meeting, :registration, :search
 
       def index
-        return unless search.results.empty? && params.dig("filter", "date") != "past"
+        return unless search.results.blank? && params.dig("filter", "date") != "past"
 
         @past_meetings = search_klass.new(search_params.merge(date: "past"))
-        unless @past_meetings.results.empty?
+
+        if @past_meetings.results.present?
           params[:filter] ||= {}
           params[:filter][:date] = "past"
           @forced_past_meetings = true
@@ -24,6 +25,7 @@ module Decidim
 
       def show
         return if meeting.current_user_can_visit_meeting?(current_user)
+
         flash[:alert] = I18n.t("meeting.not_allowed", scope: "decidim.meetings")
         redirect_to action: "index"
       end
@@ -35,11 +37,11 @@ module Decidim
       end
 
       def meetings
-        @meetings ||= paginate(search.results).visible_meeting_for(current_user)
+        @meetings ||= paginate(search.results)
       end
 
-      def geocoded_meetings
-        @geocoded_meetings ||= search.results.select(&:geocoded?)
+      def registration
+        @registration ||= meeting.registrations.find_by(user: current_user)
       end
 
       def search_klass
@@ -52,6 +54,12 @@ module Decidim
           search_text: "",
           scope_id: "",
           category_id: ""
+        }
+      end
+
+      def default_search_params
+        {
+          scope: Meeting.visible_meeting_for(current_user)
         }
       end
 

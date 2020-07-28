@@ -9,7 +9,7 @@ shared_examples "comments" do
     switch_to_host(organization.host)
   end
 
-  it "shows the list of comments for the resorce" do
+  it "shows the list of comments for the resource" do
     visit resource_path
 
     expect(page).to have_selector("#comments")
@@ -64,7 +64,7 @@ shared_examples "comments" do
       end
 
       it "shows comment to the user" do
-        expect(page).to have_comment_from(user, "This is a new comment")
+        expect(page).to have_comment_from(user, "This is a new comment", wait: 20)
       end
     end
 
@@ -86,7 +86,7 @@ shared_examples "comments" do
           click_button "Send"
         end
 
-        expect(page).to have_comment_from(user_group, "This is a new comment")
+        expect(page).to have_comment_from(user_group, "This is a new comment", wait: 20)
       end
     end
 
@@ -98,6 +98,7 @@ shared_examples "comments" do
         visit resource_path
 
         expect(page).to have_selector(".comment__reply")
+        expect(page).not_to have_selector(".comment__additionalreply")
 
         within "#comments #comment_#{comment.id}" do
           click_button "Reply"
@@ -109,8 +110,25 @@ shared_examples "comments" do
           click_button "Send"
         end
 
-        expect(page).to have_selector(".comment-thread .comment--nested")
+        expect(page).to have_selector(".comment-thread .comment--nested", wait: 20)
+        expect(page).to have_selector(".comment__additionalreply")
         expect(page).to have_reply_to(comment, "This is a reply")
+      end
+    end
+
+    context "when a comment has been moderated" do
+      let!(:parent) { create(:comment, commentable: commentable) }
+      let!(:reply) { create(:comment, commentable: parent, root_commentable: commentable) }
+
+      it "doesn't show additional reply" do
+        Decidim::Moderation.create!(reportable: reply, participatory_space: reply.participatory_space, hidden_at: 1.day.ago)
+
+        visit current_path
+
+        within "#comments #comment_#{parent.id}" do
+          expect(page).to have_selector(".comment__reply")
+          expect(page).not_to have_selector(".comment__additionalreply")
+        end
       end
     end
 
@@ -132,7 +150,7 @@ shared_examples "comments" do
             end
 
             within "#comments" do
-              expect(page).to have_selector "span.success.label", text: "In favor"
+              expect(page).to have_selector "span.success.label", text: "In favor", wait: 20
             end
           else
             expect(page).to have_no_selector(".opinion-toggle--ok")
@@ -175,7 +193,45 @@ shared_examples "comments" do
       end
     end
 
-    describe "mentions" do
+    describe "mentions drop-down", :slow do
+      before do
+        visit resource_path
+
+        within ".add-comment form" do
+          fill_in "add-comment-#{commentable.commentable_type}-#{commentable.id}", with: content
+        end
+      end
+
+      context "when mentioning a valid user" do
+        let!(:mentioned_user) { create(:user, :confirmed, organization: organization) }
+        let(:content) { "A valid user mention: @#{mentioned_user.nickname}" }
+
+        context "when text finish with a mention" do
+          it "shows the tribute container" do
+            expect(page).to have_selector(".tribute-container", text: mentioned_user.name)
+          end
+        end
+
+        context "when text contains a mention" do
+          let(:content) { "A valid user mention: @#{mentioned_user.nickname}." }
+
+          it "shows the tribute container" do
+            expect(page).not_to have_selector(".tribute-container", text: mentioned_user.name)
+          end
+        end
+      end
+
+      context "when mentioning a non valid user" do
+        let!(:mentioned_user) { create(:user, organization: organization) }
+        let(:content) { "A unconfirmed user mention: @#{mentioned_user.nickname}" }
+
+        it "do not show the tribute container" do
+          expect(page).not_to have_selector(".tribute-container")
+        end
+      end
+    end
+
+    describe "mentions", :slow do
       before do
         visit resource_path
 
@@ -187,10 +243,11 @@ shared_examples "comments" do
 
       context "when mentioning a valid user" do
         let!(:mentioned_user) { create(:user, :confirmed, organization: organization) }
-        let(:content) { "A valid user mention: @#{mentioned_user.nickname}" }
+        # do not finish with the mention to avoid trigger the drop-down
+        let(:content) { "A valid user mention: @#{mentioned_user.nickname}." }
 
         it "replaces the mention with a link to the user's profile" do
-          expect(page).to have_comment_from(user, "A valid user mention: @#{mentioned_user.nickname}")
+          expect(page).to have_comment_from(user, "A valid user mention: @#{mentioned_user.nickname}", wait: 20)
           expect(page).to have_link "@#{mentioned_user.nickname}", href: "/profiles/#{mentioned_user.nickname}"
         end
       end
@@ -200,7 +257,7 @@ shared_examples "comments" do
         let(:content) { "This text mentions a user outside current organization: @#{mentioned_user.nickname}" }
 
         it "ignores the mention" do
-          expect(page).to have_comment_from(user, "This text mentions a user outside current organization: @#{mentioned_user.nickname}")
+          expect(page).to have_comment_from(user, "This text mentions a user outside current organization: @#{mentioned_user.nickname}", wait: 20)
           expect(page).not_to have_link "@#{mentioned_user.nickname}"
         end
       end
@@ -209,7 +266,7 @@ shared_examples "comments" do
         let(:content) { "This text mentions a @nonexistent user" }
 
         it "ignores the mention" do
-          expect(page).to have_comment_from(user, "This text mentions a @nonexistent user")
+          expect(page).to have_comment_from(user, "This text mentions a @nonexistent user", wait: 20)
           expect(page).not_to have_link "@nonexistent"
         end
       end

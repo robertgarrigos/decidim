@@ -1,7 +1,7 @@
 <div class="card">
   <div class="card-divider">
     <h2 class="card-title">
-      <%= title %>
+      <%= t(".title") %>
       <%= link_to t(".invites"), meeting_registrations_invites_path(meeting), class: "button tiny button--title #{'disabled' unless allowed_to? :read_invites, :meeting, meeting: meeting}" %>
       <% if allowed_to? :export_registrations, :meeting, meeting: meeting %>
         <span class="exports dropdown tiny button button--simple button--title" data-toggle="export-dropdown"><%= t "actions.export", scope: "decidim.admin" %></span>
@@ -13,12 +13,17 @@
           </ul>
         </div>
       <% end %>
+      <%= link_to t(".registration_form"), edit_meeting_registrations_form_path(meeting_id: meeting.id), class: "button tiny button--title" %>
     </h2>
   </div>
 
   <div class="card-section">
     <div class="row column">
       <%= form.check_box :registrations_enabled %>
+    </div>
+
+    <div class="row column">
+      <%= form.check_box :registration_form_enabled %>
     </div>
 
     <div class="row column">

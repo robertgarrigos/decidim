@@ -38,7 +38,7 @@ pt:
           not_found: Resposta não encontrada.
   activerecord:
     models:
-      decidim/consultations:
+      decidim/consultation:
         one: Consulta
         other: Consultas
       decidim/consultations/question:
@@ -49,7 +49,7 @@ pt:
         other: Respostas
       decidim/consultations/vote:
         one: Voto
-        other: Votos
+        other: Voto
   decidim:
     admin:
       actions:
@@ -76,8 +76,6 @@ pt:
         create:
           error: Ocorreu um erro ao criar uma nova consulta.
           success: Consulta criada com sucesso.
-        destroy:
-          success: Consulta excluída com sucesso.
         edit:
           update: Atualizar
         form:
@@ -174,6 +172,10 @@ pt:
         questions: Questões
         responses: Respostas
     consultations:
+      admin:
+        content_blocks:
+          highlighted_consultations:
+            max_results: Quantidade máxima de elementos para mostrar
       consultation:
         start_voting_date: A votação começa
         view_results: Ver resultados
@@ -184,6 +186,9 @@ pt:
           label: 'Ordenar consultas por:'
           random: Aleatória
           recent: Mais recente
+      content_blocks:
+        highlighted_consultations:
+          name: Consultas destacadas
       count:
         title:
           one: "%{count} consulta"
@@ -204,6 +209,18 @@ pt:
         title: Perguntas de %{scope_name}
       index:
         title: Consultas
+      last_activity:
+        new_consultation: Nova consulta
+        new_question_at_html: "<span>Nova pergunta em %{link}</span>"
+      pages:
+        home:
+          highlighted_consultations:
+            active_consultations: Consultas ativas
+            see_all_consultations: Veja todas as consultas
+            voting_ends_in:
+              one: A votação termina <strong>amanhã</strong>
+              other: A votação termina em <strong>%{count} dia</strong>
+            voting_ends_today: A votação termina <strong>hoje</strong>
       question:
         take_part: Participar
         view_results: Ver resultados
@@ -227,6 +244,12 @@ pt:
           view_results: Ver resultados
           vote: Voto
         unspecified: Não especificado
+    help:
+      participatory_spaces:
+        consultations:
+          contextual: "<p>Consultas são um espaço que permite fazer uma pergunta clara a todas as pessoas que formam uma organização, fazer uma convocação para participar da consulta, acender e ordenar o debate a favor ou contra uma resposta. Quando a data da consulta chegar, você pode votar e publicar os resultados dos votos.</p> <p>Exemplos: As consultas podem ser sobre quase qualquer aspecto que afete uma organização: alguns exemplos estão mudando o nome ou logotipo da organização oferecendo várias alternativas, decidindo que Sim ou Não se tornam parte de uma organização maior, validando ou rejeitando uma nova estratégia. planejar ou o resultado de um grupo de trabalho, ou definir se as posições devem permanecer no máximo de 1, 2 ou 3 mandatos.</p>\n"
+          page: "<p>Consultas são um espaço que permite fazer uma pergunta clara a todas as pessoas que formam uma organização, fazer uma convocação para participar da consulta, acender e ordenar o debate a favor ou contra uma resposta. Quando a data da consulta chegar, você pode votar e publicar os resultados dos votos.</p> <p>Exemplos: As consultas podem ser sobre quase qualquer aspecto que afete uma organização: alguns exemplos estão mudando o nome ou logotipo da organização oferecendo várias alternativas, decidindo Sim ou Não para se tornar parte de uma organização maior, validando ou rejeitando uma nova estratégia planejar ou o resultado de um grupo de trabalho, ou definir se as posições devem permanecer no máximo de 1, 2 ou 3 mandatos na organização.</p>\n"
+          title: O que são consultas?
     menu:
       consultations: Consultas
     pages:

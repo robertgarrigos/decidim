@@ -1,16 +1,21 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "decidim/core/test/shared_examples/has_contextual_help"
 
 describe "Participatory Processes", type: :system do
   let(:organization) { create(:organization) }
+  let(:show_metrics) { true }
   let(:show_statistics) { true }
+  let(:hashtag) { true }
   let(:base_process) do
     create(
       :participatory_process,
+      :active,
       organization: organization,
       description: { en: "Description", ca: "Descripció", es: "Descripción" },
       short_description: { en: "Short description", ca: "Descripció curta", es: "Descripción corta" },
+      show_metrics: show_metrics,
       show_statistics: show_statistics
     )
   end
@@ -70,10 +75,19 @@ describe "Participatory Processes", type: :system do
     let!(:unpublished_process) { create(:participatory_process, :unpublished, organization: organization) }
     let!(:past_process) { create :participatory_process, :past, organization: organization }
     let!(:upcoming_process) { create :participatory_process, :upcoming, organization: organization }
+    let!(:grouped_process) { create :participatory_process, organization: organization }
+    let!(:group) { create :participatory_process_group, participatory_processes: [grouped_process], organization: organization }
 
     before do
       visit decidim_participatory_processes.participatory_processes_path
     end
+
+    it_behaves_like "shows contextual help" do
+      let(:index_path) { decidim_participatory_processes.participatory_processes_path }
+      let(:manifest_name) { :participatory_processes }
+    end
+
+    it_behaves_like "editable content for admins"
 
     context "and accessing from the homepage" do
       it "the menu link is not shown" do
@@ -98,16 +112,18 @@ describe "Participatory Processes", type: :system do
     it "lists the active processes" do
       within "#processes-grid" do
         within "#processes-grid h2" do
-          expect(page).to have_content("2")
+          expect(page).to have_content("3 ACTIVE PROCESSES")
         end
 
         expect(page).to have_content(translated(participatory_process.title, locale: :en))
         expect(page).to have_content(translated(promoted_process.title, locale: :en))
-        expect(page).to have_selector("article.card", count: 2)
+        expect(page).to have_content(translated(group.name, locale: :en))
+        expect(page).to have_selector("article.card", count: 3)
 
         expect(page).to have_no_content(translated(unpublished_process.title, locale: :en))
         expect(page).to have_no_content(translated(past_process.title, locale: :en))
         expect(page).to have_no_content(translated(upcoming_process.title, locale: :en))
+        expect(page).to have_no_content(translated(grouped_process.title, locale: :en))
       end
     end
 
@@ -115,70 +131,6 @@ describe "Participatory Processes", type: :system do
       click_link(translated(participatory_process.title, locale: :en))
 
       expect(page).to have_current_path decidim_participatory_processes.participatory_process_path(participatory_process)
-    end
-
-    context "and filtering processes" do
-      context "and choosing 'active' processes" do
-        it "lists the active processes" do
-          within "#processes-grid h2" do
-            expect(page).to have_content("2")
-          end
-
-          expect(page).to have_content(translated(participatory_process.title, locale: :en))
-          expect(page).to have_content(translated(promoted_process.title, locale: :en))
-        end
-      end
-
-      context "and choosing 'past' processes" do
-        before do
-          within ".order-by__tabs" do
-            click_link "Past"
-          end
-        end
-
-        it "lists the past processes" do
-          within "#processes-grid h2" do
-            expect(page).to have_content("1")
-          end
-
-          expect(page).to have_content(translated(past_process.title, locale: :en))
-        end
-      end
-
-      context "and choosing 'upcoming' processes" do
-        before do
-          within ".order-by__tabs" do
-            click_link "Upcoming"
-          end
-        end
-
-        it "lists the upcoming processes" do
-          within "#processes-grid h2" do
-            expect(page).to have_content("1")
-          end
-
-          expect(page).to have_content(translated(upcoming_process.title, locale: :en))
-        end
-      end
-
-      context "and choosing 'all' processes" do
-        before do
-          within ".order-by__tabs" do
-            click_link "All"
-          end
-        end
-
-        it "lists all processes" do
-          within "#processes-grid h2" do
-            expect(page).to have_content("4")
-          end
-
-          expect(page).to have_content(translated(participatory_process.title, locale: :en))
-          expect(page).to have_content(translated(promoted_process.title, locale: :en))
-          expect(page).to have_content(translated(past_process.title, locale: :en))
-          expect(page).to have_content(translated(upcoming_process.title, locale: :en))
-        end
-      end
     end
 
     context "with active steps" do
@@ -195,7 +147,7 @@ describe "Participatory Processes", type: :system do
 
         within find("#processes-grid .column", text: translated(participatory_process.title)) do
           within ".card__footer" do
-            expect(page).to have_content("CURRENT STEP:\nActive step")
+            expect(page).to have_content("CURRENT PHASE:\nActive step")
           end
         end
       end
@@ -214,8 +166,10 @@ describe "Participatory Processes", type: :system do
       visit decidim_participatory_processes.participatory_process_path(participatory_process)
     end
 
+    it_behaves_like "editable content for admins"
+
     it "shows the details of the given process" do
-      within "div.wrapper" do
+      within "main" do
         expect(page).to have_content(translated(participatory_process.title, locale: :en))
         expect(page).to have_content(translated(participatory_process.subtitle, locale: :en))
         expect(page).to have_content(translated(participatory_process.description, locale: :en))
@@ -240,6 +194,22 @@ describe "Participatory Processes", type: :system do
       let(:collection_for) { participatory_process }
     end
 
+    context "when it has some linked processes" do
+      let(:published_process) { create :participatory_process, :published, organization: organization }
+      let(:unpublished_process) { create :participatory_process, :unpublished, organization: organization }
+
+      it "only shows the published linked processes" do
+        participatory_process
+          .link_participatory_space_resources(
+            [published_process, unpublished_process],
+            "related_processes"
+          )
+        visit decidim_participatory_processes.participatory_process_path(participatory_process)
+        expect(page).to have_content(translated(published_process.title))
+        expect(page).to have_no_content(translated(unpublished_process.title))
+      end
+    end
+
     context "and the process has some components" do
       it "shows the components" do
         within ".process-nav" do
@@ -248,18 +218,82 @@ describe "Participatory Processes", type: :system do
         end
       end
 
-      it "shows the stats for those components" do
-        within ".process_stats" do
-          expect(page).to have_content("3 PROPOSALS")
-          expect(page).to have_no_content("0 MEETINGS")
+      context "and the process metrics are enabled" do
+        let(:organization) { create(:organization) }
+        let(:metrics) do
+          Decidim.metrics_registry.filtered(highlight: true, scope: "participatory_process").each do |metric_registry|
+            create(:metric, metric_type: metric_registry.metric_name, day: Time.zone.today - 1.week, organization: organization, participatory_space_type: Decidim::ParticipatoryProcess.name, participatory_space_id: participatory_process.id, cumulative: 5, quantity: 2)
+          end
+        end
+
+        before do
+          metrics
+          visit current_path
+        end
+
+        it "shows the metrics charts" do
+          expect(page).to have_css("h4.section-heading", text: "METRICS")
+
+          within "#metrics" do
+            Decidim.metrics_registry.filtered(highlight: true, scope: "participatory_process").each do |metric_registry|
+              expect(page).to have_css(%(##{metric_registry.metric_name}_chart))
+            end
+          end
+        end
+
+        it "renders a link to all metrics" do
+          within "#metrics" do
+            expect(page).to have_link("Show all metrics")
+          end
+        end
+
+        it "click link" do
+          click_link("Show all metrics")
+          have_current_path(decidim_participatory_processes.all_metrics_participatory_process_path(participatory_process))
         end
       end
 
-      context "and the process stats are not enabled" do
+      context "and the process statistics are enabled" do
+        let(:show_statistics) { true }
+
+        it "the stats for those components are visible" do
+          within "#participatory_process-statistics" do
+            expect(page).to have_css("h4.section-heading", text: "STATISTICS")
+            expect(page).to have_css(".process-stats__title", text: "PROPOSALS")
+            expect(page).to have_css(".process-stats__number", text: "3")
+            expect(page).to have_no_css(".process-stats__title", text: "MEETINGS")
+            expect(page).to have_no_css(".process-stats__number", text: "0")
+          end
+        end
+      end
+
+      context "and the process statistics are not enabled" do
         let(:show_statistics) { false }
 
         it "the stats for those components are not visible" do
-          expect(page).to have_no_content("3 PROPOSALS")
+          expect(page).to have_no_css("h4.section-heading", text: "STATISTICS")
+          expect(page).to have_no_css(".process-stats__title", text: "PROPOSALS")
+          expect(page).to have_no_css(".process-stats__number", text: "3")
+        end
+      end
+
+      context "and the process metrics are not enabled" do
+        let(:show_metrics) { false }
+
+        it "the metrics for the participatory processes are not rendered" do
+          expect(page).to have_no_css("h4.section-heading", text: "METRICS")
+        end
+
+        it "has no link to all metrics" do
+          expect(page).to have_no_link("Show all metrics")
+        end
+      end
+
+      context "and the process doesn't have hashtag" do
+        let(:hashtag) { false }
+
+        it "the hashtags for those components are not visible" do
+          expect(page).to have_no_content("#")
         end
       end
     end

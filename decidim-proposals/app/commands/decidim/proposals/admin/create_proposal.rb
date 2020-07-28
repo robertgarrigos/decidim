@@ -5,6 +5,10 @@ module Decidim
     module Admin
       # A command with all the business logic when a user creates a new proposal.
       class CreateProposal < Rectify::Command
+        include AttachmentMethods
+        include GalleryMethods
+        include HashtagsMethods
+
         # Public: Initializes the command.
         #
         # form - A form object with the params.
@@ -26,9 +30,16 @@ module Decidim
             return broadcast(:invalid) if attachment_invalid?
           end
 
+          if process_gallery?
+            build_gallery
+            return broadcast(:invalid) if gallery_invalid?
+          end
+
           transaction do
             create_proposal
             create_attachment if process_attachments?
+            create_gallery if process_gallery?
+            link_author_meeeting if form.created_in_meeting?
             send_notification
           end
 
@@ -37,60 +48,34 @@ module Decidim
 
         private
 
-        attr_reader :form, :proposal, :attachment
+        attr_reader :form, :proposal, :attachment, :gallery
 
         def create_proposal
-          @proposal = Decidim.traceability.create!(
-            Proposal,
-            form.current_user,
-            attributes
+          @proposal = Decidim::Proposals::ProposalBuilder.create(
+            attributes: attributes,
+            author: form.author,
+            action_user: form.current_user
           )
+          @attached_to = @proposal
         end
 
         def attributes
           {
-            title: form.title,
-            body: form.body,
+            title: title_with_hashtags,
+            body: body_with_hashtags,
             category: form.category,
             scope: form.scope,
             component: form.component,
             address: form.address,
             latitude: form.latitude,
             longitude: form.longitude,
+            created_in_meeting: form.created_in_meeting,
             published_at: Time.current
           }
         end
 
-        def build_attachment
-          @attachment = Attachment.new(
-            title: form.attachment.title,
-            file: form.attachment.file,
-            attached_to: @proposal
-          )
-        end
-
-        def attachment_invalid?
-          if attachment.invalid? && attachment.errors.has_key?(:file)
-            form.attachment.errors.add :file, attachment.errors[:file]
-            true
-          end
-        end
-
-        def attachment_present?
-          form.attachment.file.present?
-        end
-
-        def create_attachment
-          attachment.attached_to = proposal
-          attachment.save!
-        end
-
-        def attachments_allowed?
-          form.current_component.settings.attachments_allowed?
-        end
-
-        def process_attachments?
-          attachments_allowed? && attachment_present?
+        def link_author_meeeting
+          proposal.link_resources(form.author, "proposals_from_meeting")
         end
 
         def send_notification
@@ -98,7 +83,7 @@ module Decidim
             event: "decidim.events.proposals.proposal_published",
             event_class: Decidim::Proposals::PublishProposalEvent,
             resource: proposal,
-            recipient_ids: @proposal.participatory_space.followers.pluck(:id),
+            followers: @proposal.participatory_space.followers,
             extra: {
               participatory_space: true
             }

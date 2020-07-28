@@ -14,7 +14,7 @@ shared_examples "manage process steps examples" do
     switch_to_host(organization.host)
     login_as user, scope: :user
     visit decidim_admin_participatory_processes.edit_participatory_process_path(participatory_process)
-    click_link "Steps"
+    click_link "Phases"
   end
 
   it "creates a new participatory_process" do
@@ -35,9 +35,9 @@ shared_examples "manage process steps examples" do
       ca: "Descripció més llarga"
     )
 
-    page.execute_script("$('#date_field_participatory_process_step_start_date').focus()")
+    page.execute_script("$('#participatory_process_step_start_date').focus()")
     page.find(".datepicker-dropdown .day", text: "12").click
-    page.execute_script("$('#date_field_participatory_process_step_end_date').focus()")
+    page.execute_script("$('#participatory_process_step_end_date').focus()")
     page.find(".datepicker-dropdown .day", text: "22").click
 
     within ".new_participatory_process_step" do

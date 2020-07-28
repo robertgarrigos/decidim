@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 shared_examples "manage attachments examples" do
-  context "processing attachments", processing_uploads_for: Decidim::AttachmentUploader do
+  context "when processing attachments", processing_uploads_for: Decidim::AttachmentUploader do
     let!(:attachment) { create(:attachment, attached_to: attached_to, attachment_collection: attachment_collection) }
 
     before do
@@ -95,7 +95,7 @@ shared_examples "manage attachments examples" do
 
     it "can remove an attachment from a collection" do
       within "#attachments" do
-        within find("tr", text: stripped(translated(attachment.title))) do
+        within find("tr", text: translated(attachment.title)) do
           expect(page).to have_text(translated(attachment_collection.name, locale: :en))
           click_link "Edit"
         end
@@ -108,14 +108,14 @@ shared_examples "manage attachments examples" do
       end
 
       within "#attachments" do
-        within find("tr", text: stripped(translated(attachment.title))) do
+        within find("tr", text: translated(attachment.title)) do
           expect(page).to have_no_text(translated(attachment_collection.name, locale: :en))
         end
       end
     end
 
     it "can delete an attachment from a process" do
-      within find("tr", text: stripped(translated(attachment.title))) do
+      within find("tr", text: translated(attachment.title)) do
         accept_confirm { click_link "Delete" }
       end
 
@@ -126,7 +126,7 @@ shared_examples "manage attachments examples" do
 
     it "can update an attachment" do
       within "#attachments" do
-        within find("tr", text: stripped(translated(attachment.title))) do
+        within find("tr", text: translated(attachment.title)) do
           click_link "Edit"
         end
       end

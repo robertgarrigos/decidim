@@ -75,7 +75,7 @@ describe "Admin manages participatory processes", versioning: true, type: :syste
 
       within ".container" do
         expect(page).to have_current_path decidim_admin_participatory_processes.participatory_process_steps_path(Decidim::ParticipatoryProcess.last)
-        expect(page).to have_content("STEPS")
+        expect(page).to have_content("PHASES")
         expect(page).to have_content("Introduction")
       end
     end
@@ -96,25 +96,6 @@ describe "Admin manages participatory processes", versioning: true, type: :syste
       expect(page).to have_admin_callout("successfully")
       expect(page).to have_css("img[src*='#{participatory_process3.hero_image.url}']")
       expect(page).to have_css("img[src*='#{participatory_process3.banner_image.url}']")
-    end
-  end
-
-  context "when deleting a participatory process" do
-    let!(:participatory_process2) { create(:participatory_process, organization: organization) }
-
-    before do
-      visit decidim_admin_participatory_processes.participatory_processes_path
-    end
-
-    it "deletes a participatory_process" do
-      click_link translated(participatory_process2.title)
-      accept_confirm { click_link "Delete" }
-
-      expect(page).to have_admin_callout("successfully")
-
-      within "table" do
-        expect(page).to have_no_content(translated(participatory_process2.title))
-      end
     end
   end
 end

@@ -20,12 +20,12 @@ module Decidim
             have_selector("li", count: 12) &
             have_link("Dashboard", href: "/admin/") &
             have_link("Processes", href: "/admin/participatory_processes") &
-            have_link("Process groups", href: "/admin/participatory_process_groups") &
+            have_link("Conferences", href: "/admin/conferences") &
             have_link("Assemblies", href: "/admin/assemblies") &
             have_link("Consultations", href: "/admin/consultations") &
             have_link("Initiatives", href: "/admin/initiatives") &
             have_link("Pages", href: "/admin/static_pages") &
-            have_link("Users", href: "/admin/users") &
+            have_link("Participants", href: "/admin/users") &
             have_link("Newsletters", href: "/admin/newsletters") &
             have_link("Settings", href: "/admin/organization/edit") &
             have_link("Admin activity log", href: "/admin/logs") &

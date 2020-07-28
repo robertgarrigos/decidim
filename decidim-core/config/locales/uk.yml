@@ -9,14 +9,10 @@ uk:
         about: Про учасника
         email: Адреса вашої електронної пошти
         name: Ваше ім’я
-        nickname: Ваш короткий, унікальний псевдонім
         password: Пароль
         password_confirmation: Підтвердьте свій пароль
         personal_url: Особиста веб-адреса
         remove_avatar: Видалити аватар
-        user_group_document_number: Номер документа організації
-        user_group_name: Назва організації
-        user_group_phone: Телефон організації
     models:
       decidim/attachment_created_event: Вкладений файл
       decidim/component_published_event: Діюча складова
@@ -30,15 +26,7 @@ uk:
         password: Пароль
         password_confirmation: Підтвердження паролю
         remember_me: Запам'ятати мене
-        user_group_document_number: Номер документа організації
-        user_group_name: Назва організації
-        user_group_phone: Телефон організації
     models:
-      decidim/user:
-        one: Учасник
-        few: Учасників
-        many: Учасників
-        other: Учасників
       decidim/user_group:
         one: Гурт учасників
         few: Гурти учасників
@@ -58,8 +46,6 @@ uk:
     account:
       data_portability_export:
         file_no_exists: Файл не існує
-        invalid_token: Вказаний токен недійсний.
-        no_token: Не надано жодного токену
         notice: Зараз відбувається збереження у вигляді файлу. Ви отримаєте електронного листа після його завершення.
       delete:
         alert: Цю дію скасувати не можна. Якщо ви видалите свій обліковий запис, ви не зможете ввійти в систему.
@@ -122,6 +108,13 @@ uk:
       user_group:
         reject: "%{user_name} відхилив підтвердження гурту учасників %{resource_name}"
         verify: "%{user_name} підтвердив гурт учасників %{resource_name}"
+    amendments:
+      wizard_step_form:
+        steps:
+          '1': Create your amendment
+          '2': Compare your amendment
+          '3': Complete your amendment
+          '4': Publish your amendment
     anonymous_user: Анонімний вхід
     application:
       collection:
@@ -166,13 +159,12 @@ uk:
       granted_at: 'Надано: %{timestamp}'
       started_at: 'Розпочато: %{timestamp}'
     authorization_modals:
-      show:
+      content:
         expired:
           authorize: Знову підтвердити свою особу за допомогою "%{authorization}"
           explanation: Строк дії підтвердження вашої особи вичерпався. Щоб виконати цю дію, вам потрібно знову підтвердити свою особу за допомогою "%{authorization}".
           title: Строк дії підтвердження особи вичерпався
         incomplete:
-          cancel: Скасувати
           explanation: 'Незважаючи на те, що ви наразі підтвердили свою особу за допомогою "%{authorization}", ми просимо вас знову підтвердити свою особу, оскільки нам не вистачає наступних даних:'
           invalid_field: "Поле %{field}"
           reauthorize: Заново підтвердити свою особу
@@ -191,11 +183,6 @@ uk:
           ok: Гаразд
           title: Недостатньо прав через відсутність підтвердження особи
     collapsible_list:
-      hidden_elements_count:
-        one: і ще 1
-        few: і ще %{count}
-        many: і ще %{count}
-        other: і ще %{count}
       see_less: "(читати менше)"
       see_more: "(читати далі)"
     components:
@@ -209,11 +196,25 @@ uk:
             comments_enabled: Коментарі увімкнено
             dummy_global_attribute_1: Приклад властивості 1
             dummy_global_attribute_2: Приклад властивості 2
+            resources_permissions_enabled: Дозволи ресурсів увімкнуто
           step:
             comments_blocked: Коментарі вимкнено
             dummy_step_attribute_1: Приклад 1 властивості кроку
             dummy_step_attribute_2: Приклад 2 властивості кроку
     contact: Зв'язатися
+    content_blocks:
+      footer_sub_hero:
+        name: Нижній колонтитул під-багатирського банера
+      hero:
+        name: Багатирський банер
+      highlighted_content_banner:
+        name: Банер висвітленого вмісту
+      how_to_participate:
+        name: Як взяти участь
+      stats:
+        name: Статистика організації
+      sub_hero:
+        name: Під-багатирський банер
     core:
       actions:
         unauthorized: Ви не маєте прав на виконання цієї дії
@@ -230,22 +231,18 @@ uk:
           email_already_exists: Інший обліковий запис використовує ту ж саму адресу електронної пошти
         new:
           complete_profile: Заповнити профіль
-          nickname_help: Ваш короткий, унікальний псевдонім в %{organization}
           sign_up: Будь ласка, заповніть свій профіль
           subtitle: Щоб завершити реєстрацію, заповніть наступну форму
           username_help: Загальнодоступне ім'я, яке відображається у ваших дописах. З метою гарантування анонімності, може бути будь-яким.
       registrations:
         new:
           already_have_an_account?: Вже маєте обліковий запис?
-          newsletter: Отримувати іноді розсилання з доречними відомостями
+          newsletter: Отримувати іноді розсилання зі свіжими новинами
           newsletter_title: Дозвіл на зв'язок
-          nickname_help: Ваш короткий, унікальний псевдонім в %{organization}
           sign_in: Увійти
           sign_up: Зареєструватися
           sign_up_as:
             legend: Зареєструватися як
-            user: Приватна особа
-            user_group: Організація / колектив
           subtitle: Зареєструйтесь, щоб брати участь у обговореннях та підтримувати пропозиції.
           terms: умови участі
           tos_agreement: Реєструючись, ви приймаєте %{link}.
@@ -317,7 +314,7 @@ uk:
           notification_title: Сторінка <a href="%{resource_path}">профілю</a> учасника %{name} (%{nickname}), за яким ви стежите, була оновлена.
     export_mailer:
       data_portability_export:
-        click_button: Натисніть наступну кнопку, щоб завантажити свої дані. <br/> Ваш файл буде доступним до %{date}.
+        click_button: 'Натисніть наступну кнопку, щоб завантажити свої дані. <br/> Ваш файл буде доступним до %{date}.'
         download: Завантажити
       export:
         ready: Нижче додається стиснута в архів версія вашого збереженого файлу.
@@ -325,9 +322,9 @@ uk:
     filters:
       linked_classes:
         all: Усі
-        dummyresource: Приклади ресурсів
+        dummy_resource: Приклади ресурсів
         meeting: Зустрічі
-        project: Задуми
+        project: Проекти
         proposal: Пропозиції
         result: Підсумки
     fingerprint:
@@ -356,18 +353,6 @@ uk:
       errors:
         error: У цьому полі є помилка.
       remove_this_file: Видалити цей файл
-    invitations:
-      create:
-        error: При спробі запросити друзів сталися помилки
-        error_empty_form: Будь ласка, введіть кілька адрес електронної пошти
-        success: Ми надіслали запрошення вашим друзям!
-      index:
-        customize_message: Налаштуйте повідомлення про запрошення
-        friend_email: 'Друг #%{index} Електронна пошта'
-        invitations_subtitle: Нехай ваші друзі дізнаються про цей сайт
-        invitations_title: Як ви гадаєте, чи більше голосів мають бути почутими в %{organization_name}?
-        invite: Запросити
-        visit_your_profile: Відвідайте свій профіль
     log:
       base_presenter:
         create: "%{user_name} створив %{resource_name}"
@@ -391,11 +376,10 @@ uk:
       expired_session: Скінчився поточний сеанс виступу в ролі учасника.
     menu:
       home: Головна
-      more_information: Додаткові відомості
     messaging:
       conversation_mailer:
         new_conversation:
-          greeting: Доброго дня, %{recipient}!
+          greeting: Вітаємо, %{recipient}!
           intro: "%{sender} почав з вами нову бесіду. Клацніть тут, щоб прочитати її:"
           outro: Насолоджуйтесь Десідім!
           subject: "%{sender} почав з вами бесіду"
@@ -409,12 +393,8 @@ uk:
           error: Бесіда не розпочата. Спробуйте ще раз пізніше
         index:
           no_conversations: У вас ще немає бесід
-          title: Бесіда з
         reply:
-          send: Надіслати
           title: Відповісти
-        show:
-          title: Бесіда з %{usernames}
         start:
           send: Надіслати
           title: Почати бесіду
@@ -439,11 +419,13 @@ uk:
         success: Розсилання новин успішно оновлено
     newsletters_opt_in_mailer:
       notify:
-        body_1: Обробка особистих даних та їх захист стають дедалі важливішими для всіх нас. З новим "Загальним положенням про захист даних" (GDPR) від 25 травня 2018 року люди мають змогу керувати своїми особистими даними. Тому ми потребуємо вашої згоди, щоб продовжувати надсилати вам доречні відомості про діяльність %{organization_name}.
+        body_1: Обробка особистих даних та їх захист стають дедалі важливішими для всіх нас. За новим "Загальним положенням про захист даних" (GDPR) від 25 травня 2018 року люди мають змогу керувати своїми особистими даними. Тому ми потребуємо вашої згоди, щоб продовжувати надсилати вам свіжі новини про діяльність %{organization_name}.
         body_2: 'Як ви можете дати нам свою згоду? Просто натисніть цю кнопку:'
-        button: Так, я хочу продовжувати отримувати доречні відомості
-        greetings: Вітаємо,<br/>%{organization_name}<br/><a href="%{organization_url}">%{organization_url}</a>
+        body_3: Погодившись, ви зможете продовжувати отримувати відомості про послуги нашого майданчику. Якщо ж ми не отримаємо вашої згоди, ми припинимо надсилати вам наші повідомлення. Якщо ви підтвердите, що хочете продовжувати отримувати новини, ви зможете потім в будь-який момент від них відмовитись.
+        button: Так, я хочу продовжувати отримувати новини
+        greetings: Добридень,<br/>%{organization_name}<br/><a href="%{organization_url}">%{organization_url}</a>!
         hello: Вітаємо,
+        subject: Бажаєте продовжити отримувати свіжі новини про %{organization_name}?
     notifications:
       no_notifications: Ще немає сповіщень.
     notifications_settings:
@@ -463,7 +445,7 @@ uk:
       home:
         extended:
           debates: Обговорення
-          debates_explanation: Розглядайте та розбирайте назрілі питання, обмінюйтеся думками та робіть свій внесок в доречні обговорення.
+          debates_explanation: Розглядайте та розбирайте назрілі питання, обмінюйтеся думками та робіть свій внесок в обговорення, що вас цікавлять.
           how_to_participate: Як я можу взяти участь у русі?
           meetings: Зустрічі
           meetings_explanation: Дізнайтеся, де і коли ви можете брати участь в громадських зустрічах.
@@ -488,7 +470,7 @@ uk:
           orders_count: Голосів
           pages_count: Сторінок
           processes_count: Рухів
-          projects_count: Задумів
+          projects_count: Проектів
           proposals_accepted: Прийняті пропозиції
           proposals_count: Пропозицій
           results_count: Підсумків
@@ -497,8 +479,6 @@ uk:
           votes_count: Голосів
         sub_hero:
           register: Зареєструватися
-      index:
-        title: Додаткові відомості
       terms_and_conditions:
         accept:
           error: Під час прийняття умов участі виникла помилка.
@@ -523,11 +503,10 @@ uk:
       deleted: Видалений учасник
       view: Переглянути
     profiles:
-      default_officialization_text: Особу цього учасника прилюдно підтверджено, його ім'я чи роль перевірено на відповідність його справжньому імені та ролі
+      default_officialization_text_for_users: Особу цього учасника прилюдно підтверджено, його ім'я чи роль перевірено на відповідність його справжньому імені та ролі
       show:
         followers: Ті, хто стежить
         following: 'Стежить за:'
-        notifications: Сповіщення
       user:
         edit_profile: Редагувати профіль
     reported_mailer:
@@ -546,7 +525,7 @@ uk:
         error: Під час створення скарги сталася помилка. Будь ласка, спробуйте зробити це знову.
         success: Скарга була успішно створена, і вона буде розглянута адміністратором.
     scopes:
-      global: Всеохоплюючий обсяг
+      global: Всеохопний обсяг
       picker:
         cancel: Скасувати
         choose: Оберіть
@@ -554,14 +533,9 @@ uk:
       prompt: Оберіть обсяг
       scopes: Обсяги
     search:
-      filter:
-        all: Усі
-        component: Складові
       results_found_for_term: '%{count} Висліди пошуку: "%{term}"'
       term_input_placeholder: Шукати
     searches:
-      filters:
-        search: Шукати
       filters_small_view:
         close_modal: Закрити віконце
         filter: Відібрати
@@ -589,7 +563,7 @@ uk:
       reference:
         reference: 'Посилання на джерело: %{reference}'
       results_per_page:
-        label: 'Підсумків на сторінку:'
+        label: 'Результатів на сторінку:'
       share_modal:
         close_window: Закрити вікно
         share: Поділитися
@@ -607,11 +581,11 @@ uk:
       invitation_instructions:
         accept: Прийняти запрошення
         accept_until: Строк дії цього запрошення закінчується %{due_date}.
+        decline: Відхилити запрошення
         hello: Доброго дня, %{email}%!
         ignore: |-
           Якщо ви не бажаєте приймати запрошення, проігноруйте цей лист.<br /> Ваш обліковий запис не буде створено, доки ви не перейдете за наведеним вище посиланням та встановите свій псевдонім та пароль.
         invited_you_as_admin: "%{invited_by} запросив вас як адміністратора %{application}. Ви можете прийняти це запрошення за посиланням нижче."
-        invited_you_as_friend: "%{invited_by} запросив вас до %{application}."
         invited_you_as_private_user: "%{invited_by} запросив вас як приватного учасника %{application}. Ви можете прийняти це запрошення за посиланням нижче."
         someone_invited_you: Хтось запросив вас до %{application}. Ви можете прийняти це запрошення за посиланням нижче.
         someone_invited_you_as_admin: Хтось запросив вас як адміністратора %{application}, ви можете прийняти це запрошення за посиланням нижче.
@@ -620,10 +594,6 @@ uk:
         subject: Вас запросили керувати %{organization}
       invite_collaborator:
         subject: Вас запросили співпрацювати на %{organization}
-      invite_friend:
-        accept_invitation: 'Ви можете прийняти запрошення за посиланням нижче:'
-        friend_custom_text: 'Вам надіслали таке повідомлення:'
-        subject: Вас запросили до %{organization}
       invite_private_user:
         subject: Вас запрошено до приватного руху співучасті від %{organization}
       organization_admin_invitation_instructions:
@@ -632,6 +602,9 @@ uk:
         greeting: Доброго дня, %{recipient}!
         message: Ми пишемо вам, щоб повідомити про те, що ваш пароль був змінений.
         subject: Пароль змінено
+    passwords:
+      edit:
+        new_password: Пароль
   doorkeeper:
     scopes:
       public: Оприлюднені відомості про вас.
@@ -640,12 +613,7 @@ uk:
       content_type_whitelist_error: цей тип файлу неприпустимий
       cycle_detected: батько обсягу не може бути одним з його нащадків
       file_size_is_less_than_or_equal_to: розмір файлу має бути меншим або рівним %{count}
-      long_words: містить занадто довгі слова
-      must_start_with_caps: має починатися з великих літер
-      nesting_too_deep: не може бути всередині підрозряду
-      too_many_marks: містить забагато знаків оклику або питання
-      too_much_caps: містить забагато великих літер
-      too_short: занадто короткий
+      nesting_too_deep: не може бути всередині підкатегорії
   forms:
     required: Обов'язкове поле
   invisible_captcha:
@@ -657,6 +625,8 @@ uk:
         description_html: На цьому сайті використовуються реп'яшки (куки). Продовжуючи переглядати сайт, ви погоджуєтеся з нашим використанням реп'яшків. Дізнайтеся про це більше %{link}.
         link_label: тут
         ok: Я погоджуюся
+      edit_link:
+        edit: Редагувати
       footer:
         made_with_open_source: Цей веб-сайт створено за допомогою <a target="_blank" href="https://github.com/decidim/decidim">безкоштовного програмного забезпечення</a>.
       header:
@@ -673,7 +643,6 @@ uk:
       user_menu:
         admin_dashboard: Приладна дошка адміністрування
         conversations: Бесіди
-        invite_friends: Запросити друзів
         notifications: Сповіщення
         profile: Мій обліковий запис
         public_profile: Мій загальнодоступний профіль
@@ -685,7 +654,6 @@ uk:
         my_data: Мої дані
         notifications_settings: Налаштування сповіщень
         title: Налаштування учасника
-        user_groups: Організації
       widget:
         see_more: Читати далі
   locale:
@@ -724,6 +692,7 @@ uk:
     formats:
       day_of_month: "%b %d"
       day_of_week: "%a"
+      day_of_week_long: "%a %e"
       day_of_year: "%d.%m.%y"
       decidim_day_of_year: "%d %B %Y"
       decidim_short: "%H:%M %d.%m.%Y"

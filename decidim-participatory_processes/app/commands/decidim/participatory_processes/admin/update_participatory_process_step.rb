@@ -44,6 +44,8 @@ module Decidim
 
         def attributes
           {
+            cta_path: form.cta_path,
+            cta_text: form.cta_text,
             title: form.title,
             start_date: form.start_date,
             end_date: form.end_date,
@@ -58,7 +60,7 @@ module Decidim
             event: "decidim.events.participatory_process.step_changed",
             event_class: Decidim::ParticipatoryProcessStepChangedEvent,
             resource: step,
-            recipient_ids: step.participatory_process.followers.pluck(:id)
+            followers: step.participatory_process.followers
           )
         end
       end

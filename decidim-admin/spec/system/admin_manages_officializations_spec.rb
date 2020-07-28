@@ -3,6 +3,11 @@
 require "spec_helper"
 
 describe "Admin manages officializations", type: :system do
+  include_context "with filterable context"
+
+  let(:model_name) { Decidim::User.model_name }
+  let(:filterable_concern) { Decidim::Admin::Officializations::Filterable }
+
   let(:organization) { create(:organization) }
 
   let!(:admin) { create(:user, :admin, :confirmed, organization: organization) }
@@ -11,28 +16,36 @@ describe "Admin manages officializations", type: :system do
     switch_to_host(organization.host)
     login_as admin, scope: :user
     visit decidim_admin.root_path
-    click_link "Users"
+    click_link "Participants"
   end
 
   describe "listing officializations" do
     let!(:officialized) { create(:user, :officialized, organization: organization) }
-
     let!(:not_officialized) { create(:user, organization: organization) }
+    let!(:deleted) do
+      user = create(:user, organization: organization)
+      result = Decidim::DestroyAccount.call(user, OpenStruct.new(valid?: true, delete_reason: "Testing"))
+      result["ok"]
+    end
     let!(:external_not_officialized) { create(:user) }
 
     before do
-      click_link "Officializations"
+      within ".secondary-nav" do
+        click_link "Participants"
+      end
     end
 
-    it "shows each user and its officialization status" do
-      expect(page).to have_selector("tr[data-user-id=\"#{officialized.id}\"]", text: officialized.name)
-      expect(page).to have_selector("tr[data-user-id=\"#{officialized.id}\"]", text: "Officialized")
-
-      expect(page).to have_no_selector("tr[data-user-id=\"#{external_not_officialized.id}\"]", text: not_officialized.name)
-
-      expect(page).to have_selector("tr[data-user-id=\"#{not_officialized.id}\"]", text: not_officialized.name)
-      expect(page).to have_selector("tr[data-user-id=\"#{not_officialized.id}\"]", text: "Not officialized")
+    it_behaves_like "a filtered collection", options: "State", filter: "Officialized" do
+      let(:in_filter) { officialized.name }
+      let(:not_in_filter) { not_officialized.name }
     end
+
+    it_behaves_like "a filtered collection", options: "State", filter: "Not officialized" do
+      let(:in_filter) { not_officialized.name }
+      let(:not_in_filter) { officialized.name }
+    end
+
+    it_behaves_like "paginating a collection"
   end
 
   describe "officializating users" do
@@ -40,7 +53,9 @@ describe "Admin manages officializations", type: :system do
       let!(:user) { create(:user, organization: organization) }
 
       before do
-        click_link "Officializations"
+        within ".secondary-nav" do
+          click_link "Participants"
+        end
 
         within "tr[data-user-id=\"#{user.id}\"]" do
           click_link "Officialize"
@@ -50,7 +65,7 @@ describe "Admin manages officializations", type: :system do
       it "officializes it with the standard badge" do
         click_button "Officialize"
 
-        expect(page).to have_content("officialized successfully")
+        expect(page).to have_content("successfully officialized")
 
         within "tr[data-user-id=\"#{user.id}\"]" do
           expect(page).to have_content("Officialized")
@@ -67,7 +82,7 @@ describe "Admin manages officializations", type: :system do
 
         click_button "Officialize"
 
-        expect(page).to have_content("officialized successfully")
+        expect(page).to have_content("successfully officialized")
 
         within "tr[data-user-id=\"#{user.id}\"]" do
           expect(page).to have_content("Officialized").and have_content("Major of Barcelona")
@@ -86,7 +101,9 @@ describe "Admin manages officializations", type: :system do
       end
 
       before do
-        click_link "Officializations"
+        within ".secondary-nav" do
+          click_link "Participants"
+        end
 
         within "tr[data-user-id=\"#{user.id}\"]" do
           click_link "Reofficialize"
@@ -103,7 +120,7 @@ describe "Admin manages officializations", type: :system do
         )
         click_button "Officialize"
 
-        expect(page).to have_content("officialized successfully")
+        expect(page).to have_content("successfully officialized")
 
         within "tr[data-user-id=\"#{user.id}\"]" do
           expect(page).to have_content("Officialized").and have_content("Major of Barcelona")
@@ -116,7 +133,9 @@ describe "Admin manages officializations", type: :system do
     let!(:user) { create(:user, :officialized, organization: organization) }
 
     before do
-      click_link "Officializations"
+      within ".secondary-nav" do
+        click_link "Participants"
+      end
 
       within "tr[data-user-id=\"#{user.id}\"]" do
         click_link "Unofficialize"
@@ -124,10 +143,67 @@ describe "Admin manages officializations", type: :system do
     end
 
     it "unofficializes user and goes back to list" do
-      expect(page).to have_content("unofficialized successfully")
+      expect(page).to have_content("successfully unofficialized")
 
       within "tr[data-user-id=\"#{user.id}\"]" do
         expect(page).to have_content("Not officialized")
+      end
+    end
+  end
+
+  describe "contacting the user" do
+    let!(:user) { create(:user, organization: organization) }
+
+    before do
+      within ".secondary-nav" do
+        click_link "Participants"
+      end
+    end
+
+    it "redirect to conversation path" do
+      within "tr[data-user-id=\"#{user.id}\"]" do
+        click_link "Contact"
+      end
+      expect(page).to have_current_path decidim.new_conversation_path(recipient_id: user.id)
+    end
+  end
+
+  describe "clicking on user name" do
+    let!(:user) { create(:user, organization: organization) }
+
+    before do
+      within ".secondary-nav" do
+        click_link "Participants"
+      end
+    end
+
+    it "redirect to user profile page" do
+      within "tr[data-user-id=\"#{user.id}\"]" do
+        click_link user.name
+      end
+
+      within ".profile--sidebar" do
+        expect(page).to have_content(user.name)
+      end
+    end
+  end
+
+  describe "clicking on user nickname" do
+    let!(:user) { create(:user, organization: organization) }
+
+    before do
+      within ".secondary-nav" do
+        click_link "Participants"
+      end
+    end
+
+    it "redirect to user profile page" do
+      within "tr[data-user-id=\"#{user.id}\"]" do
+        click_link user.nickname
+      end
+
+      within ".profile--sidebar" do
+        expect(page).to have_content(user.name)
       end
     end
   end

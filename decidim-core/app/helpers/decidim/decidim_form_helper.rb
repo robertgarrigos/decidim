@@ -71,7 +71,11 @@ module Decidim
       scopes = selected_scopes.map { |scope| [scope, yield(scope)] }
 
       template = ""
-      template += render("decidim/scopes/scopes_picker_input", picker_options: picker_options, prompt_params: prompt_params, scopes: scopes)
+      template += render("decidim/scopes/scopes_picker_input",
+                         picker_options: picker_options,
+                         prompt_params: prompt_params,
+                         scopes: scopes,
+                         checkboxes_on_top: true)
       template.html_safe
     end
 
@@ -103,7 +107,7 @@ module Decidim
         return safe_join [field_label, field_input]
       end
 
-      tabs_id = options[:tabs_id] || "#{object_name}-#{name}-tabs"
+      tabs_id = options[:tabs_id] || "#{object_name}-#{name}-tabs".underscore
       enabled_tabs = options[:enable_tabs].nil? ? true : options[:enable_tabs]
       tabs_panels_data = enabled_tabs ? { tabs: true } : {}
 
@@ -188,6 +192,14 @@ module Decidim
 
     def foundation_datepicker_locale_tag
       javascript_include_tag "datepicker-locales/foundation-datepicker.#{I18n.locale}.js" if I18n.locale != :en
+    end
+
+    # Handle which collection to pass to Decidim::FilterFormBuilder.areas_select
+    def areas_for_select(organization)
+      return organization.areas if organization.area_types.blank?
+      return organization.areas if organization.area_types.all? { |at| at.area_ids.empty? }
+
+      organization.area_types
     end
   end
 end

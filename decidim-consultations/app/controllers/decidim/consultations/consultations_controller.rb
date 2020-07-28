@@ -7,10 +7,11 @@ module Decidim
     class ConsultationsController < Decidim::Consultations::ApplicationController
       layout "layouts/decidim/consultation", only: :show
 
+      include ParticipatorySpaceContext
       include NeedsConsultation
       include FilterResource
       include Paginable
-      include Orderable
+      include Decidim::Consultations::Orderable
 
       helper_method :collection, :consultations, :finished_consultations, :active_consultations, :filter
 
@@ -20,6 +21,7 @@ module Decidim
       helper Decidim::PaginateHelper
       helper Decidim::IconHelper
       helper Decidim::WidgetUrlsHelper
+      helper Decidim::ResourceHelper
 
       def index
         enforce_permission_to :read, :consultation_list
@@ -30,6 +32,10 @@ module Decidim
       end
 
       private
+
+      def current_participatory_space_manifest
+        @current_participatory_space_manifest ||= Decidim.find_participatory_space_manifest(:consultations)
+      end
 
       def consultations
         @consultations = search.results

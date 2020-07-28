@@ -1,5 +1,6 @@
 .wrapper{
   padding: 1.2rem 1rem;
+  position: relative;
 
   @include breakpoint(medium){
     padding: 5rem 1.5rem 3rem;
@@ -8,6 +9,19 @@
   @include breakpoint(large){
     padding-left: 4rem;
     padding-right: 4rem;
+  }
+}
+
+.wrapper-mini{
+  padding: 1.2rem 1rem;
+  position: relative;
+
+  @include breakpoint(medium){
+    padding: 2rem 1.5rem;
+  }
+
+  @include breakpoint(large){
+    padding: 3rem 4rem;
   }
 }
 

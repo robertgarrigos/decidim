@@ -7,8 +7,8 @@
 <%= partial "template_top" %>
 
 <main>
+  <%= partial "process_header" %>
   <div class="wrapper">
-    <%= partial "process_header_home" %>
     <div class="row">
       <div class="columns section view-side mediumlarge-4 mediumlarge-push-8 large-3 large-push-9">
         <%= partial "followme", following: true %>
@@ -78,12 +78,12 @@
           <div class="card__content">
             <div class="card__header">
               <%= link_to page_path("blog/blog-view"), class: "card__link" do %>
-              <h5 class="card__title card__title--strong">
+              <h5 class="card__title">
                 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ratione fugit, ipsam ex omnis eos dicta modi adipisci, debitis harum?
               </h5>
               <% end %>
               <div class="card__author">
-                <%= partial "author_data", { extra: true, small: true } %>
+                <%= partial "author_data", { extra: true } %>
               </div>
             </div>
             <p>
@@ -105,12 +105,12 @@
           <div class="card__content">
             <div class="card__header">
               <%= link_to page_path("blog/blog-view"), class: "card__link" do %>
-              <h5 class="card__title card__title--strong">
+              <h5 class="card__title">
                 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ratione fugit, ipsam ex omnis eos dicta modi adipisci, debitis harum?
               </h5>
               <% end %>
               <div class="card__author">
-                <%= partial "author_data", { extra: false, small: true } %>
+                <%= partial "author_data", { extra: false } %>
               </div>
               <p>
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam…</p>

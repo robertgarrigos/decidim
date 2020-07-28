@@ -2,24 +2,14 @@
 
 require "spec_helper"
 require "support/tasks"
+require "tasks/decidim_tasks_sniffs_stdout_context"
 
-# rubocop:disable RSpec/DescribeClass
 describe "rake decidim:check_users_newsletter_opt_in", type: :task do
-  # rubocop:enable RSpec/DescribeClass
+  include_context "with stdout sniffing"
+
   let!(:user_wo) { create(:user, :confirmed, newsletter_notifications_at: nil) }
   let!(:user_w_optin) { create(:user, :confirmed, newsletter_notifications_at: Time.zone.parse("2018-05-26 00:00 +02:00")) }
   let!(:users) { create_list(:user, 4, :confirmed, newsletter_notifications_at: Time.zone.parse("2018-05-24 00:00 +02:00")) }
-  let!(:original_stdout) { $stdout }
-
-  # rubocop:disable RSpec/ExpectOutput
-  before do
-    $stdout = StringIO.new
-  end
-
-  after do
-    $stdout = original_stdout
-  end
-  # rubocop:enable RSpec/ExpectOutput
 
   context "when executing task" do
     it "have to be executed without failures" do

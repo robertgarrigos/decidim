@@ -198,10 +198,18 @@ describe Decidim::Initiatives::Admin::Permissions do
 
           context "when initiative has enough approved members" do
             before do
-              allow(Decidim::Initiatives).to receive(:minimum_committee_members).and_return(1)
+              allow(initiative).to receive(:enough_committee_members?).and_return(true)
             end
 
             it { is_expected.to eq true }
+          end
+
+          context "when initiative has not enough approved members" do
+            before do
+              allow(initiative).to receive(:enough_committee_members?).and_return(false)
+            end
+
+            it { is_expected.to eq false }
           end
         end
       end
@@ -386,10 +394,11 @@ describe Decidim::Initiatives::Admin::Permissions do
       it_behaves_like "checks initiative state", :unpublish, :published, :validating
       it_behaves_like "checks initiative state", :discard, :validating, :published
       it_behaves_like "checks initiative state", :export_votes, :offline, :online
+      it_behaves_like "checks initiative state", :export_pdf_signatures, :published, :validating
 
       context "when accepting the initiative" do
         let(:action_name) { :accept }
-        let(:initiative) { create :initiative, organization: organization, signature_end_time: 2.days.ago }
+        let(:initiative) { create :initiative, organization: organization, signature_end_date: 2.days.ago }
         let(:percentage) { 110 }
 
         before do
@@ -405,7 +414,7 @@ describe Decidim::Initiatives::Admin::Permissions do
         end
 
         context "when the initiative signature time is not finished" do
-          let(:initiative) { create :initiative, signature_end_time: 2.days.from_now, organization: organization }
+          let(:initiative) { create :initiative, signature_end_date: 2.days.from_now, organization: organization }
 
           it { is_expected.to eq false }
         end
@@ -419,7 +428,7 @@ describe Decidim::Initiatives::Admin::Permissions do
 
       context "when rejecting the initiative" do
         let(:action_name) { :reject }
-        let(:initiative) { create :initiative, organization: organization, signature_end_time: 2.days.ago }
+        let(:initiative) { create :initiative, organization: organization, signature_end_date: 2.days.ago }
         let(:percentage) { 90 }
 
         before do
@@ -435,7 +444,7 @@ describe Decidim::Initiatives::Admin::Permissions do
         end
 
         context "when the initiative signature time is not finished" do
-          let(:initiative) { create :initiative, signature_end_time: 2.days.from_now, organization: organization }
+          let(:initiative) { create :initiative, signature_end_date: 2.days.from_now, organization: organization }
 
           it { is_expected.to eq false }
         end

@@ -13,6 +13,7 @@ module Decidim
         def initialize(assembly, form)
           @assembly = assembly
           @form = form
+          @parent = Assembly.find_by(id: @assembly.parent)
         end
 
         # Executes the command. Broadcasts these events:
@@ -23,6 +24,7 @@ module Decidim
         # Returns nothing.
         def call
           return broadcast(:invalid) if form.invalid?
+
           update_assembly
           link_participatory_processes(@assembly)
 
@@ -42,6 +44,7 @@ module Decidim
         def update_assembly
           @assembly.assign_attributes(attributes)
           save_assembly if @assembly.valid?
+          update_children_count
         end
 
         def save_assembly
@@ -81,7 +84,6 @@ module Decidim
             purpose_of_action: form.purpose_of_action,
             composition: form.composition,
             assembly_type: form.assembly_type,
-            assembly_type_other: form.assembly_type_other,
             creation_date: form.creation_date,
             created_by: form.created_by,
             created_by_other: form.created_by_other,
@@ -105,7 +107,17 @@ module Decidim
         end
 
         def link_participatory_processes(assembly)
-          assembly.link_participatory_spaces_resources(participatory_processes(assembly), "included_participatory_processes")
+          assembly.link_participatory_space_resources(participatory_processes(assembly), "included_participatory_processes")
+        end
+
+        # Resets the children counter cache to its correct value using an SQL count query.
+        # Fixes Rails decrementing twice error when updating the parent to nil.
+        #
+        # Returns nothing.
+        def update_children_count
+          return unless @parent
+
+          Assembly.reset_counters(@parent.id, :children_count)
         end
       end
     end

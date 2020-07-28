@@ -20,6 +20,7 @@ module Decidim
         # Returns nothing.
         def call
           return broadcast(:invalid) if form.invalid?
+
           initiative_type = create_initiative_type
 
           if initiative_type.persisted?
@@ -39,7 +40,15 @@ module Decidim
             organization: form.current_organization,
             title: form.title,
             description: form.description,
-            banner_image: form.banner_image
+            signature_type: form.signature_type,
+            undo_online_signatures_enabled: form.undo_online_signatures_enabled,
+            promoting_committee_enabled: form.promoting_committee_enabled,
+            minimum_committee_members: form.minimum_committee_members,
+            banner_image: form.banner_image,
+            collect_user_extra_fields: form.collect_user_extra_fields,
+            extra_fields_legal_information: form.extra_fields_legal_information,
+            validate_sms_code_on_votes: form.validate_sms_code_on_votes,
+            document_number_authorization_handler: form.document_number_authorization_handler
           )
 
           return initiative_type unless initiative_type.valid?

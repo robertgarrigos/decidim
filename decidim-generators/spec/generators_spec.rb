@@ -7,10 +7,17 @@ require "decidim/gem_manager"
 module Decidim
   describe Generators do
     let(:env) do |example|
+      #
+      # When tracking coverage, make sure the ruby environment points to the
+      # local version, so we get the benefits of running `decidim` directly
+      # without `bundler` (more realistic test), but also get code coverage
+      # properly measured (we track coverage on the local version and not on the
+      # installed version).
+      #
       if ENV["SIMPLECOV"]
         {
           "RUBYOPT" => "-rsimplecov #{ENV["RUBYOPT"]}",
-          "RUBYLIB" => "#{repo_root}/decidim-generators/lib",
+          "RUBYLIB" => "#{repo_root}/decidim-generators/lib:#{ENV["RUBYLIB"]}",
           "PATH" => "#{repo_root}/decidim-generators/exe:#{ENV["PATH"]}",
           "COMMAND_NAME" => example.full_description.tr(" ", "_")
         }
@@ -64,16 +71,18 @@ module Decidim
         it_behaves_like "a new production application"
       end
 
-      context "with --edge flag" do
-        let(:command) { "decidim --edge #{test_app}" }
+      if ENV["CIRCLE_BRANCH"] == "master"
+        context "with --edge flag" do
+          let(:command) { "decidim --edge #{test_app}" }
 
-        it_behaves_like "a new production application"
-      end
+          it_behaves_like "a new production application"
+        end
 
-      context "with --branch flag" do
-        let(:command) { "decidim --branch master #{test_app}" }
+        context "with --branch flag" do
+          let(:command) { "decidim --branch master #{test_app}" }
 
-        it_behaves_like "a new production application"
+          it_behaves_like "a new production application"
+        end
       end
 
       context "with --path flag" do

@@ -1,6 +1,7 @@
 <div class="empty-notifications callout secondary <%= "hide" if notifications.any? %>">
   <p><%= t("decidim.notifications.no_notifications") %></p>
 </div>
+
 <div id="notifications">
   <div class="mb-s text-right">
     <% if notifications.any? %>
@@ -21,13 +22,13 @@
         <li class="card-data__item">
           <div class="card__link text-center">
             <%= resource_icon notification.resource, class: "icon--large" %>
-            <span class="text-medium mt-xs"><%= notification.created_at.strftime("%a %e") %></span>
+            <span class="text-medium mt-xs"><%= l notification.created_at, format: :day_of_week_long %></span>
           </div>
         </li>
         <li class="card-data__item card-data__item--expand absolutes">
           <div class="mr-s">
             <span class="text-small"><%= notification.event_class.constantize.model_name.human %></span>
-            <br />
+            <br>
             <span>
               <%= notification.event_class_instance.notification_title %>
             </span>

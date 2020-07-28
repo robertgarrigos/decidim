@@ -27,10 +27,10 @@ module Decidim
       end
 
       def create
-        @form = form(ComponentForm).from_params(params)
+        @form = form(ComponentForm).from_params(component_params)
         enforce_permission_to :create, :component
 
-        CreateComponent.call(manifest, @form, current_participatory_space) do
+        CreateComponent.call(@form) do
           on(:ok) do
             flash[:notice] = I18n.t("components.create.success", scope: "decidim.admin")
             redirect_to action: :index
@@ -52,7 +52,7 @@ module Decidim
 
       def update
         @component = query_scope.find(params[:id])
-        @form = form(ComponentForm).from_params(params)
+        @form = form(ComponentForm).from_params(component_params)
         enforce_permission_to :update, :component, component: @component
 
         UpdateComponent.call(@form, @component) do
@@ -64,8 +64,8 @@ module Decidim
           end
 
           on(:invalid) do
-            flash.now[:alert] = I18n.t("components.update.error", scope: "decidim.admin")
-            render action: "new"
+            flash[:alert] = I18n.t("components.update.error", scope: "decidim.admin")
+            render action: :edit
           end
         end
       end
@@ -113,12 +113,32 @@ module Decidim
 
       private
 
+      # Processes the component params so Decidim::Admin::ComponentForm
+      # can assign and validate the attributes when using #from_params.
+      def component_params
+        new_settings = proc { |name, data| Component.build_settings(manifest, name, data, current_organization) }
+
+        params[:component].permit!.tap do |hsh|
+          hsh[:id] = params[:id]
+          hsh[:manifest] = manifest
+          hsh[:participatory_space] = current_participatory_space
+          hsh[:settings] = new_settings.call(:global, hsh[:settings])
+          if hsh[:default_step_settings]
+            hsh[:default_step_settings] = new_settings.call(:step, hsh[:default_step_settings])
+          else
+            hsh[:step_settings].each do |key, value|
+              hsh[:step_settings][key] = new_settings.call(:step, value)
+            end
+          end
+        end
+      end
+
       def query_scope
         current_participatory_space.components
       end
 
       def manifest
-        Decidim.find_component_manifest(params[:type])
+        @component&.manifest || Decidim.find_component_manifest(params[:type])
       end
 
       def default_name(manifest)

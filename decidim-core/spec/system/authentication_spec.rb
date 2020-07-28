@@ -3,7 +3,7 @@
 require "spec_helper"
 
 describe "Authentication", type: :system do
-  let(:organization) { create(:organization, :with_tos) }
+  let(:organization) { create(:organization) }
   let(:last_user) { Decidim::User.last }
 
   before do
@@ -27,7 +27,7 @@ describe "Authentication", type: :system do
           find("*[type=submit]").click
         end
 
-        expect(page).to have_content("confirmation link")
+        expect(page).to have_content("You have signed up successfully")
       end
     end
 
@@ -47,7 +47,7 @@ describe "Authentication", type: :system do
           find("*[type=submit]").click
         end
 
-        expect(page).to have_no_content("confirmation link")
+        expect(page).not_to have_content("You have signed up successfully")
       end
     end
 
@@ -122,8 +122,6 @@ describe "Authentication", type: :system do
             fill_in :user_email, with: "user@from-twitter.com"
             find("*[type=submit]").click
           end
-
-          expect(page).to have_content("confirmation link")
         end
 
         context "and a user already exists with the given email" do
@@ -190,32 +188,19 @@ describe "Authentication", type: :system do
         expect_user_logged
       end
     end
-  end
 
-  describe "Sign Up as a organization" do
-    it "creates a new User" do
-      find(".sign-up-link").click
+    context "when sign up is disabled" do
+      let(:organization) { create(:organization, users_registration_mode: :existing) }
 
-      within ".new_user" do
-        choose "Organization/Collective"
-
-        fill_in :user_email, with: "user@example.org"
-        fill_in :user_name, with: "Responsible Citizen"
-        fill_in :user_nickname, with: "responsible"
-        fill_in :user_password, with: "DfyvHn425mYAy2HL"
-        fill_in :user_password_confirmation, with: "DfyvHn425mYAy2HL"
-
-        fill_in :user_user_group_name, with: "My organization"
-        fill_in :user_user_group_document_number, with: "12345678Z"
-        fill_in :user_user_group_phone, with: "333-333-3333"
-
-        check :user_tos_agreement
-        check :user_newsletter
-
-        find("*[type=submit]").click
+      it "redirects to the sign in when accessing the sign up page" do
+        visit decidim.new_user_registration_path
+        expect(page).not_to have_content("Sign Up")
       end
 
-      expect(page).to have_content("confirmation link")
+      it "don't allow the user to sign up" do
+        find(".sign-in-link").click
+        expect(page).not_to have_content("Create an account")
+      end
     end
   end
 
@@ -227,6 +212,28 @@ describe "Authentication", type: :system do
 
       expect(page).to have_content("successfully confirmed")
       expect(last_user).to be_confirmed
+    end
+  end
+
+  context "when confirming the account" do
+    let!(:user) { create(:user, email_on_notification: true, organization: organization) }
+
+    before do
+      perform_enqueued_jobs { user.confirm }
+      switch_to_host(user.organization.host)
+      login_as user, scope: :user
+      visit decidim.root_path
+    end
+
+    it "sends a welcome notification" do
+      find("a.topbar__notifications").click
+
+      within "#notifications" do
+        expect(page).to have_content("Welcome")
+        expect(page).to have_content("thanks for joining #{organization.name}")
+      end
+
+      expect(last_email_body).to include("thanks for joining #{organization.name}")
     end
   end
 
@@ -294,7 +301,7 @@ describe "Authentication", type: :system do
           find("*[type=submit]").click
         end
 
-        expect(page).to have_content("password has been changed successfully")
+        expect(page).to have_content("Your password has been successfully changed")
         expect(page).to have_current_path "/"
       end
     end
@@ -313,6 +320,95 @@ describe "Authentication", type: :system do
 
         expect(page).to have_content("Signed out successfully.")
         expect(page).to have_no_content(user.name)
+      end
+    end
+
+    context "with lockable account" do
+      Devise.maximum_attempts = 3
+      let!(:maximum_attempts) { Devise.maximum_attempts }
+
+      describe "when attempting to login with failing password" do
+        describe "before locking" do
+          before do
+            visit decidim.root_path
+            find(".sign-in-link").click
+
+            (maximum_attempts - 2).times do
+              within ".new_user" do
+                fill_in :user_email, with: user.email
+                fill_in :user_password, with: "not-the-pasword"
+                find("*[type=submit]").click
+              end
+            end
+          end
+
+          it "shows the last attempt warning before locking the account" do
+            within ".new_user" do
+              fill_in :user_email, with: user.email
+              fill_in :user_password, with: "not-the-pasword"
+              find("*[type=submit]").click
+            end
+
+            expect(page).to have_content("You have one more attempt before your account is locked.")
+          end
+        end
+
+        describe "locks the account" do
+          before do
+            visit decidim.root_path
+            find(".sign-in-link").click
+
+            (maximum_attempts - 1).times do
+              within ".new_user" do
+                fill_in :user_email, with: user.email
+                fill_in :user_password, with: "not-the-pasword"
+                find("*[type=submit]").click
+              end
+            end
+          end
+
+          it "when reached maximum failed attempts" do
+            within ".new_user" do
+              fill_in :user_email, with: user.email
+              fill_in :user_password, with: "not-the-pasword"
+              perform_enqueued_jobs { find("*[type=submit]").click }
+            end
+
+            expect(page).to have_content("Your account is locked.")
+            expect(emails.count).to eq(1)
+          end
+        end
+      end
+
+      describe "Resend unlock instructions email" do
+        before do
+          user.lock_access!
+
+          visit decidim.new_user_unlock_path
+        end
+
+        it "resends the unlock instructions" do
+          within ".new_user" do
+            fill_in :user_email, with: user.email
+            perform_enqueued_jobs { find("*[type=submit]").click }
+          end
+
+          expect(page).to have_content("You will receive an email with instructions for how to unlock your account in a few minutes.")
+          expect(emails.count).to eq(1)
+        end
+      end
+
+      describe "Unlock account" do
+        before do
+          user.lock_access!
+          perform_enqueued_jobs { user.send_unlock_instructions }
+        end
+
+        it "unlocks the user account" do
+          visit last_email_link
+
+          expect(page).to have_content("Your account has been successfully unlocked. Please sign in to continue")
+        end
       end
     end
   end
@@ -352,6 +448,39 @@ describe "Authentication", type: :system do
         expect(page).to have_content("Successfully")
         expect(page).to have_content(user.name)
       end
+
+      context "when sign up is disabled" do
+        let(:organization) { create(:organization, users_registration_mode: :existing) }
+
+        it "doesn't allow the user to sign up" do
+          find(".sign-in-link").click
+          expect(page).not_to have_content("Sign Up")
+        end
+      end
+
+      context "when sign in is disabled" do
+        let(:organization) { create(:organization, users_registration_mode: :disabled) }
+
+        it "doesn't allow the user to sign up" do
+          find(".sign-in-link").click
+          expect(page).not_to have_content("Sign Up")
+        end
+
+        it "doesn't allow the user to sign in as a regular user, only through external accounts" do
+          find(".sign-in-link").click
+          expect(page).not_to have_content("Email")
+          expect(page).to have_css(".button--facebook")
+        end
+
+        it "authenticates an existing User" do
+          find(".sign-in-link").click
+
+          click_link "Sign in with Facebook"
+
+          expect(page).to have_content("Successfully")
+          expect(page).to have_content(user.name)
+        end
+      end
     end
   end
 
@@ -374,7 +503,7 @@ describe "Authentication", type: :system do
             find("*[type=submit]").click
           end
 
-          expect(page).to have_content("confirmation link")
+          expect(page).to have_content("You have signed up successfully")
         end
       end
     end

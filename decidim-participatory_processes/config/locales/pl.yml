@@ -3,23 +3,26 @@ pl:
     attributes:
       participatory_process:
         announcement: Ogłoszenie
+        area_id: Powierzchnia
         banner_image: Obraz baneru
         copy_categories: Kopiuj kategorie
         copy_components: Skopiuj komponenty
         copy_steps: Skopiuj kolejne etapy
+        decidim_area_id: Powierzchnia
         description: Opis
         developer_group: Grupa promotorów
         domain: Domena
         end_date: Data zakończenia
         hashtag: Hasztag
         hero_image: Obraz w domu
-        local_area: Okolica
+        local_area: Obszar organizacji
         meta_scope: Zakres metadanych
         participatory_process_group_id: Grupa procesów
-        participatory_scope: Zakres partycypacji
-        participatory_structure: Struktura partycypacji
+        participatory_scope: Co postanowiono
+        participatory_structure: Jak to się decyduje
         promoted: Lansowany
         published_at: Opublikowano na
+        related_process_ids: Powiązane procesy
         scope_id: Zakres
         scopes_enabled: Zakresy włączone
         short_description: Krótki opis
@@ -27,7 +30,7 @@ pl:
         slug: Ślimak URL
         start_date: Data rozpoczęcia
         subtitle: Podtytuł
-        target: Cel
+        target: Kto uczestniczy
         title: Tytuł
       participatory_process_group:
         description: Opis
@@ -35,6 +38,8 @@ pl:
         name: Nazwa
         participatory_process_ids: Powiązane procesy
       participatory_process_step:
+        cta_path: Ścieżka wezwania do działania
+        cta_text: Tekst wezwania do działania
         description: Opis
         end_date: Data zakończenia
         short_description: Krótki opis
@@ -73,6 +78,9 @@ pl:
         destroy: Kasować
         duplicate: Duplikat
         edit: Edytuj
+        filter:
+          all_processes: Pokaż wszystkie procesy
+          process_groups: Grupy procesowe
         new_process: Nowy proces
         new_process_group: Nowa grupa procesów
         new_process_step: Nowy krok
@@ -186,13 +194,11 @@ pl:
         destroy:
           success: Użytkownik usunięty pomyślnie z tego procesu uczestnictwa.
         edit:
-          title: Zaktualizuj uczestniczącego użytkownika procesu.
           update: Aktualizuj
         index:
           process_admins_title: Uczestniczący użytkownicy procesu
         new:
           create: Utwórz
-          title: Nowy użytkownik procesu partycypacyjnego.
         update:
           error: Wystąpił błąd podczas aktualizacji użytkownika dla tego procesu uczestnictwa.
           success: Użytkownik zaktualizował się pomyślnie dla tego procesu partycypacyjnego.
@@ -200,12 +206,8 @@ pl:
         create:
           error: Podczas tworzenia nowego procesu partycypacyjnego wystąpił błąd.
           success: Proces współuczestnictwa został pomyślnie utworzony. Skonfiguruj teraz kroki.
-        destroy:
-          success: Proces partycypacyjny został pomyślnie usunięty.
         edit:
           update: Aktualizuj
-        form:
-          title: Informacje ogólne
         index:
           not_published: Nie opublikowane
           private: Prywatny
@@ -259,11 +261,26 @@ pl:
           email_outro: Otrzymałeś to powiadomienie, ponieważ obserwujesz %{participatory_space_title}. Możesz przestać otrzymywać powiadomienia po poprzednim linku.
           email_subject: Aktualizacja do %{participatory_space_title}
           notification_title: Zmieniono daty <a href="%{resource_path}">%{resource_title}</a> kroku <a href="%{participatory_space_url}">%{participatory_space_title}</a>.
+    help:
+      participatory_spaces:
+        participatory_processes:
+          contextual: "<p> <strong>proces partycypacyjny</strong> jest sekwencją działań partycypacyjnych (np najpierw wypełnić ankietę, a następnie składanie propozycji, omawiając je twarzą w twarz lub wirtualnych spotkań, a na końcu ich priorytetów) w celu definiowania i podejmowania decyzji na określony temat.</p> <p>Przykładami procesów partycypacyjnych są: proces wybierania członków komitetu (w którym kandydatury są najpierw przedstawiane, następnie dyskutowane, a ostatecznie wybierana jest kandydatura), budżety partycypacyjne (w których propozycje są składane, wyceniane ekonomicznie i głosowane za pomocą dostępnych pieniędzy), proces planowania strategicznego, wspólne opracowywanie rozporządzenia lub normy, projektowanie przestrzeni miejskiej lub opracowywanie planu polityki publicznej.</p>\n"
+          page: "<p> <strong>proces partycypacyjny</strong> jest sekwencją działań partycypacyjnych (np najpierw wypełnić ankietę, a następnie składanie propozycji, omawiając je twarzą w twarz lub wirtualnych spotkań, a na końcu ich priorytetów) w celu definiowania i podejmowania decyzji na określony temat.</p> <p>Przykładami procesów partycypacyjnych są: proces wybierania członków komitetu (w którym kandydatury są najpierw przedstawiane, następnie dyskutowane, a ostatecznie wybierana jest kandydatura), budżety partycypacyjne (w których propozycje są składane, wyceniane ekonomicznie i głosowane za pomocą dostępnych pieniędzy), proces planowania strategicznego, wspólne opracowywanie rozporządzenia lub normy, projektowanie przestrzeni miejskiej lub opracowywanie planu polityki publicznej.</p>\n"
+          title: Czym jest proces partycypacyjny?
     menu:
       processes: Procesy
+    metrics:
+      participatory_processes:
+        description: Liczba procesów uczestniczących w tej organizacji
+        object: procesy uczestniczące
+        title: Procesy partycypacyjne
     participatory_process_groups:
       show:
-        group_participatory_processes: Procesy %{group}
+        group_participatory_processes:
+          one: 1 procesy dla %{group}
+          few: "%{count} procesów dla %{group}"
+          many: "%{count} procesów dla %{group}"
+          other: "%{count} procesów dla %{group}"
         title: Uczestniczące grupy procesów
     participatory_process_steps:
       index:
@@ -271,38 +288,89 @@ pl:
         title: Etapy procesu partycypacyjnego
     participatory_processes:
       admin:
+        content_blocks:
+          highlighted_processes:
+            max_results: Maksymalna ilość elementów do pokazania
         participatory_process_copies:
           form:
             slug_help: 'Ślimaki URL służą do generowania adresów URL wskazujących ten proces. Akceptuje tylko litery, cyfry i myślniki i musi zaczynać się od litery. Przykład: %{url}'
+        participatory_process_steps:
+          form:
+            cta_path_help: 'Używaj tutaj częściowych ścieżek, a nie pełnych adresów URL. Akceptuje litery, cyfry, myślniki i ukośniki i musi zaczynać się od litery. Jeśli nie zostanie ustawiony, przycisk nie będzie wyświetlany. Przykład: %{url}'
+            cta_text_help: Jeśli nie zostanie ustawiony, przycisk nie będzie wyświetlany.
         participatory_processes:
           form:
             announcement_help: Wprowadzony tutaj tekst zostanie wyświetlony użytkownikowi tuż pod informacjami o procesie.
+            duration: Trwanie
+            filters: Filtry
+            images: Obrazy
+            metadata: Metadane
+            other: Inny
+            related_processes: Powiązane procesy
+            select_an_area: Wybierz obszar
+            select_process_group: Wybierz grupę procesów
             slug_help: 'Ślimaki URL służą do generowania adresów URL wskazujących ten proces. Akceptuje tylko litery, cyfry i myślniki i musi zaczynać się od litery. Przykład: %{url}'
+            title: Informacje ogólne
+            visbility: Widoczność
+      content_blocks:
+        highlighted_processes:
+          name: Wyróżnione procesy
       index:
         title: Procesy partycypacyjne
-      order_by_processes:
-        active: Aktywne
-        all: Wszystko
-        past: Przeszłe
-        upcoming: Nadchodzące
+      last_activity:
+        new_participatory_process: Nowy proces uczestnictwa
       pages:
         home:
           highlighted_processes:
             active_processes: Aktywne procesy
             active_step: Aktywny krok
+            more_information: Więcej informacji
+            participate: Uczestniczyć
             see_all_processes: Zobacz wszystkie procesy
-      participatory_process_groups:
-        none: Brak
       participatory_processes:
+        filters:
+          counters:
+            active:
+              one: 1 aktywny proces
+              few: "%{count} aktywnych procesów"
+              many: "%{count} aktywnych procesów"
+              other: "%{count} aktywnych procesów"
+            all:
+              one: 1 proces
+              few: "%{count} procesów"
+              many: "%{count} procesów"
+              other: "%{count} procesów"
+            past:
+              one: 1 przeszły proces
+              few: "%{count} przeszłych procesów"
+              many: "%{count} przeszłych procesów"
+              other: "%{count} przeszłych procesów"
+            upcoming:
+              one: 1 nadchodzący proces
+              few: "%{count} nadchodzących procesów"
+              many: "%{count} nadchodzących procesów"
+              other: "%{count} nadchodzących procesów"
+          explanations:
+            no_active: Brak aktywnych procesów
+            no_active_nor_upcoming: Brak aktywnych i nadchodzących procesów
+            no_active_nor_upcoming_callout: Nie ma aktywnych ani nadchodzących procesów. Oto lista poprzednich.
+          names:
+            active: Aktywne
+            all: Wszystko
+            past: Przeszłe
+            upcoming: Nadchodzące
+          see: Widzieć
         index:
           loading: Wyniki wyszukiwania...
       show:
+        area: Powierzchnia
         developer_group: Grupa promotorów
         end_date: Data zakończenia
         local_area: Obszar Organizacji
         participatory_scope: Co jest zdecydowane
         participatory_structure: Jak to się stało
         private_space: To jest prywatny proces
+        related_processes: Powiązane procesy
         scope: Zakres
         start_date: Data rozpoczęcia
         target: Kto uczestniczy
@@ -316,13 +384,14 @@ pl:
         meetings_count: Spotkania
         orders_count: Głosowania
         pages_count: Strony
+        participants_count: Uczestnicy
         processes_count: Procesy
         projects_count: Projekty
         proposals_count: Propozycje
         results_count: Wyniki
+        supports_count: Głosowania
         surveys_count: Ankiety
         users_count: Uczestnicy
-        votes_count: Głosowania
   layouts:
     decidim:
       participatory_process_groups:
@@ -336,22 +405,16 @@ pl:
       participatory_processes:
         index:
           promoted_processes: Podświetlone procesy
-        order_by_processes:
-          processes:
-            one: "%{count} proces"
-            few: "%{count} procesów"
-            many: "%{count} procesów"
-            other: "%{count} procesów"
         participatory_process:
           active_step: 'Aktualny krok:'
+          more_info: Więcej informacji
           take_part: Wziąć udział
         promoted_process:
           active_step: 'Aktualny krok:'
           more_info: Więcej informacji
           take_part: Wziąć udział
-      process_header:
-        process_menu_item: Proces
-        unfold: Rozwiń
       process_header_steps:
         step: Krok %{current} z %{total}
         view_steps: Wyświetl kroki
+      process_navigation:
+        process_menu_item: Proces

@@ -40,11 +40,14 @@ module Decidim
       # event_name - a String with the name of the event.
       # resource - the resource that received the event
       # user - the User that receives the event
+      # user_role - the role the user takes for this event (either `:follower` or
+      #   `:affected_user`)
       # extra - a Hash with extra information of the event.
-      def initialize(resource:, event_name:, user:, extra:)
+      def initialize(resource:, event_name:, user:, user_role: nil, extra: {})
         @event_name = event_name
         @resource = resource
         @user = user
+        @user_role = user_role
         @extra = extra.with_indifferent_access
       end
 
@@ -64,45 +67,37 @@ module Decidim
         @resource_url ||= resource_locator.url
       end
 
-      # Whether this event should be notified or not. Useful when you want the
-      # event to decide based on the params.
-      #
-      # It returns false when the resource or any element in the chain is a
-      # `Decidim::Publicable` and it isn't published or participatory_space
-      # is a `Decidim::Participable` and the user can't participate.
-      def notifiable?
-        return false if resource.is_a?(Decidim::Publicable) && !resource.published?
-        return false if participatory_space.is_a?(Decidim::Publicable) && !participatory_space&.published?
-        return false if component && !component.published?
-
-        return false if participatory_space.is_a?(Decidim::Participable) && !participatory_space.can_participate?(user)
-
-        true
-      end
-
-      private
-
-      attr_reader :event_name, :resource, :user, :extra
-
-      def component
-        return resource.component if resource.is_a?(Decidim::HasComponent)
-        return resource if resource.is_a?(Decidim::Component)
-      end
-
-      def participatory_space
-        return resource if resource.is_a?(Decidim::ParticipatorySpaceResourceable)
-        component&.participatory_space
-      end
+      def resource_text; end
 
       def resource_title
         return unless resource
 
-        if resource.respond_to?(:title)
+        if resource.is_a?(Decidim::Hashtaggable)
+          translated_title = translated_attribute(resource.title)
+          renderer = Decidim::ContentRenderers::HashtagRenderer.new(translated_title)
+          renderer.render(links: false).html_safe
+        elsif resource.respond_to?(:title)
           translated_attribute(resource.title)
         elsif resource.respond_to?(:name)
           translated_attribute(resource.name)
         end
       end
+
+      private
+
+      def component
+        return resource if resource.is_a?(Decidim::Component)
+
+        resource.try(:component)
+      end
+
+      def participatory_space
+        return resource if resource.is_a?(Decidim::Participable)
+
+        resource.try(:participatory_space)
+      end
+
+      attr_reader :event_name, :resource, :user, :user_role, :extra
     end
   end
 end

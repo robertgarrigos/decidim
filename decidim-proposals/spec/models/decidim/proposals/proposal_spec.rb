@@ -9,7 +9,7 @@ module Decidim
 
       let(:component) { build :proposal_component }
       let(:organization) { component.participatory_space.organization }
-      let(:proposal) { build(:proposal, component: component) }
+      let(:proposal) { create(:proposal, component: component) }
       let(:coauthorable) { proposal }
 
       include_examples "coauthorable"
@@ -18,6 +18,7 @@ module Decidim
       include_examples "has category"
       include_examples "has reference"
       include_examples "reportable"
+      include_examples "resourceable"
 
       it { is_expected.to be_valid }
       it { is_expected.to be_versioned }
@@ -54,7 +55,7 @@ module Decidim
         end
 
         context "with Organization endorsement" do
-          let!(:user_group) { create(:user_group, verified_at: DateTime.current, organization: user.organization) }
+          let!(:user_group) { create(:user_group, verified_at: Time.current, organization: user.organization) }
           let!(:membership) { create(:user_group_membership, user: user, user_group: user_group) }
 
           before { user_group.reload }
@@ -74,6 +75,7 @@ module Decidim
         let(:proposal) { build(:proposal, :accepted) }
 
         it { is_expected.to be_answered }
+        it { is_expected.to be_published_state }
         it { is_expected.to be_accepted }
       end
 
@@ -81,6 +83,7 @@ module Decidim
         let(:proposal) { build(:proposal, :rejected) }
 
         it { is_expected.to be_answered }
+        it { is_expected.to be_published_state }
         it { is_expected.to be_rejected }
       end
 
@@ -102,8 +105,8 @@ module Decidim
         end
 
         context "when the proposal is not official" do
-          it "returns the followers" do
-            expect(subject.users_to_notify_on_comment_created).to match_array(followers)
+          it "returns the followers and the author" do
+            expect(subject.users_to_notify_on_comment_created).to match_array(followers.concat([proposal.creator.author]))
           end
         end
       end
@@ -135,10 +138,10 @@ module Decidim
       end
 
       describe "#editable_by?" do
-        let(:author) { build(:user, organization: organization) }
+        let(:author) { create(:user, organization: organization) }
 
         context "when user is author" do
-          let(:proposal) { build :proposal, component: component, users: [author], updated_at: Time.current }
+          let(:proposal) { create :proposal, component: component, users: [author], updated_at: Time.current }
 
           it { is_expected.to be_editable_by(author) }
 
@@ -159,13 +162,13 @@ module Decidim
 
         context "when proposal is from user group and user is admin" do
           let(:user_group) { create :user_group, :verified, users: [author], organization: author.organization }
-          let(:proposal) { build :proposal, component: component, updated_at: Time.current, users: [author], user_groups: [user_group] }
+          let(:proposal) { create :proposal, component: component, updated_at: Time.current, users: [author], user_groups: [user_group] }
 
           it { is_expected.to be_editable_by(author) }
         end
 
         context "when user is not the author" do
-          let(:proposal) { build :proposal, component: component, updated_at: Time.current }
+          let(:proposal) { create :proposal, component: component, updated_at: Time.current }
 
           it { is_expected.not_to be_editable_by(author) }
         end
@@ -189,6 +192,7 @@ module Decidim
 
           it { is_expected.to be_withdrawn }
         end
+
         context "when proposal is not withdrawn" do
           let(:proposal) { build :proposal }
 
@@ -197,10 +201,10 @@ module Decidim
       end
 
       describe "#withdrawable_by" do
-        let(:author) { build(:user, organization: organization) }
+        let(:author) { create(:user, organization: organization) }
 
         context "when user is author" do
-          let(:proposal) { build :proposal, component: component, users: [author], created_at: Time.current }
+          let(:proposal) { create :proposal, component: component, users: [author], created_at: Time.current }
 
           it { is_expected.to be_withdrawable_by(author) }
         end
@@ -237,6 +241,36 @@ module Decidim
           end
 
           it { is_expected.not_to be_withdrawable_by(author) }
+        end
+      end
+
+      context "when answer is not published" do
+        let(:proposal) { create(:proposal, :accepted_not_published, component: component) }
+
+        it "has accepted as the internal state" do
+          expect(proposal.internal_state).to eq("accepted")
+        end
+
+        it "has not_answered as public state" do
+          expect(proposal.state).to be_nil
+        end
+
+        it { is_expected.not_to be_accepted }
+        it { is_expected.to be_answered }
+        it { is_expected.not_to be_published_state }
+      end
+
+      describe "#with_valuation_assigned_to" do
+        let(:user) { create :user, organization: organization }
+        let(:space) { component.participatory_space }
+        let!(:valuator_role) { create :participatory_process_user_role, role: :valuator, user: user, participatory_process: space }
+        let(:assigned_proposal) { create :proposal, component: component }
+        let!(:assignment) { create :valuation_assignment, proposal: assigned_proposal, valuator_role: valuator_role }
+
+        it "only returns the assigned proposals for the given space" do
+          results = described_class.with_valuation_assigned_to(user, space)
+
+          expect(results).to eq([assigned_proposal])
         end
       end
     end

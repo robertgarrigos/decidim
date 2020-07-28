@@ -13,7 +13,8 @@ module Decidim
         extend ActiveSupport::Concern
 
         included do
-          helper_method :privatable_to, :authorization_object, :collection
+          helper PaginateHelper
+          helper_method :privatable_to, :collection
 
           def index
             enforce_permission_to :read, :space_private_user
@@ -47,11 +48,18 @@ module Decidim
           def destroy
             @private_user = collection.find(params[:id])
             enforce_permission_to :destroy, :space_private_user, private_user: @private_user
-            @private_user.destroy!
 
-            flash[:notice] = I18n.t("participatory_space_private_users.destroy.success", scope: "decidim.admin")
+            DestroyParticipatorySpacePrivateUser.call(@private_user, current_user) do
+              on(:ok) do
+                flash[:notice] = I18n.t("participatory_space_private_users.destroy.success", scope: "decidim.admin")
+                redirect_to after_destroy_path
+              end
 
-            redirect_to after_destroy_path
+              on(:invalid) do
+                flash.now[:alert] = I18n.t("participatory_space_private_users.destroy.error", scope: "decidim.admin")
+                render template: "decidim/admin/participatory_space_private_users/index"
+              end
+            end
           end
 
           def resend_invitation
@@ -84,16 +92,15 @@ module Decidim
             raise NotImplementedError
           end
 
-          # Public: The Class or Object to be used with the authorization layer to
-          # verify the user can manage the private users
-          #
-          # By default is the same as the privatable_to.
-          def authorization_object
-            privatable_to
-          end
-
           def collection
-            @collection ||= privatable_to.participatory_space_private_users
+            # there's an unidentified corner case where Decidim::User
+            # may have been destroyed, but the related ParticipatorySpacePrivateUser
+            # remains in the database. That's why filtering by not null users
+            @collection ||= privatable_to
+                            .participatory_space_private_users
+                            .includes(:user).where.not("decidim_users.id" => nil)
+                            .page(params[:page])
+                            .per(20)
           end
         end
       end

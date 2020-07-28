@@ -77,19 +77,17 @@ module Decidim
       true
     end
 
-    # This flag says when mixed and face-to-face voting methods
-    # are allowed. If set to false, only online voting will be
-    # allowed
-    config_accessor :face_to_face_voting_allowed do
-      true
-    end
+    # Set a service to generate a timestamp on each vote. The
+    # attribute is the name of a class whose instances are
+    # initialized with a string containing the data to be
+    # timestamped and respond to a timestamp method
+    config_accessor :timestamp_service
 
-    # This flag says when mixed and online voting methods
-    # are allowed. If set to false, only offline voting will be
-    # allowed
-    config_accessor :online_voting_allowed do
-      true
-    end
+    # Set a service to add a signature to pdf of signatures.
+    # The attribute is the name of a class whose instances are
+    # initialized with the document to be signed and respond to a
+    # signed_pdf method with the signature added
+    config_accessor :pdf_signature_service
 
     # This flag allows creating authorizations to unauthorized users.
     config_accessor :do_not_require_authorization do

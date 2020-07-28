@@ -10,7 +10,7 @@ describe Decidim::Accountability::ProposalLinkedEvent do
   let(:proposal_component) do
     create(:component, manifest_name: "proposals", participatory_space: resource.component.participatory_space)
   end
-  let(:proposal) { create :proposal, component: proposal_component }
+  let(:proposal) { create :proposal, component: proposal_component, title: "My super proposal" }
   let(:extra) { { proposal_id: proposal.id } }
   let(:proposal_path) { resource_locator(proposal).path }
   let(:proposal_title) { proposal.title }
@@ -60,6 +60,12 @@ describe Decidim::Accountability::ProposalLinkedEvent do
   describe "notification_title" do
     it "is generated correctly" do
       expect(subject.notification_title).to eq("The proposal <a href=\"#{proposal_path}\">#{proposal_title}</a> has been included in the <a href=\"#{resource_path}\">#{resource_title}</a> result.")
+    end
+  end
+
+  describe "resource_text" do
+    it "outputs the localized result description" do
+      expect(subject.resource_text).to eq translated(resource.description)
     end
   end
 end

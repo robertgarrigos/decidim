@@ -26,6 +26,7 @@ interface AddCommentFormProps {
   submitButtonClassName?: string;
   autoFocus?: boolean;
   arguable?: boolean;
+  userAllowedToComment?: boolean;
   addComment?: (data: { body: string, alignment: number, userGroupId?: string }) => void;
   onCommentAdded?: () => void;
   orderBy: string;
@@ -76,6 +77,17 @@ export class AddCommentForm extends React.Component<AddCommentFormProps, AddComm
         {this._renderForm()}
       </div>
     );
+  }
+
+  public componentDidMount() {
+    this._attachMentions();
+  }
+
+  /**
+   * Trick to reuse input_mentions.js logic
+   */
+  private _attachMentions() {
+    window.$(document).trigger("attach-mentions-element", this.bodyTextArea);
   }
 
   /**
@@ -136,7 +148,9 @@ export class AddCommentForm extends React.Component<AddCommentFormProps, AddComm
           {this._renderCommentAs()}
           <div className="field">
             <label className="show-for-sr" htmlFor={`add-comment-${type}-${id}`}>{I18n.t("components.add_comment_form.form.body.label")}</label>
-            {this._renderTextArea()}
+            <div className="hashtags__container">
+              {this._renderTextArea()}
+            </div>
             {this._renderTextAreaError()}
             <button
               type="submit"
@@ -377,6 +391,7 @@ const AddCommentFormWithMutation = graphql<addCommentMutation, AddCommentFormPro
                 comments: [],
                 hasComments: false,
                 acceptsNewComments: false,
+                userAllowedToComment: false,
                 upVotes: 0,
                 upVoted: false,
                 downVotes: 0,

@@ -47,6 +47,9 @@ module Decidim
           end
 
           self.decidim_category_id = model.categorization.decidim_category_id if model.categorization
+          presenter = MeetingPresenter.new(model)
+          self.title = presenter.title(all_locales: true)
+          self.description = presenter.description(all_locales: true)
         end
 
         def services_to_persist
@@ -79,6 +82,7 @@ module Decidim
 
         def category
           return unless current_component
+
           @category ||= categories.find_by(id: decidim_category_id)
         end
 

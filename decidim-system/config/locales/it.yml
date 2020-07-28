@@ -47,6 +47,8 @@ it:
           fields:
             created_at: Data/ora di creazione
             name: Nome
+            omniauth_settings: Impostazioni Omniauth
+            smtp_settings: Impostazioni SMTP
           name: Organizzazione
       organizations:
         create:
@@ -60,9 +62,26 @@ it:
           reference_prefix_hint: Il prefisso di riferimento è utilizzato solamente per identificare le risorse in tutte le organizzazioni
           secondary_hosts_hint: Inserisci ciascun elemento in una nuova linea
           title: Nuova Organizzazione
+        omniauth_settings:
+          enabled: Abilitato
+          facebook:
+            app_id: ID App
+            app_secret: App secret
+          google_oauth2:
+            client_id: ID Cliente
+            client_secret: Client secret
+          icon: Icona
+          icon_path: Percorso icona
+          twitter:
+            api_key: API Key
+            api_secret: API secret
         update:
           error: C'è stato un errore durante l'aggiornamento di questa organizzazione.
           success: OK, l'Organizzazione è stata aggiornata.
+        users_registration_mode:
+          disabled: L'accesso può essere fatto solo con account esterni
+          enabled: Permetti agli utenti di registrarsi e accedere
+          existing: Non consentire agli utenti di registrarsi, ma consentire agli utenti esistenti di accedere
       shared:
         notices:
           no_organization_warning_html: È necessario creare un'organizzazione per iniziare. Assicurati di leggere %{guide} prima di procedere.

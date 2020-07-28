@@ -9,7 +9,8 @@ module Decidim
 
     belongs_to :scope,
                foreign_key: "decidim_scopes_id",
-               class_name: "Decidim::Scope"
+               class_name: "Decidim::Scope",
+               optional: true
 
     has_many :initiatives,
              foreign_key: "scoped_type_id",
@@ -23,5 +24,11 @@ module Decidim
       only_integer: true,
       greater_than: 0
     }
+
+    def scope_name
+      return { I18n.locale.to_s => I18n.t("decidim.scopes.global") } if decidim_scopes_id.nil?
+
+      scope&.name.presence || { I18n.locale.to_s => I18n.t("decidim.initiatives.unavailable_scope") }
+    end
   end
 end

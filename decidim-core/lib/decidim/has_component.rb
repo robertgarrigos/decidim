@@ -9,9 +9,11 @@ module Decidim
     extend ActiveSupport::Concern
 
     included do
-      belongs_to :component, foreign_key: "decidim_component_id", class_name: "Decidim::Component"
+      belongs_to :component, foreign_key: "decidim_component_id", class_name: "Decidim::Component", touch: true
       delegate :organization, to: :component, allow_nil: true
-      delegate :participatory_space, to: :component, allow_nil: true
+      delegate :participatory_space, :can_participate_in_space?, to: :component, allow_nil: true
+
+      alias_method :can_participate?, :can_participate_in_space?
     end
 
     class_methods do

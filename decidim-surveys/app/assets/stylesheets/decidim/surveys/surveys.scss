@@ -1,4 +1,6 @@
-form.answer-survey{
+@import "decidim/forms/forms";
+
+form.answer-questionnaire{
   .radio-button-collection,
   .check-box-collection,
   .sortable-check-box-collection{
@@ -13,7 +15,7 @@ form.answer-survey{
     }
   }
 
-  label.survey-question{
+  label.questionnaire-question{
     font-weight: bold;
   }
 

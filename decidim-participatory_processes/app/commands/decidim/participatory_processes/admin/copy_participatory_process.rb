@@ -53,13 +53,15 @@ module Decidim
             scope: @participatory_process.scope,
             developer_group: @participatory_process.developer_group,
             local_area: @participatory_process.local_area,
+            area: @participatory_process.area,
             target: @participatory_process.target,
             participatory_scope: @participatory_process.participatory_scope,
             participatory_structure: @participatory_process.participatory_structure,
             meta_scope: @participatory_process.meta_scope,
             start_date: @participatory_process.start_date,
             end_date: @participatory_process.end_date,
-            participatory_process_group: @participatory_process.participatory_process_group
+            participatory_process_group: @participatory_process.participatory_process_group,
+            private_space: @participatory_process.private_space
           )
         end
 
@@ -81,13 +83,21 @@ module Decidim
         end
 
         def copy_participatory_process_categories
-          @participatory_process.categories.each do |category|
-            Category.create!(
+          @participatory_process.categories.first_class.each do |category|
+            new_category = Category.create!(
               name: category.name,
               description: category.description,
-              parent_id: category.parent_id,
               participatory_space: @copied_process
             )
+
+            category.descendants.each do |child|
+              Category.create!(
+                name: child.name,
+                description: child.description,
+                participatory_space: @copied_process,
+                parent: new_category
+              )
+            end
           end
         end
 

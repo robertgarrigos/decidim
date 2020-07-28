@@ -9,7 +9,7 @@ module Decidim
 
     included do
       def demodulized_name
-        self.class.name.demodulize
+        @demodulized_name ||= self.class.name.demodulize
       end
 
       delegate :foreign_key, to: :demodulized_name
@@ -75,6 +75,16 @@ module Decidim
       def can_participate?(_user)
         true
       end
+
+      def empty_published_component?
+        components.published.empty?
+      end
+
+      def cta_button_text_key
+        return :more_info if empty_published_component?
+
+        :take_part
+      end
     end
 
     class_methods do
@@ -92,6 +102,30 @@ module Decidim
       # Returns an `ActiveRecord::Association`.
       def public_spaces
         published
+      end
+
+      # Public: Adds a sane default way to retrieve active spaces. Please, overwrite
+      # this from your model class in case this is not correct for your model.
+      #
+      # Returns an `ActiveRecord::Association`.
+      def active_spaces
+        public_spaces
+      end
+
+      # Public: Adds a sane default way to retrieve future spaces. Please, overwrite
+      # this from your model class in case this is not correct for your model.
+      #
+      # Returns an `ActiveRecord::Association`.
+      def future_spaces
+        none
+      end
+
+      # Public: Adds a sane default way to retrieve past spaces. Please, overwrite
+      # this from your model class in case this is not correct for your model.
+      #
+      # Returns an `ActiveRecord::Association`.
+      def past_spaces
+        none
       end
     end
   end

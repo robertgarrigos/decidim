@@ -10,15 +10,17 @@ module Decidim
 
       field :title, !TranslatedFieldType, "The name of this participatory space."
 
-      field :components, types[ComponentInterface] do
-        description "Lists the components this space contains."
-
+      field :type, !types.String do
+        description "The participatory space class name. i.e. Decidim::ParticipatoryProcess"
         resolve ->(participatory_space, _args, _ctx) {
-                  Decidim::Component.where(
-                    participatory_space: participatory_space
-                  ).published
-                }
+          participatory_space.class.name
+        }
       end
+
+      field :components,
+            type: types[ComponentInterface],
+            description: "Lists the components this space contains.",
+            function: ComponentListHelper.new
 
       field :stats, types[Decidim::Core::StatisticType] do
         resolve ->(participatory_space, _args, _ctx) {
@@ -33,6 +35,11 @@ module Decidim
       end
 
       resolve_type ->(obj, _ctx) { obj.manifest.query_type.constantize }
+    end
+
+    class ComponentListHelper < ComponentList
+      argument :order, ComponentInputSort, "Provides several methods to order the results"
+      argument :filter, ComponentInputFilter, "Provides several methods to filter the results"
     end
   end
 end

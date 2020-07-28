@@ -18,7 +18,12 @@ module Decidim
             {
               name: "Gotham City",
               host: "decide.gotham.gov",
-              secondary_hosts: "foo.gotham.gov\r\n\r\nbar.gotham.gov"
+              secondary_hosts: "foo.gotham.gov\r\n\r\nbar.gotham.gov",
+              force_users_to_authenticate_before_access_organization: false,
+              users_registration_mode: "existing",
+              omniauth_settings_facebook_enabled: true,
+              omniauth_settings_facebook_app_id: "facebook-app-id",
+              omniauth_settings_facebook_app_secret: "facebook-app-secret"
             }
           end
 
@@ -33,6 +38,15 @@ module Decidim
             expect(organization.name).to eq("Gotham City")
             expect(organization.host).to eq("decide.gotham.gov")
             expect(organization.secondary_hosts).to match_array(["foo.gotham.gov", "bar.gotham.gov"])
+            expect(organization.users_registration_mode).to eq("existing")
+
+            expect(organization.omniauth_settings["omniauth_settings_facebook_enabled"]).to eq(true)
+            expect(
+              Decidim::AttributeEncryptor.decrypt(organization.omniauth_settings["omniauth_settings_facebook_app_id"])
+            ).to eq("facebook-app-id")
+            expect(
+              Decidim::AttributeEncryptor.decrypt(organization.omniauth_settings["omniauth_settings_facebook_app_secret"])
+            ).to eq("facebook-app-secret")
           end
         end
 

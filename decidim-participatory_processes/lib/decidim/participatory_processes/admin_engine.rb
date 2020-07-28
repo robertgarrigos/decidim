@@ -12,10 +12,11 @@ module Decidim
       isolate_namespace Decidim::ParticipatoryProcesses::Admin
 
       paths["db/migrate"] = nil
+      paths["lib/tasks"] = nil
 
       routes do
         resources :participatory_process_groups
-        resources :participatory_processes, param: :slug, except: :show do
+        resources :participatory_processes, param: :slug, except: [:show, :destroy] do
           resource :publish, controller: "participatory_process_publications", only: [:create, :destroy]
           resources :copies, controller: "participatory_process_copies", only: [:new, :create]
 
@@ -32,6 +33,12 @@ module Decidim
           end
           resources :attachment_collections, controller: "participatory_process_attachment_collections"
           resources :attachments, controller: "participatory_process_attachments"
+
+          resource :export, controller: "participatory_process_exports", only: :create
+
+          collection do
+            resources :imports, controller: "participatory_process_imports", only: [:new, :create]
+          end
         end
 
         scope "/participatory_processes/:participatory_process_slug" do
@@ -50,11 +57,15 @@ module Decidim
             member do
               put :unreport
               put :hide
+              put :unhide
             end
           end
           resources :participatory_space_private_users, controller: "participatory_space_private_users" do
             member do
               post :resend_invitation, to: "participatory_space_private_users#resend_invitation"
+            end
+            collection do
+              resource :participatory_space_private_users_csv_import, only: [:new, :create], path: "csv_import"
             end
           end
         end
@@ -80,15 +91,9 @@ module Decidim
                     decidim_admin_participatory_processes.participatory_processes_path,
                     icon_name: "target",
                     position: 2,
-                    active: :inclusive,
-                    if: allowed_to?(:enter, :space_area, space_name: :processes)
-
-          menu.item I18n.t("menu.participatory_process_groups", scope: "decidim.admin"),
-                    decidim_admin_participatory_processes.participatory_process_groups_path,
-                    icon_name: "layers",
-                    position: 3,
-                    active: :inclusive,
-                    if: allowed_to?(:enter, :space_area, space_name: :process_groups)
+                    active: is_active_link?(decidim_admin_participatory_processes.participatory_processes_path, :inclusive) ||
+                            is_active_link?(decidim_admin_participatory_processes.participatory_process_groups_path, :inclusive),
+                    if: allowed_to?(:enter, :space_area, space_name: :processes) || allowed_to?(:enter, :space_area, space_name: :process_groups)
         end
       end
     end

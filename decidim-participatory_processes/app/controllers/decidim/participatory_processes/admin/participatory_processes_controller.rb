@@ -7,17 +7,19 @@ module Decidim
       #
       class ParticipatoryProcessesController < Decidim::ParticipatoryProcesses::Admin::ApplicationController
         include Decidim::Admin::ParticipatorySpaceAdminContext
+        include Decidim::ParticipatoryProcesses::Admin::Filterable
         participatory_space_admin_layout only: [:edit]
 
         helper ProcessGroupsForSelectHelper
+        helper Decidim::ParticipatoryProcesses::Admin::ParticipatoryProcessHelper
 
-        helper_method :current_participatory_process, :current_participatory_space
+        helper_method :current_participatory_process, :current_participatory_space, :process_group
 
         layout "decidim/admin/participatory_processes"
 
         def index
           enforce_permission_to :read, :process_list
-          @participatory_processes = collection
+          @participatory_processes = filtered_collection
         end
 
         def new
@@ -68,20 +70,19 @@ module Decidim
           end
         end
 
-        def destroy
-          enforce_permission_to :destroy, :process, process: current_participatory_process
-          current_participatory_process.destroy!
-
-          flash[:notice] = I18n.t("participatory_processes.destroy.success", scope: "decidim.admin")
-
-          redirect_to participatory_processes_path
-        end
-
         def copy
           enforce_permission_to :create, Decidim::ParticipatoryProcess
         end
 
         private
+
+        def process_group
+          @process_group ||= ParticipatoryProcessGroup.find_by(id: ransack_params[:decidim_participatory_process_group_id_eq])
+        end
+
+        def collection
+          @collection ||= ParticipatoryProcessesWithUserRole.for(current_user)
+        end
 
         def current_participatory_process
           @current_participatory_process ||= collection.where(slug: params[:slug]).or(
@@ -90,10 +91,6 @@ module Decidim
         end
 
         alias current_participatory_space current_participatory_process
-
-        def collection
-          @collection ||= Decidim::ParticipatoryProcessesWithUserRole.for(current_user)
-        end
 
         def participatory_process_params
           {

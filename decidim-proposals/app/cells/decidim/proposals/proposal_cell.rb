@@ -11,17 +11,11 @@ module Decidim
       include Cell::ViewModel::Partial
       include Messaging::ConversationHelper
 
-      delegate :user_signed_in?, to: :parent_controller
-
       def show
-        cell card_size, model, @options
+        cell card_size, model, options
       end
 
       private
-
-      def current_user
-        context[:current_user]
-      end
 
       def card_size
         "decidim/proposals/proposal_m"

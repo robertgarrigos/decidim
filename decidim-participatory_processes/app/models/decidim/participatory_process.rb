@@ -18,10 +18,15 @@ module Decidim
     include Decidim::HasPrivateUsers
     include Decidim::Loggable
     include Decidim::ParticipatorySpaceResourceable
+    include Decidim::Searchable
 
     belongs_to :organization,
                foreign_key: "decidim_organization_id",
                class_name: "Decidim::Organization"
+    belongs_to :area,
+               foreign_key: "decidim_area_id",
+               class_name: "Decidim::Area",
+               optional: true
     belongs_to :participatory_process_group,
                foreign_key: "decidim_participatory_process_group_id",
                class_name: "Decidim::ParticipatoryProcessGroup",
@@ -44,6 +49,10 @@ module Decidim
              foreign_type: "decidim_participatory_space_type",
              dependent: :destroy,
              as: :participatory_space
+    belongs_to :scope_type_max_depth,
+               foreign_key: "decidim_scope_type_id",
+               class_name: "Decidim::ScopeType",
+               optional: true
 
     has_many :components, as: :participatory_space, dependent: :destroy
 
@@ -55,9 +64,21 @@ module Decidim
     mount_uploader :hero_image, Decidim::HeroImageUploader
     mount_uploader :banner_image, Decidim::BannerImageUploader
 
-    scope :past, -> { where(arel_table[:end_date].lteq(Time.current)) }
-    scope :upcoming, -> { where(arel_table[:start_date].gt(Time.current)) }
-    scope :active, -> { where(arel_table[:start_date].lteq(Time.current).and(arel_table[:end_date].gt(Time.current).or(arel_table[:end_date].eq(nil)))) }
+    scope :past, -> { where(arel_table[:end_date].lt(Date.current)) }
+    scope :upcoming, -> { where(arel_table[:start_date].gt(Date.current)) }
+    scope :active, -> { where(arel_table[:start_date].lteq(Date.current).and(arel_table[:end_date].gt(Date.current).or(arel_table[:end_date].eq(nil)))) }
+
+    searchable_fields({
+                        scope_id: :decidim_scope_id,
+                        participatory_space: :itself,
+                        A: :title,
+                        B: :subtitle,
+                        C: :short_description,
+                        D: :description,
+                        datetime: :published_at
+                      },
+                      index_on_create: ->(_process) { false },
+                      index_on_update: ->(process) { process.visible? })
 
     # Scope to return only the promoted processes.
     #
@@ -66,13 +87,57 @@ module Decidim
       where(promoted: true)
     end
 
+    # Return processes that DON'T belong to a process group.
+    def self.groupless
+      where(decidim_participatory_process_group_id: nil)
+    end
+
+    # Return processes that belong to a process group.
+    def self.grouped
+      where.not(decidim_participatory_process_group_id: nil)
+    end
+
+    def self.active_spaces
+      active
+    end
+
+    def self.future_spaces
+      upcoming
+    end
+
+    def self.past_spaces
+      past
+    end
+
     def self.log_presenter_class_for(_log)
       Decidim::ParticipatoryProcesses::AdminLog::ParticipatoryProcessPresenter
     end
 
+    def active?
+      return false if start_date.blank?
+
+      start_date < Date.current && (end_date.blank? || end_date > Date.current)
+    end
+
     def past?
       return false if end_date.blank?
-      end_date < Time.current
+
+      end_date < Date.current
+    end
+
+    def upcoming?
+      return false if start_date.blank?
+
+      start_date > Date.current
+    end
+
+    # Pluck all ParticipatoryProcessGroup ID's
+    def self.group_ids
+      pluck(:decidim_participatory_process_group_id)
+    end
+
+    def closed?
+      past?
     end
 
     def hashtag
@@ -83,19 +148,21 @@ module Decidim
       slug
     end
 
-    def self.private_processes
-      where(private_space: true)
-    end
-
-    def can_participate?(user)
-      return true unless private_space?
-      return true if private_space? && users.include?(user)
-      false
-    end
-
     # Overrides the method from `Participable`.
     def moderators
       "#{admin_module_name}::Moderators".constantize.for(self)
+    end
+
+    def user_roles(role_name = nil)
+      roles = Decidim::ParticipatoryProcessUserRole.where(participatory_process: self)
+      return roles if role_name.blank?
+
+      roles.where(role: role_name)
+    end
+
+    # Allow ransacker to search for a key in a hstore column (`title`.`en`)
+    ransacker :title do |parent|
+      Arel::Nodes::InfixOperation.new("->>", parent.table[:title], Arel::Nodes.build_quoted(I18n.locale.to_s))
     end
   end
 end

@@ -1,15 +1,24 @@
 <% add_decidim_meta_tags({
   description: translated_attribute(debate.description),
-  title: translated_attribute(debate.title),
+  title: present(debate).title,
   url: debate_url(debate.id)
 }) %>
 
+<%
+edit_link(
+  resource_locator(debate).edit,
+  :update,
+  :debate,
+  debate: debate
+)
+%>
+
 <div class="row column view-header">
   <h2 class="heading2">
-    <%== translated_attribute debate.title %>
+    <%== present(debate).title %>
   </h2>
 
-  <%= cell "decidim/author", Decidim::Debates::DebatePresenter.new(debate).author, context: {extra_classes: ["author-data--small"]} %>
+  <%= cell "decidim/author", Decidim::Debates::DebatePresenter.new(debate).author, context: { extra_classes: ["author-data--small"] } %>
 
 </div>
 <div class="row">
@@ -25,18 +34,18 @@
             <%= l debate.start_time, format: "%H:%M" %> - <%= l debate.end_time, format: "%H:%M" %>
           </div>
         <% end %>
-        <%= render partial: "decidim/shared/follow_button", locals: { followable: debate } %>
+        <%= render partial: "decidim/shared/follow_button", locals: { followable: debate, large: false } %>
       </div>
     </div>
     <%= resource_reference(debate) %>
-    <%= render partial: "share", locals: { debate: debate } %>
+    <%= render partial: "decidim/shared/share_modal" %>
   </div>
   <div class="columns mediumlarge-8 mediumlarge-pull-4">
     <div class="section">
-      <p><%= simple_format(translated_attribute(debate.description)) %></p>
+      <%= render_debate_description(debate) %>
       <% if translated_attribute(debate.instructions).present? %>
         <div class="callout secondary">
-          <%= simple_format(translated_attribute(debate.instructions)) %>
+          <%= decidim_sanitize(simple_format(translated_attribute(debate.instructions))) %>
         </div>
       <% end %>
       <% if translated_attribute(debate.information_updates).present? %>
@@ -54,9 +63,6 @@
 </div>
 
 <%= comments_for debate %>
-
-<%= javascript_include_tag "decidim/proposals/social_share" %>
-<%= stylesheet_link_tag "decidim/proposals/social_share" %>
 
 <%=
   render partial: "decidim/shared/flag_modal", locals: {

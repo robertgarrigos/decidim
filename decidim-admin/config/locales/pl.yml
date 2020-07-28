@@ -36,6 +36,8 @@ pl:
         organization_url: Adres organizacji
         redirect_uri: Przekierowanie URI
       organization:
+        alert_color: Alarm
+        badges_enabled: Włącz odznaki
         cta_button_path: Ścieżka przycisku wezwania do działania
         cta_button_text: Tekst przycisku wezwania do działania
         default_locale: Domena domyślna
@@ -52,7 +54,6 @@ pl:
         highlighted_content_banner_image: Obraz
         highlighted_content_banner_short_description: Krótki opis
         highlighted_content_banner_title: Tytuł
-        homepage_image: Obraz strony głównej
         instagram_handler: Obsługa Instagram
         logo: Logo
         name: Nazwa
@@ -62,11 +63,15 @@ pl:
         omnipresent_banner_short_description: Krótki opis
         omnipresent_banner_title: Tytuł
         omnipresent_banner_url: URL
+        primary_color: Podstawowa
         reference_prefix: Prefiks referencyjny
+        secondary_color: Wtórny
         show_statistics: Pokaż statystyki
+        success_color: Powodzenie
         tos_version: Warunki korzystania z usługi
         twitter_handler: Obsługa Twittera
-        welcome_text: Tekst powitalny
+        user_groups_enabled: Włącz grupy użytkowników
+        warning_color: Ostrzeżenie
         youtube_handler: Poradnik YouTube
       scope:
         code: Kod
@@ -83,44 +88,31 @@ pl:
         changed_notably: Nastąpiły zauważalne zmiany.
         content: Zadowolony
         organization: Organizacja
+        show_in_footer: Pokaż w stopce
         slug: Ślimak URL
         title: Tytuł
+        weight: Waga
+      static_page_topic:
+        description: Opis
+        show_in_footer: Pokaż w stopce
+        title: Tytuł
+        weight: Waga
+      user_group_csv_verification:
+        file: Plik
     errors:
       models:
         oauth_application:
           attributes:
             redirect_uri:
               must_be_ssl: Identyfikator URI przekierowania musi być identyfikatorem URI protokołu SSL
+        organization:
+          attributes:
+            official_img_footer:
+              allowed_file_content_types: Nieprawidłowy plik obrazu
+            official_img_header:
+              allowed_file_content_types: Nieprawidłowy plik obrazu
   activerecord:
     attributes:
-      decidim/participatory_process:
-        banner_image: Obraz baneru
-        description: Opis
-        developer_group: Grupa promotorów
-        domain: Domena
-        end_date: Data końcowa
-        hashtag: Hasztag
-        hero_image: Obraz w domu
-        local_area: Obszar lokalny
-        meta_scope: Zakres metadanych
-        participatory_scope: Zakres współuczestnictwa
-        participatory_structure: Struktura uczestnictwa
-        promoted: Lansowany
-        scope: Zakres
-        short_description: Krótki opis
-        slug: Ślimak URL
-        start_date: Data rozpoczęcia
-        subtitle: Podtytuł
-        target: Cel
-        title: Tytuł
-      decidim/participatory_process_group:
-        description: Opis
-        hero_image: Obraz w domu
-        name: Nazwa
-        participatory_processes: Procesy partycypacyjne
-      decidim/participatory_process_step:
-        end_date: Data końcowa
-        start_date: Data rozpoczęcia
       decidim/static_page:
         content: Zadowolony
         slug: Ślimak URL
@@ -133,9 +125,6 @@ pl:
         organization_url: Adres organizacji
         redirect_uri: Przekierowanie URI
         site: Stronie internetowej
-  date:
-    formats:
-      datepicker: "%m / %d / %Y"
   decidim:
     admin:
       actions:
@@ -236,10 +225,6 @@ pl:
           error: Podczas aktualizowania tej kategorii wystąpił błąd.
           success: Kategoria została zaktualizowana.
       component_permissions:
-        edit:
-          everyone: Każdy
-          submit: Zapisz uprawnienia
-          title: Edytuj uprawnienia
         update:
           success: Uprawnienia zostały pomyślnie zaktualizowane.
       components:
@@ -280,6 +265,20 @@ pl:
       exports:
         export_as: "%{name} jako %{export_format}"
         notice: Twój eksport jest obecnie w toku. Po jego zakończeniu otrzymasz e-maila.
+      filters:
+        category_id_eq:
+          label: Kategoria
+        officialized_at_null:
+          label: Stan
+          values:
+            'false': Oficjalny
+            'true': Nie oficjalny
+        search_label: Szukaj
+      help_sections:
+        error: Wystąpił błąd podczas aktualizowania sekcji pomocy
+        form:
+          save: Zapisać
+        success: Sekcje pomocy zostały pomyślnie zaktualizowane
       impersonatable_users:
         index:
           filter:
@@ -333,10 +332,12 @@ pl:
         areas: Obszary
         configuration: Konfiguracja
         dashboard: Deska rozdzielcza
+        help_sections: Sekcje pomocy
+        homepage: Strona główna
         impersonations: Podszywanie się pod inne osoby
         newsletters: Biuletyny
         oauth_applications: Aplikacje OAuth
-        officializations: Oficjalizacje
+        participants: Uczestnicy
         scope_types: Typy zakresów
         scopes: Zakresy
         settings: Ustawienia
@@ -446,9 +447,10 @@ pl:
         new:
           save: Zapisać
           title: Nowy biuletyn
-        show:
+        select_recipients_to_deliver:
           confirm_deliver: Czy na pewno chcesz dostarczyć ten biuletyn? Nie można cofnąć tej czynności.
           deliver: Dostarcz biuletyn
+        show:
           preview: Zapowiedź
           subject: Przedmiot
         update:
@@ -482,18 +484,12 @@ pl:
           actions: działania
           badge: Odznaka
           created_at: Utworzono w
-          filter:
-            all: Wszystko
-            not_officialized: Nie oficjalny
-            officialized: Oficjalny
-          filter_by: Filtruj według
           name: Nazwa
           nickname: Przezwisko
           not_officialized: Nie oficjalny
           officialize: Oficjalizuj
           officialized: Oficjalny
           reofficialize: Reofficialize
-          search: Szukaj
           status: Status
           unofficialize: Nieoficjalne
         new:
@@ -519,6 +515,7 @@ pl:
         edit:
           update: Aktualizuj
         form:
+          colors_title: Kolory organizacji
           cta_button_path_help: 'Możesz zastąpić lokalizację, w której przycisk Do połączenia z działaniem na łącza do strony głównej. Użyj częściowych ścieżek, a nie pełnych adresów URL. Akceptuje litery, liczby, myślniki i ukośniki, i muszą zaczynać się od litery. Przycisk Zadzwoń do Działania zostanie wyświetlony na stronie głównej między tekstem powitalnym a opisem. Przykład: %{url}'
           cta_button_text_help: Można zastąpić tekst przycisku Żądanie do działania na stronie głównej dla każdego dostępnego języka w organizacji. Jeśli nie zostanie ustawiona, zostanie użyta wartość domyślna. Przycisk Zadzwoń do Działania zostanie wyświetlony na stronie głównej między tekstem powitalnym a opisem.
           header_snippets_help: Użyj tego pola, aby dodać elementy do głowicy HTML. Najczęstszym sposobem jest zintegrowanie usług innych firm, które wymagają dodatkowego kodu JavaScript lub CSS. Można również użyć go do dodawania dodatkowych znaczników meta do HTML. Należy zauważyć, że będzie to widoczne tylko na stronach publicznych, a nie w sekcji administracyjnej.
@@ -526,17 +523,31 @@ pl:
           homepage_highlighted_content_banner_title: Baner treści o wysokim priorytecie
           layout_appearance_title: Edytuj wygląd układu
           omnipresent_banner_appearance_title: Edytuj wszechobecny baner
+      organization_homepage:
+        edit:
+          active_content_blocks: Aktywne bloki treści
+          inactive_content_blocks: Bloki nieaktywnych treści
+      organization_homepage_content_blocks:
+        edit:
+          update: Aktualizacja
       participatory_space_private_users:
         create:
           error: Wystąpił błąd podczas dodawania użytkownika prywatnego do tej partycji uczestniczącej.
           success: Prywatny dostęp użytkowników prywatnych do przestrzeni utworzonej pomyślnie.
         destroy:
+          error: Wystąpił błąd podczas usuwania użytkownika prywatnego z tej partycji uczestniczącej.
           success: Dostęp prywatny użytkownika do przestrzeni dyskowej został pomyślnie zniszczony.
         index:
           title: Prywatny użytkownik przestrzeni prywatnej
         new:
           create: Stwórz
           title: Nowy prywatny użytkownik przestrzeni partycypacyjnej.
+      resource_permissions:
+        edit:
+          submit: Zatwierdź
+          title: Edytuj uprawnienia
+        update:
+          success: Uprawnienia zostały pomyślnie zaktualizowane.
       scope_types:
         create:
           error: Podczas tworzenia nowego typu zakresu wystąpił błąd.
@@ -568,6 +579,21 @@ pl:
         update:
           error: Podczas aktualizowania tego zakresu wystąpił błąd.
           success: Zakres został zaktualizowany
+      static_page_topics:
+        create:
+          error: Wystąpił błąd podczas tworzenia nowego tematu.
+          success: Temat został utworzony pomyślnie.
+        destroy:
+          success: Temat został pomyślnie zniszczony
+        edit:
+          title: Edytuj temat
+          update: Zaktualizuj temat
+        new:
+          create: Utwórz temat
+          title: Nowy temat
+        update:
+          error: Wystąpił błąd podczas aktualizowania tego tematu.
+          success: Temat zaktualizowany pomyślnie
       static_pages:
         actions:
           view: Wyświetl stronę publiczną
@@ -580,11 +606,18 @@ pl:
           changed_notably_help: Jeśli ta opcja jest zaznaczona, użytkownicy zostaną powiadomieni o zaakceptowaniu nowych warunków.
           title: Edytuj stronę
           update: Aktualizacja
+        form:
+          none: Żaden
         index:
           last_notable_change: Ostatnia godna uwagi zmiana
         new:
-          create: Stwórz
+          create: Stwórz stronę
           title: Nowa strona
+        topic:
+          destroy: Usuń temat
+          edit: Edytuj temat
+          empty: W tym temacie nie ma strony
+          without_topic: Strony bez tematu
         update:
           error: Podczas aktualizowania tej strony wystąpił błąd.
           success: Strona została zaktualizowana
@@ -594,15 +627,18 @@ pl:
         areas: Obszary
         authorization_workflows: Metody weryfikacji
         dashboard: Deska rozdzielcza
-        impersonatable_users: Niekodowalni użytkownicy
-        impersonations: Impersonaty
-        officializations: Oficjalizacje
+        impersonatable_users: Zarządzaj użytkownikami
+        impersonations: Zarządzanie użytkownikami
+        participants: Użytkownicy
         scope_types: Typy zakresów
         scopes: Zakresy
         static_pages: Strony
         user_groups: Grupy użytkowników
         users: Użytkownicy
       user_group:
+        csv_verify:
+          invalid: Wystąpił błąd podczas odczytu pliku CSV.
+          success: Plik CSV przesłany pomyślnie, weryfikujemy grupy użytkowników pasujące do kryteriów. To może zająć chwilę.
         reject:
           invalid: Podczas odrzucania tej grupy użytkowników wystąpił błąd.
           success: Grupa użytkowników została odrzucona
@@ -622,6 +658,12 @@ pl:
             pending: W oczekiwaniu
             rejected: Odrzucone
             verified: Zweryfikowano
+          verify_via_csv: Zweryfikuj za pomocą CSV
+      user_groups_csv_verifications:
+        new:
+          explanation: Prześlij swój plik CSV. Musi mieć oficjalne wiadomości e-mail grup użytkowników w organizacji w pierwszej kolumnie pliku, bez nagłówków. Tylko grupy użytkowników, które potwierdziły swój adres e-mail i mają e-mail znajdujący się w pliku CSV, zostaną zweryfikowane.
+          title: Prześlij swój plik CSV
+          upload: Przekazać plik
       users:
         create:
           error: Podczas zapraszania tego użytkownika wystąpił błąd.
@@ -636,6 +678,7 @@ pl:
         new:
           create: Zapraszam
           title: Zaproś użytkownika jako administratora
+      view_public_page: Zobacz stronę publiczną
     forms:
       errors:
         impersonate_user:
@@ -646,12 +689,16 @@ pl:
         hide: Ukryć
         not_hidden: Nie ukryty
         title: działania
+        unhide: Odkryj
         unreport: Brak oceny
       admin:
         reportable:
           hide:
             invalid: Wystąpił problem z ukryciem zasobu.
             success: Zasób został ukryty.
+          unhide:
+            invalid: Podczas odkrywania zasobu wystąpił problem.
+            success: Zasoby zostały pomyślnie odkryte.
           unreport:
             invalid: Wystąpił problem z niewykorzystaniem zasobów.
             success: Zasób został pomyślnie nieudokumentowany.
@@ -676,7 +723,3 @@ pl:
           title: Ustawienia
         users:
           title: Użytkownicy
-  time:
-    formats:
-      datepicker: "%m / %d / %Y"
-      timepicker: "%m / %d / %Y %H:%M"

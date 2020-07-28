@@ -15,13 +15,14 @@ module Decidim
       helper Decidim::IconHelper
       helper Decidim::Comments::CommentsHelper
       helper Decidim::Admin::IconLinkHelper
+      helper Decidim::ResourceReferenceHelper
       helper PaginateHelper
       helper InitiativeHelper
       include InitiativeSlug
 
       include FilterResource
       include Paginable
-      include Orderable
+      include Decidim::Initiatives::Orderable
       include TypeSelectorOptions
       include NeedsInitiative
 
@@ -55,7 +56,7 @@ module Decidim
       end
 
       def initiatives
-        @initiatives = search.results.includes(:author, :scoped_type)
+        @initiatives = search.results.includes(:scoped_type)
         @initiatives = reorder(@initiatives)
         @initiatives = paginate(@initiatives)
       end

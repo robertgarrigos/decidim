@@ -22,6 +22,7 @@ module Decidim
         # Returns nothing.
         def call
           return broadcast(:invalid) if form.invalid?
+
           update_response
           broadcast(:ok, response)
         end
@@ -32,12 +33,13 @@ module Decidim
 
         def update_response
           response.assign_attributes(attributes)
-          response.save
+          response.save!
         end
 
         def attributes
           {
-            title: form.title
+            title: form.title,
+            response_group: form.response_group
           }
         end
       end

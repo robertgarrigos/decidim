@@ -36,6 +36,8 @@ eu:
         organization_url: Erakundearen URLa
         redirect_uri: Birbideratu URIa
       organization:
+        alert_color: Alerta
+        badges_enabled: Gaitu txapak
         cta_button_path: Deitu ekintza botoiaren bideora
         cta_button_text: Deitu ekintza botoiaren testura
         default_locale: Eskualdeko ezarpen lehenetsiak
@@ -52,7 +54,6 @@ eu:
         highlighted_content_banner_image: Image
         highlighted_content_banner_short_description: Deskribapen laburra
         highlighted_content_banner_title: Izenburua
-        homepage_image: Irudiaren irudia
         instagram_handler: Instagram kudeatzailea
         logo: Logotipo
         name: Izena
@@ -62,11 +63,15 @@ eu:
         omnipresent_banner_short_description: Deskribapen laburra
         omnipresent_banner_title: Izenburua
         omnipresent_banner_url: URL
+        primary_color: Lehen
         reference_prefix: Erreferentzia-aurrizkia
+        secondary_color: Bigarren
         show_statistics: Erakutsi estatistikak
+        success_color: Arrakasta
         tos_version: Zerbitzu-baldintzak bertsioa
         twitter_handler: Twitter kudeatzailea
-        welcome_text: Ongietorri testua
+        user_groups_enabled: Gaitu erabiltzaileen taldeak
+        warning_color: Abisua
         youtube_handler: YouTube kudeatzailea
       scope:
         code: Kodea
@@ -83,44 +88,31 @@ eu:
         changed_notably: Aldaketa nabarmenak izan dira.
         content: Edukia
         organization: Erakundea
+        show_in_footer: Erakutsi orri-oinean
         slug: URL laburra
         title: Titulua
+        weight: pisu
+      static_page_topic:
+        description: deskribapena
+        show_in_footer: Erakutsi orri-oinean
+        title: Izenburua
+        weight: pisu
+      user_group_csv_verification:
+        file: file
     errors:
       models:
         oauth_application:
           attributes:
             redirect_uri:
               must_be_ssl: Birbideratze URI SSL URI izan behar du
+        organization:
+          attributes:
+            official_img_footer:
+              allowed_file_content_types: Irudi fitxategi baliogabea
+            official_img_header:
+              allowed_file_content_types: Irudi fitxategi baliogabea
   activerecord:
     attributes:
-      decidim/participatory_process:
-        banner_image: Iragarki-bandako irudia
-        description: Descripción
-        developer_group: Sustatzailearen taldea
-        domain: Domeinua
-        end_date: Bukaera-data
-        hashtag: Traola
-        hero_image: Orri nagusiko irudia
-        local_area: Udal-alorrak
-        meta_scope: 'Metadatuak: esparrua'
-        participatory_scope: Partehartze esparrua
-        participatory_structure: Partehartze egitura
-        promoted: Nabarmendua
-        scope: Esparrua
-        short_description: Deskribapen laburra
-        slug: URL testu laburra
-        start_date: Hasiera-data
-        subtitle: Azpititulua
-        target: Nori zuzentzen zaio?
-        title: Titulua
-      decidim/participatory_process_group:
-        description: Deskribapena
-        hero_image: Orri nagusiko irudia
-        name: Izena
-        participatory_processes: Prozesu partizipatiboak
-      decidim/participatory_process_step:
-        end_date: Bukaera-data
-        start_date: Hasiera-data
       decidim/static_page:
         content: Contenido
         slug: URL laburra
@@ -133,9 +125,6 @@ eu:
         organization_url: Erakundearen URLa
         redirect_uri: Birbideratu URIa
         site: Web
-  date:
-    formats:
-      datepicker: "%Y/%m/%d"
   decidim:
     admin:
       actions:
@@ -236,10 +225,6 @@ eu:
           error: Errorea gertatu da kategoria hau eguneratzean.
           success: Kategoria zuzen eguneratu da.
       component_permissions:
-        edit:
-          everyone: Denek
-          submit: Gorde baimenak
-          title: Editatu baimenak
         update:
           success: Baimenak behar bezala eguneratu dira.
       components:
@@ -280,6 +265,20 @@ eu:
       exports:
         export_as: "%{name} honako hau gisa: %{export_format}"
         notice: Zure esportazioa bidean da. Mezu elektroniko bat jasoko duzu bukatutakoan.
+      filters:
+        category_id_eq:
+          label: Kategoria
+        officialized_at_null:
+          label: Egoera
+          values:
+            'false': Officialized
+            'true': Ez ofiziala
+        search_label: Search
+      help_sections:
+        error: Errore bat gertatu da laguntza-atalak eguneratuz
+        form:
+          save: Save
+        success: Laguntza atalak behar bezala eguneratu dira
       impersonatable_users:
         index:
           filter:
@@ -333,10 +332,12 @@ eu:
         areas: Arloak
         configuration: konfigurazioa
         dashboard: Kontrol-panela
+        help_sections: Laguntza atalak
+        homepage: Hasiera
         impersonations: impersonations
         newsletters: Buletinak
         oauth_applications: OAuth aplikazioak
-        officializations: Officializations
+        participants: Parte-hartzaileak
         scope_types: Esparru motak
         scopes: Esparruak
         settings: Ezarpenak
@@ -446,9 +447,10 @@ eu:
         new:
           save: Gorde
           title: Buletin berria
-        show:
+        select_recipients_to_deliver:
           confirm_deliver: Ziur zaude buletin hau bidali nahi duzula? Ekintza hau ezin da desegin.
           deliver: Bidali buletina
+        show:
           preview: Aurreikusi
           subject: Gaia
         update:
@@ -482,18 +484,12 @@ eu:
           actions: Ekintzak
           badge: Badge
           created_at: Sortua
-          filter:
-            all: guztiak
-            not_officialized: Ez ofiziala
-            officialized: Officialized
-          filter_by: Iragazi arabera
           name: izena
           nickname: ezizena
           not_officialized: Ez ofiziala
           officialize: Officialize
           officialized: Officialized
           reofficialize: Reofficialize
-          search: Search
           status: Egoera
           unofficialize: Unofficialize
         new:
@@ -519,6 +515,7 @@ eu:
         edit:
           update: Eguneratu
         form:
+          colors_title: Antolaketa koloreak
           cta_button_path_help: 'Orrialde nagusira deitzeko dei-botoirako esteka gainidatzi dezakezu. Erabili bideak partzialak, ez URL osoak hemen. Letrak, zenbakiak, marrak eta barrak onartzen ditu eta gutun batekin hasi behar duzu. The Call To Action botoian hasierako orrian erakusten da ongietorri testua eta azalpena. Adibidea: %{url}'
           cta_button_text_help: Hasierako pantailako Call To Action botoian testua gainidatz dezakezu zure erakundeko hizkuntza bakoitzarentzat. Ezartzen bada, balio lehenetsia erabiliko da. The Call To Action botoian hasierako orrian erakusten da ongietorri testua eta azalpena.
           header_snippets_help: Erabili eremu hau HTML goiburuari gauzak gehitzeko. Erabilerarik ohikoena da JavaScript edo CSS gehigarriak behar dituzten hirugarrenen zerbitzuak txertatzea. Gainera, HTMLari meta-etiketa gehigarriak gehitzeko erabil dezakezu. Kontuan hartu orri publikoetan baino ez dela erakutsiko, ez administrazio atalean.
@@ -526,17 +523,31 @@ eu:
           homepage_highlighted_content_banner_title: Highligted edukien banner
           layout_appearance_title: Editatu itxura diseinua
           omnipresent_banner_appearance_title: Editatu omnipresent banner
+      organization_homepage:
+        edit:
+          active_content_blocks: Eduki bloke aktiboak
+          inactive_content_blocks: Eduki eduki gabeko blokeak
+      organization_homepage_content_blocks:
+        edit:
+          update: eguneratzearen
       participatory_space_private_users:
         create:
           error: Errore bat gertatu da partaidetza espazio honen erabiltzaile pribatua gehitzean.
           success: Partaidetza espazioa erabiltzaile pribatuaren sarbidea behar bezala sortu da.
         destroy:
+          error: Errore bat gertatu da erabiltzaile pribatu bat ezabatzen parte hartzaileentzako.
           success: Partekatze espazioa erabiltzaileen sarbide pribatuan arrakastaz suntsitu da.
         index:
           title: Partaidetza espazioa erabiltzaile pribatua
         new:
           create: Sortu
           title: Erabiltzaile pribatuaren parte hartzailea.
+      resource_permissions:
+        edit:
+          submit: Bidali
+          title: Editatu baimenak
+        update:
+          success: Baimenak behar bezala eguneratu dira.
       scope_types:
         create:
           error: Errore bat gertatu da esparru mota berri bat sortzean.
@@ -568,6 +579,21 @@ eu:
         update:
           error: Errorea gertatu da esparru hau eguneratzean.
           success: Esparrua zuzen eguneratu da
+      static_page_topics:
+        create:
+          error: Errore bat gertatu da gai berri bat sortzean.
+          success: Gaia arrakastaz sortu da.
+        destroy:
+          success: Gaia arrakastaz suntsitu da
+        edit:
+          title: Editatu gaia
+          update: Eguneratu gaia
+        new:
+          create: Sortu gaia
+          title: Gai berria
+        update:
+          error: Gai hau eguneratzean errorea gertatu da.
+          success: Gaia ondo eguneratu da
       static_pages:
         actions:
           view: Ikusi orri publikoa
@@ -580,11 +606,18 @@ eu:
           changed_notably_help: Egiaztatuta badago, erabiltzaileei jakinaraziko zaie baldintza eta baldintza berriak onartzeko.
           title: Editatu orria
           update: Eguneratu
+        form:
+          none: Bat ere ez
         index:
           last_notable_change: Azken aldaketa nabaria
         new:
-          create: Sortu
+          create: Sortu orrialdea
           title: Orri berria
+        topic:
+          destroy: Kendu gaia
+          edit: Editatu gaia
+          empty: Ez dago orrialde honen azpian
+          without_topic: Gai gabeko orriak
         update:
           error: Errorea gertatu da orri hau eguneratzean.
           success: Orria zuzen eguneratu da.
@@ -594,15 +627,18 @@ eu:
         areas: Arloak
         authorization_workflows: Egiaztapen metodoak
         dashboard: Kontrol-panela
-        impersonatable_users: Erabiltzaile ustekabekoak
-        impersonations: Ordezteak
-        officializations: Officializations
+        impersonatable_users: Erabiltzaile erabilgarriak
+        impersonations: Erabiltzaileen kudeaketa
+        participants: erabiltzaileak
         scope_types: Esparru motak
         scopes: Esparruak
         static_pages: Orriak
         user_groups: Erabiltzaile-taldeak
         users: Erabiltzaileak
       user_group:
+        csv_verify:
+          invalid: Errore bat gertatu da CSV fitxategia irakurtzean.
+          success: CSV fitxategiak behar bezala kargatu du, irizpideekin bat datozen erabiltzaile-taldeak egiaztatzen ari gara. Denbora pixka bat izan liteke.
         reject:
           invalid: Errore bat gertatu da erabiltzaile talde hau arbuiatzerakoan.
           success: Erabiltzaile taldea arrakastaz arbuiatua
@@ -622,6 +658,12 @@ eu:
             pending: Zain
             rejected: Ukatua
             verified: Egiaztatuta
+          verify_via_csv: Egiaztatu CSV bidez
+      user_groups_csv_verifications:
+        new:
+          explanation: Kargatu zure CSV fitxategia. Zure erakundeko erabiltzaile taldeen mezu elektronikoak fitxategian lehen zutabean izan behar du, goibururik gabe. Zure posta elektronikoa baieztatu duten erabiltzaile taldeek eta CSV fitxategian agertzen diren mezu elektronikoak baliozkotu egingo dira.
+          title: Kargatu zure CSV fitxategia
+          upload: Upload
       users:
         create:
           error: Errorea gertatu da erabiltzaile honi gonbit egitean.
@@ -636,6 +678,7 @@ eu:
         new:
           create: Gonbit egin
           title: Gonbit egin erabiltzaile bati administratzaile gisa
+      view_public_page: Ikusi orri publikoa
     forms:
       errors:
         impersonate_user:
@@ -646,12 +689,16 @@ eu:
         hide: Ezkutatu
         not_hidden: Ezkutatu gabe
         title: Ekintzak
+        unhide: Erakutsi
         unreport: Ezeztatu salaketa
       admin:
         reportable:
           hide:
             invalid: Errorea gertatu da edukia ezkutatzean.
             success: Edukia zuzen ezkutatu da.
+          unhide:
+            invalid: Arazo bat izan da baliabidea desegiteko.
+            success: Baliabidea ondo ezabatu da.
           unreport:
             invalid: Arazo bat izan da salaketa ezeztatzean.
             success: Salaketa zuzen ezeztatu da.
@@ -676,7 +723,3 @@ eu:
           title: Ezarpenak
         users:
           title: Erabiltzaileak
-  time:
-    formats:
-      datepicker: "%Y/%m/%d"
-      timepicker: "%d/%m/%Y %H:%M"

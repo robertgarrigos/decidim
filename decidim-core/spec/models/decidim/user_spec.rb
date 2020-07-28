@@ -6,8 +6,10 @@ module Decidim
   describe User do
     subject { user }
 
-    let(:organization) { build(:organization) }
+    let(:organization) { create(:organization) }
     let(:user) { build(:user, organization: organization) }
+
+    include_examples "resourceable"
 
     it { is_expected.to be_valid }
 
@@ -85,7 +87,7 @@ module Decidim
 
         context "when deleted" do
           before do
-            user.deleted_at = Time.zone.now
+            user.deleted_at = Time.current
           end
 
           it "is valid" do
@@ -102,7 +104,7 @@ module Decidim
             expect do
               create(:user, organization: user.organization,
                             nickname: user.nickname,
-                            deleted_at: Time.zone.now)
+                            deleted_at: Time.current)
             end.not_to raise_error
           end
         end
@@ -146,6 +148,24 @@ module Decidim
 
         it { is_expected.not_to be_valid }
       end
+
+      context "with weird characters" do
+        let(:weird_characters) do
+          %w(< > ? % & ^ * # @ ( ) [ ] = + : ; " { } \ |)
+        end
+
+        it "doesn't allow them" do
+          weird_characters.each do |character|
+            user = build(:user)
+            user.name = user.name.insert(rand(0..user.name.length), character)
+            user.nickname = user.nickname.insert(rand(0..user.nickname.length), character)
+
+            expect(user).not_to be_valid
+            expect(user.errors[:name].length).to eq(1)
+            expect(user.errors[:nickname].length).to eq(1)
+          end
+        end
+      end
     end
 
     describe "validation scopes" do
@@ -172,6 +192,64 @@ module Decidim
       it "returns true if deleted_at is present" do
         subject.deleted_at = Time.current
         expect(subject).to be_deleted
+      end
+    end
+
+    describe "#tos_accepted?" do
+      subject { user.tos_accepted? }
+
+      let(:user) { create(:user, organization: organization, accepted_tos_version: accepted_tos_version) }
+      let(:accepted_tos_version) { organization.tos_version }
+
+      it { is_expected.to be_truthy }
+
+      context "when user accepted ToS before organization last update" do
+        let(:organization) { build(:organization, tos_version: Time.current) }
+        let(:accepted_tos_version) { 1.year.before }
+
+        it { is_expected.to be_falsey }
+
+        context "when organization has no TOS" do
+          let(:organization) { build(:organization, tos_version: nil) }
+          let(:user) { build(:user, organization: organization) }
+
+          it { is_expected.to be_falsey }
+        end
+      end
+
+      context "when user didn't accepted ToS" do
+        let(:accepted_tos_version) { nil }
+
+        it { is_expected.to be_falsey }
+
+        context "when user is managed" do
+          let(:user) { build(:user, :managed, organization: organization, accepted_tos_version: accepted_tos_version) }
+
+          it { is_expected.to be_truthy }
+        end
+
+        context "when organization has no TOS" do
+          let(:organization) { build(:organization, tos_version: nil) }
+
+          it { is_expected.to be_falsey }
+        end
+      end
+    end
+
+    describe "#find_for_authentication" do
+      let(:user) { create(:user, organization: organization) }
+
+      let(:conditions) do
+        {
+          env: {
+            "decidim.current_organization" => organization
+          },
+          email: user.email.upcase
+        }
+      end
+
+      it "finds the user even with weird casing in email" do
+        expect(described_class.find_for_authentication(conditions)).to eq user
       end
     end
   end

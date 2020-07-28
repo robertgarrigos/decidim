@@ -18,7 +18,7 @@ describe Decidim::Permissions do
 
   context "when reading public pages" do
     let(:action) do
-      { scope: :admin, action: :read, subject: :public_page }
+      { scope: :public, action: :read, subject: :public_page }
     end
 
     it { is_expected.to eq true }
@@ -26,7 +26,7 @@ describe Decidim::Permissions do
 
   context "when action is on a locale" do
     let(:action) do
-      { scope: :foo, action: :foo, subject: :locales }
+      { scope: :public, action: :foo, subject: :locales }
     end
 
     it { is_expected.to eq true }
@@ -37,6 +37,7 @@ describe Decidim::Permissions do
       { scope: :public, action: :read, subject: :component }
     end
     let(:context) { { current_component: component } }
+    let(:organization) { component.participatory_space.organization }
 
     context "when the component is published" do
       let(:component) { create :component, :published }
@@ -47,7 +48,27 @@ describe Decidim::Permissions do
     context "when the component is not published" do
       let(:component) { create :component, :unpublished }
 
-      it { is_expected.to eq false }
+      context "when the user does not exist" do
+        it { is_expected.to eq false }
+      end
+
+      context "when the user has no admin access" do
+        let(:user) { create :user, organization: organization }
+
+        it { is_expected.to eq false }
+      end
+
+      context "when the user is an admin" do
+        let(:user) { create :user, :admin, organization: organization }
+
+        it { is_expected.to eq true }
+      end
+
+      context "when the space gives the user admin access" do
+        let(:user) { create :process_admin, participatory_process: component.participatory_space }
+
+        it { is_expected.to eq true }
+      end
     end
   end
 
@@ -87,7 +108,21 @@ describe Decidim::Permissions do
     context "when user is a user manager" do
       let(:user) { create :user, :user_manager }
 
-      it_behaves_like "delegates permissions to", Decidim::UserManagerPermissions
+      context "when reading the admin dashboard" do
+        let(:action) do
+          { scope: :public, action: :read, subject: :admin_dashboard }
+        end
+
+        it { is_expected.to eq true }
+      end
+
+      context "when impersonating a managed user" do
+        let(:action) do
+          { scope: :public, action: :impersonate, subject: :managed_user }
+        end
+
+        it { is_expected.to eq true }
+      end
     end
 
     context "when managing self user" do
@@ -216,6 +251,96 @@ describe Decidim::Permissions do
 
           it { is_expected.to eq false }
         end
+      end
+    end
+
+    context "when action is on user group" do
+      let(:action_subject) { :user_group }
+
+      context "when creating user groups" do
+        let(:action_name) { :create }
+
+        it { is_expected.to eq true }
+      end
+
+      context "when joining user groups" do
+        let(:action_name) { :join }
+
+        it { is_expected.to eq true }
+      end
+
+      context "when leaving a user group" do
+        let(:action_name) { :leave }
+        let(:user) { create :user, :confirmed }
+        let!(:user_group) { create :user_group, users: [user], organization: user.organization }
+        let(:context) { { user_group: user_group } }
+
+        context "when the user does not belong to the user group" do
+          let!(:user_group) { create :user_group, organization: user.organization }
+
+          it { is_expected.to eq false }
+        end
+
+        context "when the user is the creator" do
+          it { is_expected.to eq false }
+        end
+
+        context "when the user belongs to the group" do
+          before do
+            membership = Decidim::UserGroupMembership.find_by(user: user, user_group: user_group)
+            membership.role = :admin
+            membership.save
+          end
+
+          it { is_expected.to eq true }
+        end
+      end
+
+      context "when managing user groups" do
+        let(:action_name) { :manage }
+        let(:user) { create :user, :confirmed }
+        let!(:user_group) { create :user_group, users: [user], organization: user.organization }
+        let(:context) { { user_group: user_group } }
+
+        context "when the user is the creator" do
+          it { is_expected.to eq true }
+        end
+
+        context "when the user is an admin" do
+          before do
+            membership = Decidim::UserGroupMembership.find_by(user: user, user_group: user_group)
+            membership.role = :admin
+            membership.save
+          end
+
+          it { is_expected.to eq true }
+        end
+
+        context "when the user is a basic member" do
+          before do
+            membership = Decidim::UserGroupMembership.find_by(user: user, user_group: user_group)
+            membership.role = :member
+            membership.save
+          end
+
+          it { is_expected.to eq false }
+        end
+      end
+    end
+
+    context "when action is on user group invitations" do
+      let(:action_subject) { :user_group_invitations }
+
+      context "when action is create" do
+        let(:action_name) { :create }
+
+        it { is_expected.to eq true }
+      end
+
+      context "when action is reject" do
+        let(:action_name) { :reject }
+
+        it { is_expected.to eq true }
       end
     end
   end

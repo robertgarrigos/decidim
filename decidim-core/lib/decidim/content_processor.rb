@@ -60,15 +60,40 @@ module Decidim
       Result.new(parsed[:rewrite], parsed[:metadata])
     end
 
+    def self.parse_with_processor(_type, content, context)
+      parsed = if content.is_a?(Hash)
+                 Decidim.content_processors.each_with_object(rewrite: content, metadata: {}) do |type, result|
+                   next unless type == :hashtag
+
+                   result[:rewrite].each do |key, value|
+                     parser = parser_klass(type).constantize.new(value, context)
+                     result[:rewrite][key] = parser.rewrite
+                     result[:metadata][type] = parser.metadata
+                   end
+                 end
+               else
+                 Decidim.content_processors.each_with_object(rewrite: content, metadata: {}) do |type, result|
+                   next unless type == :hashtag
+
+                   parser = parser_klass(type).constantize.new(result[:rewrite], context)
+                   result[:rewrite] = parser.rewrite
+                   result[:metadata][type] = parser.metadata
+                 end
+               end
+      Result.new(parsed[:rewrite], parsed[:metadata])
+    end
+
     # This calls all registered processors one after the other and returns
     # the processed content ready to display.
     #
     # @return [String] the content processed and ready to display (it is expected to include HTML)
-    def self.render(content)
+    def self.render(content, wrapper_tag = "p")
       simple_format(
         Decidim.content_processors.reduce(content) do |result, type|
           renderer_klass(type).constantize.new(result).render
-        end
+        end,
+        {},
+        wrapper_tag: wrapper_tag
       )
     end
 

@@ -20,11 +20,12 @@ module Decidim
       Metadata = Struct.new(:linked_proposals)
 
       # Matches a URL
-      URL_REGEX_PART1 = '(?i)\b((?:[a-z][\w-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|'
-      URL_REGEX_PART2 = '\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))'
-      URL_REGEX = /#{URL_REGEX_PART1}#{URL_REGEX_PART2}/i
+      URL_REGEX_SCHEME = '(?:http(s)?:\/\/)'
+      URL_REGEX_CONTENT = '[\w.-]+[\w\-\._~:\/?#\[\]@!\$&\'\(\)\*\+,;=.]+'
+      URL_REGEX_END_CHAR = '[\d]'
+      URL_REGEX = %r{#{URL_REGEX_SCHEME}#{URL_REGEX_CONTENT}/proposals/#{URL_REGEX_END_CHAR}+}i.freeze
       # Matches a mentioned Proposal ID (~(d)+ expression)
-      ID_REGEX = /~(\d+)/
+      ID_REGEX = /~(\d+)/.freeze
 
       def initialize(content, context)
         super
@@ -72,8 +73,13 @@ module Decidim
 
       def proposal_from_url_match(match)
         uri = URI.parse(match)
+        return if uri.path.blank?
+
         proposal_id = uri.path.split("/").last
         find_proposal_by_id(proposal_id)
+      rescue URI::InvalidURIError
+        Rails.logger.error("#{e.message}=>#{e.backtrace}")
+        nil
       end
 
       def proposal_from_id_match(match)

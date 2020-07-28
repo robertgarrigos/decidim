@@ -7,7 +7,8 @@ module Decidim
         def permissions
           return permission_action unless user
           return permission_action unless permission_action.scope == :admin
-          return permission_action if consultation && !consultation.is_a?(Decidim::Consultation)
+
+          return permission_action if consultation && (!consultation.is_a?(Decidim::Consultation) && !consultation.is_a?(Decidim::Consultations::Question))
 
           unless user.admin?
             disallow!
@@ -22,9 +23,11 @@ module Decidim
           end
 
           allowed_read_participatory_space?
+          allowed_action_on_component?
           allowed_consultation_action?
           allowed_question_action?
           allowed_response_action?
+          allowed_response_group_action?
 
           permission_action
         end
@@ -43,13 +46,23 @@ module Decidim
           @response ||= context.fetch(:response, nil)
         end
 
+        def response_group
+          @response_group ||= context.fetch(:response_group, nil)
+        end
+
+        def allowed_action_on_component?
+          return unless permission_action.subject == :component
+
+          allow!
+        end
+
         def allowed_consultation_action?
           return unless permission_action.subject == :consultation
 
           case permission_action.action
           when :create, :read, :publish
             allow!
-          when :update, :destroy, :preview
+          when :update, :preview
             toggle_allow(consultation.present?)
           when :publish_results
             toggle_allow(consultation.finished? && !consultation.results_published?)
@@ -64,7 +77,7 @@ module Decidim
           case permission_action.action
           when :create, :read
             allow!
-          when :update, :destroy, :preview
+          when :update, :destroy, :preview, :configure
             toggle_allow(question.present?)
           when :publish
             toggle_allow(question.external_voting || question.responses_count.positive?)
@@ -79,6 +92,17 @@ module Decidim
             allow!
           when :update, :destroy
             toggle_allow(response.present?)
+          end
+        end
+
+        def allowed_response_group_action?
+          return unless permission_action.subject == :response_group
+
+          case permission_action.action
+          when :create, :read
+            toggle_allow(question&.multiple?)
+          when :update, :destroy
+            toggle_allow(response_group.present?)
           end
         end
 

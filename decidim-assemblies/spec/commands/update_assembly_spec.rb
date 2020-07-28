@@ -5,7 +5,10 @@ require "spec_helper"
 module Decidim::Assemblies
   describe Admin::UpdateAssembly do
     describe "call" do
-      let(:my_assembly) { create :assembly }
+      let(:organization) { create(:organization) }
+      let(:assembly_type) { create(:assemblies_type, organization: organization) }
+      let(:assembly_type_id) { assembly_type.id }
+      let(:my_assembly) { create :assembly, assembly_type: assembly_type, organization: organization }
       let(:user) { create :user, :admin, :confirmed, organization: my_assembly.organization }
 
       let(:participatory_processes) do
@@ -42,14 +45,12 @@ module Decidim::Assemblies
             scopes_enabled: my_assembly.scopes_enabled,
             scope: my_assembly.scope,
             area: my_assembly.area,
-            parent: nil,
             errors: my_assembly.errors,
             show_statistics: my_assembly.show_statistics,
             participatory_processes_ids: participatory_processes.map(&:id),
             purpose_of_action: my_assembly.purpose_of_action,
             composition: my_assembly.composition,
-            assembly_type: my_assembly.assembly_type,
-            assembly_type_other: my_assembly.assembly_type_other,
+            decidim_assemblies_type_id: assembly_type_id,
             creation_date: my_assembly.creation_date,
             created_by: my_assembly.created_by,
             created_by_other: my_assembly.created_by_other,
@@ -147,6 +148,22 @@ module Decidim::Assemblies
           expect(linked_participatory_processes).to match_array(participatory_processes)
         end
 
+        it "links to assembly type" do
+          command.call
+
+          expect(my_assembly.assembly_type).to eq(assembly_type)
+        end
+
+        context "when no assembly type is set" do
+          let(:assembly_type_id) { nil }
+
+          it "assembly type is null" do
+            command.call
+
+            expect(my_assembly.assembly_type).to eq(nil)
+          end
+        end
+
         context "when no homepage image is set" do
           it "does not replace the homepage image" do
             command.call
@@ -162,6 +179,30 @@ module Decidim::Assemblies
             my_assembly.reload
 
             expect(my_assembly.banner_image).to be_present
+          end
+        end
+
+        context "when updating the parent assembly" do
+          let!(:parent_assembly) { create :assembly, organization: organization }
+
+          it "increments the parent's children_count counter correctly" do
+            form.parent_id = parent_assembly.id
+
+            command.call
+            my_assembly.reload
+            parent_assembly.reload
+
+            expect(my_assembly.parent).to eq(parent_assembly)
+            expect(parent_assembly.children_count).to eq(parent_assembly.children.count)
+          end
+
+          it "decrements the parent's children_count counter correctly" do
+            command.call
+            my_assembly.reload
+            parent_assembly.reload
+
+            expect(my_assembly.parent).to be(nil)
+            expect(parent_assembly.children_count).to eq(parent_assembly.children.count)
           end
         end
       end

@@ -35,6 +35,7 @@ module Decidim
           initiative_type_scope_action?
           initiative_committee_action?
           initiative_admin_user_action?
+          moderator_action?
           allow! if permission_action.subject == :attachment
 
           permission_action
@@ -82,7 +83,7 @@ module Decidim
         end
 
         def initiative_type_action?
-          return unless permission_action.subject == :initiative_type
+          return unless [:initiative_type, :initiatives_type].include? permission_action.subject
 
           initiative_type = context.fetch(:initiative_type, nil)
 
@@ -136,26 +137,37 @@ module Decidim
             toggle_allow(initiative.published?)
           when :discard
             toggle_allow(initiative.validating?)
+          when :export_pdf_signatures
+            toggle_allow(initiative.published? || initiative.accepted? || initiative.rejected?)
           when :export_votes
-            toggle_allow(initiative.offline? || initiative.any?)
+            toggle_allow(initiative.offline_signature_type? || initiative.any_signature_type?)
           when :accept
             allowed = initiative.published? &&
-                      initiative.signature_end_time < Time.zone.today &&
+                      initiative.signature_end_date < Date.current &&
                       initiative.percentage >= 100
             toggle_allow(allowed)
           when :reject
             allowed = initiative.published? &&
-                      initiative.signature_end_time < Time.zone.today &&
+                      initiative.signature_end_date < Date.current &&
                       initiative.percentage < 100
             toggle_allow(allowed)
+          when :send_to_technical_validation
+            toggle_allow(allowed_to_send_to_technical_validation?)
           else
             allow!
           end
         end
 
+        def moderator_action?
+          return unless permission_action.subject == :moderation
+
+          allow!
+        end
+
         def read_initiative_list_action?
           return unless permission_action.subject == :initiative &&
                         permission_action.action == :list
+
           allow!
         end
 
@@ -170,17 +182,19 @@ module Decidim
           when :update
             toggle_allow(initiative.created?)
           when :send_to_technical_validation
-            allowed = initiative.created? && (
-                        !initiative.decidim_user_group_id.nil? ||
-                          initiative.committee_members.approved.count >= Decidim::Initiatives.minimum_committee_members
-            )
-
-            toggle_allow(allowed)
+            toggle_allow(allowed_to_send_to_technical_validation?)
           when :manage_membership
-            allow!
+            toggle_allow(initiative.promoting_committee_enabled?)
           else
             disallow!
           end
+        end
+
+        def allowed_to_send_to_technical_validation?
+          initiative.created? && (
+            !initiative.created_by_individual? ||
+            initiative.enough_committee_members?
+          )
         end
       end
     end

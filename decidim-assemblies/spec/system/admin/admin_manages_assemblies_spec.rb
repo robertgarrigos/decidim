@@ -5,6 +5,8 @@ require "spec_helper"
 describe "Admin manages assemblies", type: :system do
   include_context "when admin administrating an assembly"
 
+  let(:model_name) { assembly.class.model_name }
+
   shared_examples "creating an assembly" do
     let(:image1_filename) { "city.jpeg" }
     let(:image1_path) { Decidim::Dev.asset(image1_filename) }
@@ -58,24 +60,8 @@ describe "Admin manages assemblies", type: :system do
       expect(page).to have_admin_callout("successfully")
 
       within ".container" do
-        expect(page).to have_current_path decidim_admin_assemblies.assemblies_path(parent_id: parent_assembly&.id)
+        expect(page).to have_current_path decidim_admin_assemblies.assemblies_path(q: { parent_id_eq: parent_assembly&.id })
         expect(page).to have_content("My assembly")
-      end
-    end
-  end
-
-  shared_examples "deleting an assembly" do
-    before do
-      click_link translated(assembly.title)
-    end
-
-    it "deletes an assembly" do
-      accept_confirm { click_link "Delete" }
-
-      expect(page).to have_admin_callout("successfully")
-
-      within "table" do
-        expect(page).not_to have_content(translated(assembly.title))
       end
     end
   end
@@ -91,7 +77,11 @@ describe "Admin manages assemblies", type: :system do
 
     it_behaves_like "manage assemblies"
     it_behaves_like "creating an assembly"
-    it_behaves_like "deleting an assembly"
+
+    describe "listing parent assemblies" do
+      it_behaves_like "filtering collection by published/unpublished"
+      it_behaves_like "filtering collection by private/public"
+    end
   end
 
   context "when managing child assemblies" do
@@ -110,6 +100,17 @@ describe "Admin manages assemblies", type: :system do
 
     it_behaves_like "manage assemblies"
     it_behaves_like "creating an assembly"
-    it_behaves_like "deleting an assembly"
+
+    describe "listing child assemblies" do
+      it_behaves_like "filtering collection by published/unpublished" do
+        let!(:published_space) { child_assembly }
+        let!(:unpublished_space) { create(:assembly, :unpublished, parent: parent_assembly, organization: organization) }
+      end
+
+      it_behaves_like "filtering collection by private/public" do
+        let!(:public_space) { child_assembly }
+        let!(:private_space) { create(:assembly, :private, parent: parent_assembly, organization: organization) }
+      end
+    end
   end
 end

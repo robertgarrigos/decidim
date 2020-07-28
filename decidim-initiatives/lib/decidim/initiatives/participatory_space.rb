@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 Decidim.register_participatory_space(:initiatives) do |participatory_space|
+  participatory_space.icon = "decidim/initiatives/icon.svg"
   participatory_space.stylesheet = "decidim/initiatives/initiatives"
 
   participatory_space.context(:public) do |context|
@@ -10,16 +11,24 @@ Decidim.register_participatory_space(:initiatives) do |participatory_space|
 
   participatory_space.context(:admin) do |context|
     context.engine = Decidim::Initiatives::AdminEngine
-    context.layout = "layouts/decidim/admin/initiatives"
+    context.layout = "layouts/decidim/admin/initiative"
   end
 
   participatory_space.participatory_spaces do |organization|
     Decidim::Initiative.where(organization: organization)
   end
 
+  participatory_space.query_type = "Decidim::Initiatives::InitiativeType"
+
   participatory_space.register_resource(:initiative) do |resource|
     resource.model_class_name = "Decidim::Initiative"
     resource.card = "decidim/initiatives/initiative"
+    resource.searchable = true
+  end
+
+  participatory_space.register_resource(:initiatives_type) do |resource|
+    resource.model_class_name = "Decidim::InitiativesType"
+    resource.actions = %w(vote)
   end
 
   participatory_space.model_class_name = "Decidim::Initiative"
@@ -28,6 +37,14 @@ Decidim.register_participatory_space(:initiatives) do |participatory_space|
   participatory_space.seeds do
     seeds_root = File.join(__dir__, "..", "..", "..", "db", "seeds")
     organization = Decidim::Organization.first
+
+    Decidim::ContentBlock.create(
+      organization: organization,
+      weight: 33,
+      scope: :homepage,
+      manifest_name: :highlighted_initiatives,
+      published_at: Time.current
+    )
 
     3.times do |n|
       type = Decidim::InitiativesType.create!(
@@ -50,18 +67,28 @@ Decidim.register_participatory_space(:initiatives) do |participatory_space|
       Decidim::Initiative.skip_callback(:save, :after, :notify_state_change, raise: false)
       Decidim::Initiative.skip_callback(:create, :after, :notify_creation, raise: false)
 
-      initiative = Decidim::Initiative.create!(
+      params = {
         title: Decidim::Faker::Localized.sentence(3),
         description: Decidim::Faker::Localized.sentence(25),
         scoped_type: Decidim::InitiativesTypeScope.reorder(Arel.sql("RANDOM()")).first,
         state: state,
         signature_type: "online",
-        signature_start_time: DateTime.current - 7.days,
-        signature_end_time:  DateTime.current + 7.days,
-        published_at: DateTime.current - 7.days,
+        signature_start_date: Date.current - 7.days,
+        signature_end_date: Date.current + 7.days,
+        published_at: Time.current - 7.days,
         author: Decidim::User.reorder(Arel.sql("RANDOM()")).first,
         organization: organization
-      )
+      }
+
+      initiative = Decidim.traceability.perform_action!(
+        "publish",
+        Decidim::Initiative,
+        organization.users.first,
+        visibility: "all"
+      ) do
+        Decidim::Initiative.create!(params)
+      end
+      initiative.add_to_index_as_search_resource
 
       Decidim::Comments::Seed.comments_for(initiative)
 

@@ -1,35 +1,28 @@
-<div class="process-header row column">
-  <div class="row column process-header__main">
-    <div class="initiative-creation-header__container row">
-      <div class="columns mediumlarge-3">
-        <% if content_for? :back_link %>
-            <%= content_for :back_link %>
+<div class="columns large-3">
+  <div class="m-bottom">
+    <%= link_to :back do %>
+      <%= icon "chevron-left", class: "icon--small" %> <%= t(".back") %>
+    <% end %>
+  </div>
+  <div class="section">
+    <p>
+      <%= t(".title") %>
+    </p>
+  </div>
+  <div class="show-for-large">
+    <ol class="wizard__steps">
+      <% wizard_steps.each do |wizard_step| %>
+        <% next if wizard_step.to_s == "promotal_committee" && !promotal_committee_required? %>
+        <% if step == wizard_step %>
+          <li class="step--active">
+            <%= t(".#{wizard_step}") %>
+          </li>
+        <% else %>
+          <li>
+            <%= t(".#{wizard_step}") %>
+          </li>
         <% end %>
-
-        <h2 class="section-heading"><%= t(".#{step}") %></h2>
-      </div>
-      <div class="columns mediumlarge-6">
-        <div class="initiative-creation-header__phase">
-          <div class="process-header__progress show-for-medium">
-            <ol>
-              <% wizard_steps.each do |wizard_step| %>
-                <% unless future_step? wizard_step %>
-                  <li class="phase-item--past">
-                    <span></span>
-                    <div class="caption"><%= t ".#{wizard_step}" %></div>
-                  </li>
-                <% else %>
-                  <li>
-                    <span></span>
-                    <div class="caption"><%= t ".#{wizard_step}" %></div>
-                  </li>
-                <% end %>
-              <% end %>
-            </ol>
-          </div>
-        </div>
-      </div>
-      <div class="columns mediumlarge-3"></div>
-    </div>
+      <% end %>
+    </ol>
   </div>
 </div>

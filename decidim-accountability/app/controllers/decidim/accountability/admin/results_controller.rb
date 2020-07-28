@@ -5,7 +5,9 @@ module Decidim
     module Admin
       # This controller allows an admin to manage results from a Participatory Process
       class ResultsController < Admin::ApplicationController
-        helper_method :results, :parent_result, :parent_results, :statuses
+        include Decidim::ApplicationHelper
+        include Decidim::SanitizeHelper
+        helper_method :results, :parent_result, :parent_results, :statuses, :present
 
         def new
           enforce_permission_to :create, :result
@@ -83,7 +85,7 @@ module Decidim
               else
                 query = query.where("title ilike ?", "%#{params[:term]}%")
               end
-              render json: query.all.collect { |p| [p.title, p.id] }
+              render json: query.all.collect { |p| [decidim_html_escape(present(p).title), p.id] }
             end
           end
         end

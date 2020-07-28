@@ -8,9 +8,13 @@ module Decidim
       isolate_namespace Decidim::Blogs::Admin
 
       paths["db/migrate"] = nil
+      paths["lib/tasks"] = nil
 
       routes do
-        resources :posts
+        resources :posts do
+          resources :attachment_collections
+          resources :attachments
+        end
         root to: "posts#index"
       end
 

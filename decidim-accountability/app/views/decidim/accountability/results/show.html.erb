@@ -4,11 +4,17 @@
   url: result_url(result.id)
 }) %>
 
+<%
+edit_link(
+  resource_locator(result).edit,
+  :update,
+  :result,
+  result: result
+)
+%>
+
 <% if result.children.any? %>
   <%= render partial: "show_parent", locals: { result: result } %>
 <% else %>
   <%= render partial: "show_leaf", locals: { result: result } %>
 <% end %>
-
-<%= javascript_include_tag "decidim/proposals/social_share" %>
-<%= stylesheet_link_tag "decidim/proposals/social_share" %>

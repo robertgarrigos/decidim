@@ -39,7 +39,7 @@ module Decidim
       return hidden_field(name) if name.to_s == "handler_name"
 
       case type.name
-      when "Date"
+      when "Date", "Time"
         date_field name
       else
         text_field name

@@ -38,6 +38,33 @@ module Decidim
       collection_route("path", options)
     end
 
+    # Builds the admin index path to the associated collection of resources
+    #
+    # options - An optional hash of options to pass to the Rails router
+    #
+    # Returns a String.
+    def admin_index(options = {})
+      admin_collection_route("path", options)
+    end
+
+    # Builds the admin show path to the resource.
+    #
+    # options - An optional hash of options to pass to the Rails router
+    #
+    # Returns a String.
+    def show(options = {})
+      admin_route_proxy.send("#{member_route_name}_path", resource, options)
+    end
+
+    # Builds the admin edit path to the resource.
+    #
+    # options - An optional hash of options to pass to the Rails router
+    #
+    # Returns a String.
+    def edit(options = {})
+      admin_route_proxy.send("edit_#{member_route_name}_path", resource, options)
+    end
+
     private
 
     # Private: Build the route to the resource.
@@ -52,6 +79,10 @@ module Decidim
     # Returns a String.
     def collection_route(route_type, options)
       route_proxy.send("#{collection_route_name}_#{route_type}", options)
+    end
+
+    def admin_collection_route(route_type, options)
+      admin_route_proxy.send("#{collection_route_name}_#{route_type}", options)
     end
 
     def manifest
@@ -73,6 +104,10 @@ module Decidim
 
     def route_proxy
       @route_proxy ||= EngineRouter.main_proxy(component || resource)
+    end
+
+    def admin_route_proxy
+      @admin_route_proxy ||= EngineRouter.admin_proxy(component || resource)
     end
   end
 end

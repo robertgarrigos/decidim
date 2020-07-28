@@ -1,7 +1,7 @@
 {
   "name": "decidim",
   "description": "The participatory democracy framework",
-  "version": "0.14.0-dev",
+  "version": "0.21.0",
   "repository": {
     "url": "git@github.com:decidim/decidim.git",
     "type": "git"
@@ -9,8 +9,16 @@
   "author": "Marc Riera <mrc2407@gmail.com>",
   "license": "AGPL-3.0",
   "engines": {
-    "node": "^10.5.0"
+    "node": "^10.5.0",
+    "npm": "^6.2.0"
   },
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "Firefox ESR",
+    "IE 11",
+    "not dead"
+  ],
   "scripts": {
     "build": "webpack --env.dev",
     "build:prod": "NODE_ENV=production webpack -p --env.prod",
@@ -182,6 +190,9 @@
     }
   },
   "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@babel/polyfill": "^7.2.5",
+    "@babel/preset-env": "^7.3.4",
     "@types/classnames": "^2.2.3",
     "@types/enzyme": "^3.1.0",
     "@types/enzyme-adapter-react-16": "^1.0.2",
@@ -203,7 +214,7 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
-    "css-loader": "^0.28.11",
+    "css-loader": "^2.1.0",
     "enzyme": "^3.1.0",
     "enzyme-adapter-react-16": "^1.0.2",
     "eslint": "^4.18.2",
@@ -219,9 +230,10 @@
     "faker": "^4.1.0",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^22.4.2",
+    "jest-localstorage-mock": "^2.4.0",
     "json-loader": "~0.5.7",
     "mini-css-extract-plugin": "^0.4.0",
-    "node-sass": "^4.9.0",
+    "node-sass": "^4.9.4",
     "progress-bar-webpack-plugin": "^1.10.0",
     "raf": "^3.4.0",
     "sass-loader": "^7.0.1",
@@ -234,7 +246,8 @@
     "typescript": "^2.5.3",
     "typescript-babel-jest": "^1.0.5",
     "webpack": "^4.6.0",
-    "webpack-bundle-analyzer": "^2.9.0",
+    "webpack-bundle-analyzer": "^3.3.2",
+    "webpack-cli": "^2.1.5",
     "webpack-config-utils": "~2.3.0",
     "yaml-jest": "^1.0.5",
     "yaml-loader": "^0.5.0"
@@ -251,7 +264,6 @@
     "graphql-anywhere": "^4.1.5",
     "graphql-tag": "^2.8.0",
     "jquery": "^3.2.1",
-    "npm": "^5.7.1",
     "react": "^16.0.0",
     "react-apollo": "^2.0.4",
     "react-dom": "^16.0.0",
@@ -259,10 +271,10 @@
     "react-select": "^1.2.1",
     "react-test-renderer": "^16.0.0",
     "unfetch": "^3.0.0",
-    "uuid": "^3.2.1",
-    "webpack-cli": "^2.0.11"
+    "uuid": "^3.2.1"
   },
   "jest": {
+    "testURL": "https://decidim.dev/",
     "setupFiles": [
       "raf/polyfill",
       "<rootDir>/decidim-admin/app/frontend/entry_test.ts",

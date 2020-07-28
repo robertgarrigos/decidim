@@ -9,8 +9,8 @@ describe Decidim::Proposals::ProposalMentionedEvent do
   let(:organization) { create :organization }
   let(:author) { create :user, organization: organization }
 
-  let(:source_proposal) { create :proposal, component: create(:proposal_component, organization: organization) }
-  let(:mentioned_proposal) { create :proposal, component: create(:proposal_component, organization: organization) }
+  let(:source_proposal) { create :proposal, component: create(:proposal_component, organization: organization), title: "Proposal A" }
+  let(:mentioned_proposal) { create :proposal, component: create(:proposal_component, organization: organization), title: "Proposal B" }
   let(:resource) { source_proposal }
   let(:extra) do
     {
@@ -41,16 +41,20 @@ describe Decidim::Proposals::ProposalMentionedEvent do
   context "with content" do
     let(:content) do
       "Your proposal \"#{mentioned_proposal.title}\" has been mentioned " \
-        "<a href=\"#{resource_locator(source_proposal).path}\">in this space</a> in the comments."
+        "<a href=\"#{resource_url}\">in this space</a> in the comments."
     end
 
     describe "email_intro" do
+      let(:resource_url) { resource_locator(source_proposal).url }
+
       it "is generated correctly" do
         expect(subject.email_intro).to eq(content)
       end
     end
 
     describe "notification_title" do
+      let(:resource_url) { resource_locator(source_proposal).path }
+
       it "is generated correctly" do
         expect(subject.notification_title).to include(content)
       end

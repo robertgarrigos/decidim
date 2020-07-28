@@ -41,6 +41,18 @@ describe Decidim::ActionLog do
         it { is_expected.to be_valid }
       end
     end
+
+    context "when an invalid visibility is given" do
+      let(:action_log) { build :action_log, visibility: "foo" }
+
+      it { is_expected.not_to be_valid }
+    end
+
+    context "when no visibility is given" do
+      let(:action_log) { build :action_log, visibility: nil }
+
+      it { is_expected.not_to be_valid }
+    end
   end
 
   describe "readonly" do
@@ -60,5 +72,51 @@ describe Decidim::ActionLog do
         action_log.destroy
       end.to raise_error(ActiveRecord::ReadOnlyRecord)
     end
+  end
+
+  describe "visible_for" do
+    subject { action_log.visible_for?(user) }
+
+    let(:action_log) { create(:action_log) }
+    let(:user) { instance_double(Decidim::User) }
+
+    before do
+      action_log.resource.publish!
+    end
+
+    context "when the resource has been hidden" do
+      before do
+        create(:moderation, :hidden, reportable: action_log.resource)
+      end
+
+      it { is_expected.to be_falsey }
+    end
+
+    context "when there's no resource" do
+      before do
+        action_log.resource.delete
+      end
+
+      it { is_expected.to be_falsey }
+    end
+
+    context "when there's no particiaptory space" do
+      before do
+        action_log.participatory_space.delete
+      end
+
+      it { is_expected.to be_falsey }
+    end
+
+    context "when the user can't participate" do
+      before do
+        action_log.participatory_space.private_space = true
+        action_log.participatory_space.save!
+      end
+
+      it { is_expected.to be_falsey }
+    end
+
+    it { is_expected.to be_truthy }
   end
 end

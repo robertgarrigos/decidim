@@ -7,7 +7,7 @@ module Decidim
     describe UpdateProposal do
       let(:form_klass) { ProposalForm }
 
-      let(:component) { create(:proposal_component) }
+      let(:component) { create(:proposal_component, :with_extra_hashtags, suggested_hashtags: suggested_hashtags.join(" ")) }
       let(:organization) { component.organization }
       let(:form) do
         form_klass.from_params(
@@ -30,6 +30,7 @@ module Decidim
       let(:address) { nil }
       let(:latitude) { 40.1234 }
       let(:longitude) { 2.1234 }
+      let(:suggested_hashtags) { [] }
 
       describe "call" do
         let(:form_params) do
@@ -38,7 +39,8 @@ module Decidim
             body: "A reasonable proposal body",
             address: address,
             has_address: has_address,
-            user_group_id: user_group.try(:id)
+            user_group_id: user_group.try(:id),
+            suggested_hashtags: suggested_hashtags
           }
         end
 
@@ -120,6 +122,17 @@ module Decidim
             end
           end
 
+          context "with extra hashtags" do
+            let(:suggested_hashtags) { %w(Hashtag1 Hashtag2) }
+
+            it "saves the extra hashtags" do
+              command.call
+              proposal = Decidim::Proposals::Proposal.last
+              expect(proposal.body).to include("_Hashtag1")
+              expect(proposal.body).to include("_Hashtag2")
+            end
+          end
+
           context "when geocoding is enabled" do
             let(:component) { create(:proposal_component, :with_geocoding_enabled) }
 
@@ -130,10 +143,7 @@ module Decidim
                 let(:address) { "Carrer Pare Llaurador 113, baixos, 08224 Terrassa" }
 
                 before do
-                  Geocoder::Lookup::Test.add_stub(
-                    address,
-                    [{ "latitude" => latitude, "longitude" => longitude }]
-                  )
+                  stub_geocoding(address, [latitude, longitude])
                 end
 
                 it "sets the latitude and longitude" do

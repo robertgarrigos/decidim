@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "decidim/settings_manifest"
-require "decidim/components/export_manifest"
+require "decidim/exporters/export_manifest"
 
 module Decidim
   # This class handles all the logic associated to configuring a component
@@ -24,6 +24,10 @@ module Decidim
     # An array with the name of the classes that will be exported with
     # the data portability feature for this component. For example, `Decidim::<MyModule>::<MyClass>``
     attribute :data_portable_entities, Array, default: []
+
+    # An array with the name of the classes to know the participants
+    # of the component at the time of sending the newsletter. For example, `Decidim::<MyModule>::<MyClass>``
+    attribute :newsletter_participant_entities, Array, default: []
 
     # A path with the `scss` stylesheet this engine provides. It is used to
     # mix this engine's stylesheets with the main app's stylesheets so it can
@@ -54,6 +58,25 @@ module Decidim
     # probably have the form of `Decidim::<MyComponent>::Permissions`.
     attribute :permissions_class_name, String, default: "Decidim::DefaultPermissions"
 
+    # Does this component have specific data to serialize and import?
+    # Beyond the attributes in decidim_component table.
+    attribute :serializes_specific_data, Boolean, default: false
+
+    # The class to be used to serialize specific data for the current component.
+    # Should be a kind of `Decidim::Exporters::Serializer`.
+    #
+    # Note that this class will be initialized with the component as argument.
+    # Then it makes no sense to use the base Decidim::Exporters::Serializer because it
+    # will serialize the component itself, not the specific data depending on it.
+    # Thus you will always be setting a subclass of `Decidim::Exporters::Serializer`.
+    #
+    attribute :specific_data_serializer_class_name, String
+
+    # The class to be used to import specific data for the current component.
+    # Should be a kind of `Decidim::Importers::Importer`.
+    #
+    attribute :specific_data_importer_class_name, String
+
     validates :name, presence: true
 
     # Public: Registers a hook to this manifest. Hooks get fired when some
@@ -79,6 +102,7 @@ module Decidim
     # Returns nothing.
     def run_hooks(event_name, context = nil)
       return unless hooks[event_name]
+
       hooks[event_name.to_sym].each do |hook|
         hook.call(context)
       end
@@ -129,10 +153,10 @@ module Decidim
     end
 
     # Public: Registers an export artifact with a name and its properties
-    # defined in `Decidim::Components::ExportManifest`.
+    # defined in `Decidim::Exporters::ExportManifest`.
     #
     # Export artifacts provide an unified way for components to register
-    # exportable collections serialized via a `Serializer` than eventually
+    # exportable collections serialized via a `Serializer` that eventually
     # are transformed to their formats.
     #
     # name  - The name of the artifact. Should be unique in the context of
@@ -141,6 +165,8 @@ module Decidim
     #
     # Returns nothing.
     def exports(name, &block)
+      return unless name
+
       @exports ||= []
       @exports << [name, block]
       @export_manifests = nil
@@ -149,13 +175,17 @@ module Decidim
     # Pubic: Returns a collection of previously registered export manifests
     # for this component.
     #
-    # Returns an Array<Decidim::Components::ExportManifest>.
+    # Returns an Array<Decidim::Exporters::ExportManifest>.
     def export_manifests
-      @export_manifests ||= @exports.map do |(name, block)|
-        Decidim::Components::ExportManifest.new(name).tap do |manifest|
+      @export_manifests ||= Array(@exports).map do |(name, block)|
+        Decidim::Exporters::ExportManifest.new(name, self).tap do |manifest|
           block.call(manifest)
         end
       end
+    end
+
+    def serializes_specific_data?
+      serializes_specific_data
     end
 
     # Public: Stores an instance of StatsRegistry
@@ -183,6 +213,24 @@ module Decidim
     # Returns a Class.
     def permissions_class
       permissions_class_name&.constantize
+    end
+
+    # Public: Finds the specific data serializer class from its name, using the
+    # `specific_data_serializer_class_name` attribute. If the class does not exist,
+    # it raises an exception. If the class name is not set, it returns nil.
+    #
+    # Returns a Decidim::Exporters::Serializer subclass or nil.
+    def specific_data_serializer_class
+      specific_data_serializer_class_name&.constantize
+    end
+
+    # Public: Finds the specific data importer class from its name, using the
+    # `specific_data_importerer_class_name` attribute. If the class does not exist,
+    # it raises an exception. If the class name is not set, it returns nil.
+    #
+    # Returns a Decidim::Importers::Importer subclass or nil.
+    def specific_data_importer_class
+      specific_data_importer_class_name&.constantize
     end
 
     # Public: Registers a resource. Exposes a DSL defined by

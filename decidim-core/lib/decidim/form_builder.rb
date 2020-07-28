@@ -28,6 +28,23 @@ module Decidim
     end
     # rubocop:enable Metrics/ParameterLists
 
+    # Public: generates a radio buttons input from a collection and adds help
+    # text and errors.
+    #
+    # attribute       - the name of the field
+    # collection      - the collection from which we will render the check boxes
+    # value_attribute - a Symbol or a Proc defining how to find the value attribute
+    # text_attribute  - a Symbol or a Proc defining how to find the text attribute
+    # options         - a Hash with options
+    # html_options    - a Hash with options
+    #
+    # Renders a collection of radio buttons.
+    # rubocop:disable Metrics/ParameterLists
+    def collection_radio_buttons(attribute, collection, value_attribute, text_attribute, options = {}, html_options = {})
+      super + error_and_help_text(attribute, options)
+    end
+    # rubocop:enable Metrics/ParameterLists
+
     # Public: Generates an form field for each locale.
     #
     # type - The form field's type, like `text_area` or `text_input`
@@ -36,15 +53,9 @@ module Decidim
     #
     # Renders form fields for each locale.
     def translated(type, name, options = {})
-      if locales.count == 1
-        return send(
-          type,
-          "#{name}_#{locales.first.to_s.gsub("-", "__")}",
-          options.merge(label: options[:label] || label_for(name))
-        )
-      end
+      return translated_one_locale(type, name, locales.first, options.merge(label: (options[:label] || label_for(name)))) if locales.count == 1
 
-      tabs_id = options[:tabs_id] || "#{object_name}-#{name}-tabs"
+      tabs_id = sanitize_tabs_selector(options[:tabs_id] || "#{object_name}-#{name}-tabs")
 
       label_tabs = content_tag(:div, class: "label--tabs") do
         field_label = label_i18n(name, options[:label] || label_for(name))
@@ -57,7 +68,7 @@ module Decidim
                 title = I18n.with_locale(locale) { I18n.t("name", scope: "locale") }
                 element_class = nil
                 element_class = "is-tab-error" if error?(name_with_locale(name, locale))
-                tab_content_id = "#{tabs_id}-#{name}-panel-#{index}"
+                tab_content_id = sanitize_tabs_selector "#{tabs_id}-#{name}-panel-#{index}"
                 content_tag(:a, title, href: "##{tab_content_id}", class: element_class)
               end
             end
@@ -71,12 +82,43 @@ module Decidim
         locales.each_with_index.inject("".html_safe) do |string, (locale, index)|
           tab_content_id = "#{tabs_id}-#{name}-panel-#{index}"
           string + content_tag(:div, class: tab_element_class_for("panel", index), id: tab_content_id) do
-            send(type, name_with_locale(name, locale), options.merge(label: false))
+            if options[:hashtaggable]
+              hashtaggable_text_field(type, name, locale, options.merge(label: false))
+            else
+              send(type, name_with_locale(name, locale), options.merge(label: false))
+            end
           end
         end
       end
 
       safe_join [label_tabs, tabs_content]
+    end
+
+    def translated_one_locale(type, name, locale, options = {})
+      return hashtaggable_text_field(type, name, locale, options) if options[:hashtaggable]
+
+      send(
+        type,
+        "#{name}_#{locale.to_s.gsub("-", "__")}",
+        options.merge(label: options[:label] || label_for(name))
+      )
+    end
+
+    # Public: Generates a field for hashtaggable type.
+    # type - The form field's type, like `text_area` or `text_input`
+    # name - The name of the field
+    # handlers - The social handlers to be created
+    # options - The set of options to send to the field
+    #
+    # Renders form fields for each locale.
+    def hashtaggable_text_field(type, name, locale, options = {})
+      content_tag(:div, class: "hashtags__container") do
+        if options[:value]
+          send(type, name_with_locale(name, locale), options.merge(label: options[:label], value: options[:value][locale]))
+        else
+          send(type, name_with_locale(name, locale), options.merge(label: options[:label]))
+        end
+      end
     end
 
     # Public: Generates an form field for each social.
@@ -88,7 +130,7 @@ module Decidim
     #
     # Renders form fields for each locale.
     def social_field(type, name, handlers, options = {})
-      tabs_id = options[:tabs_id] || "#{object_name}-#{name}-tabs"
+      tabs_id = sanitize_tabs_selector(options[:tabs_id] || "#{object_name}-#{name}-tabs")
 
       label_tabs = content_tag(:div, class: "label--tabs") do
         field_label = label_i18n(name, options[:label] || label_for(name))
@@ -99,7 +141,7 @@ module Decidim
             handlers.each_with_index.inject("".html_safe) do |string, (handler, index)|
               string + content_tag(:li, class: tab_element_class_for("title", index)) do
                 title = I18n.t(".#{handler}", scope: "activemodel.attributes.#{object_name}")
-                tab_content_id = "#{tabs_id}-#{name}-panel-#{index}"
+                tab_content_id = sanitize_tabs_selector "#{tabs_id}-#{name}-panel-#{index}"
                 content_tag(:a, title, href: "##{tab_content_id}")
               end
             end
@@ -111,7 +153,7 @@ module Decidim
 
       tabs_content = content_tag(:div, class: "tabs-content", data: { tabs_content: tabs_id }) do
         handlers.each_with_index.inject("".html_safe) do |string, (handler, index)|
-          tab_content_id = "#{tabs_id}-#{name}-panel-#{index}"
+          tab_content_id = sanitize_tabs_selector "#{tabs_id}-#{name}-panel-#{index}"
           string + content_tag(:div, class: tab_element_class_for("panel", index), id: tab_content_id) do
             send(type, "#{handler}_handler", options.merge(label: false))
           end
@@ -137,11 +179,11 @@ module Decidim
       options[:lines] ||= 10
       options[:disabled] ||= false
 
-      content_tag(:div, class: "editor") do
+      content_tag(:div, class: "editor #{"hashtags__container" if options[:hashtaggable]}") do
         template = ""
-        template += label(name, options[:label].to_s || name) if options[:label] != false
+        template += label(name, options[:label].to_s || name) + required_for_attribute(name) if options[:label] != false
         template += hidden_field(name, options)
-        template += content_tag(:div, nil, class: "editor-container", data: {
+        template += content_tag(:div, nil, class: "editor-container #{"js-hashtags" if options[:hashtaggable]}", data: {
                                   toolbar: options[:toolbar],
                                   disabled: options[:disabled]
                                 }, style: "height: #{options[:lines]}rem")
@@ -174,8 +216,38 @@ module Decidim
                    []
                  end
       html_options = {}
-
       select(name, @template.options_for_select(categories, selected: selected, disabled: disabled), options, html_options)
+    end
+
+    # Public: Generates a select field for areas.
+    #
+    # name       - The name of the field (usually area_id)
+    # collection - A collection of areas or area_types.
+    #              If it's areas, we sort the selectable options alphabetically.
+    #
+    # Returns a String.
+    def areas_select(name, collection, options = {})
+      selectables = if collection.first.is_a?(Decidim::Area)
+                      assemblies = collection
+                                   .map { |a| [a.name[I18n.locale.to_s], a.id] }
+                                   .sort_by { |arr| arr[0] }
+
+                      @template.options_for_select(
+                        assemblies,
+                        selected: options[:selected]
+                      )
+                    else
+                      @template.option_groups_from_collection_for_select(
+                        collection,
+                        :areas,
+                        :translated_name,
+                        :id,
+                        :translated_name,
+                        selected: options[:selected]
+                      )
+                    end
+
+      select(name, selectables, options)
     end
 
     # Public: Generates a picker field for scope selection.
@@ -184,6 +256,7 @@ module Decidim
     # options       - An optional Hash with options:
     # - multiple    - Multiple mode, to allow multiple scopes selection.
     # - label       - Show label?
+    # - checkboxes_on_top - Show checked picker values on top (default) or below the picker prompt
     #
     # Also it should receive a block that returns a Hash with :url and :text for each selected scope (and for null scope for prompt)
     #
@@ -201,7 +274,11 @@ module Decidim
       scopes = selected_scopes(attribute).map { |scope| [scope, yield(scope)] }
       template = ""
       template += label(attribute, label_for(attribute) + required_for_attribute(attribute)) unless options[:label] == false
-      template += @template.render("decidim/scopes/scopes_picker_input", picker_options: picker_options, prompt_params: prompt_params, scopes: scopes)
+      template += @template.render("decidim/scopes/scopes_picker_input",
+                                   picker_options: picker_options,
+                                   prompt_params: prompt_params,
+                                   scopes: scopes,
+                                   checkboxes_on_top: options[:checkboxes_on_top])
       template += error_and_help_text(attribute, options)
       template.html_safe
     end
@@ -239,7 +316,7 @@ module Decidim
 
     # Public: Override so checkboxes are rendered before the label.
     def check_box(attribute, options = {}, checked_value = "1", unchecked_value = "0")
-      custom_label(attribute, options[:label], options[:label_options], true, false) do
+      custom_label(attribute, options[:label], options[:label_options], true) do
         options.delete(:label)
         options.delete(:label_options)
         @template.check_box(@object_name, attribute, objectify_options(options), checked_value, unchecked_value)
@@ -251,20 +328,16 @@ module Decidim
     def date_field(attribute, options = {})
       value = object.send(attribute)
       data = { datepicker: "" }
-      data[:startdate] = I18n.localize(value, format: :datepicker) if value.present?
-      iso_value = value.present? ? value.strftime("%Y-%m-%d") : ""
+      data[:startdate] = I18n.localize(value, format: :decidim_short) if value.present? && value.is_a?(Date)
+      datepicker_format = ruby_format_to_datepicker(I18n.t("date.formats.decidim_short"))
+      data[:"date-format"] = datepicker_format
 
-      template = ""
-      template += label(attribute, label_for(attribute) + required_for_attribute(attribute))
-      template += @template.text_field(
-        @object_name,
+      template = text_field(
         attribute,
-        options.merge(name: nil,
-                      id: "date_field_#{@object_name}_#{attribute}",
-                      data: data)
+        options.merge(data: data)
       )
-      template += @template.hidden_field(@object_name, attribute, value: iso_value)
-      template += error_and_help_text(attribute, options)
+      help_text = I18n.t("decidim.datepicker.help_text", datepicker_format: datepicker_format)
+      template += error_and_help_text(attribute, options.merge(help_text: help_text))
       template.html_safe
     end
 
@@ -272,22 +345,17 @@ module Decidim
     # datepicker library
     def datetime_field(attribute, options = {})
       value = object.send(attribute)
-      if value.present?
-        iso_value = value.strftime("%Y-%m-%dT%H:%M:%S")
-        formatted_value = I18n.localize(value, format: :timepicker)
-      end
-      template = ""
-      template += label(attribute, label_for(attribute) + required_for_attribute(attribute))
-      template += @template.text_field(
-        @object_name,
+      data = { datepicker: "", timepicker: "" }
+      data[:startdate] = I18n.localize(value, format: :decidim_short) if value.present? && value.is_a?(ActiveSupport::TimeWithZone)
+      datepicker_format = ruby_format_to_datepicker(I18n.t("time.formats.decidim_short"))
+      data[:"date-format"] = datepicker_format
+
+      template = text_field(
         attribute,
-        options.merge(value: formatted_value,
-                      name: nil,
-                      id: "datetime_field_#{@object_name}_#{attribute}",
-                      data: { datepicker: "", timepicker: "" })
+        options.merge(data: data)
       )
-      template += @template.hidden_field(@object_name, attribute, value: iso_value)
-      template += error_and_help_text(attribute, options)
+      help_text = I18n.t("decidim.datepicker.help_text", datepicker_format: datepicker_format)
+      template += error_and_help_text(attribute, options.merge(help_text: help_text))
       template.html_safe
     end
 
@@ -314,10 +382,10 @@ module Decidim
                     else
                       @template.content_tag :label, I18n.t("default_image", scope: "decidim.forms")
                     end
-        template += @template.link_to @template.image_tag(file.url), file.url, target: "_blank"
+        template += @template.link_to @template.image_tag(file.url), file.url, target: "_blank", rel: "noopener"
       elsif file_is_present?(file)
         template += @template.label_tag I18n.t("current_file", scope: "decidim.forms")
-        template += @template.link_to file.file.filename, file.url, target: "_blank"
+        template += @template.link_to file.file.filename, file.url, target: "_blank", rel: "noopener"
       end
 
       if file_is_present?(file)
@@ -333,7 +401,7 @@ module Decidim
 
       if object.errors[attribute].any?
         template += content_tag :p, class: "is-invalid-label" do
-          safe_join object.errors[attribute], "<br/>"
+          safe_join object.errors[attribute], "<br/>".html_safe
         end
       end
 
@@ -348,6 +416,14 @@ module Decidim
         object.class.human_attribute_name(attribute)
       else
         attribute.to_s.humanize
+      end
+    end
+
+    def form_field_for(attribute, options = {})
+      if attribute == :body
+        text_area(attribute, options.merge(rows: 10))
+      else
+        text_field(attribute, options)
       end
     end
 
@@ -465,6 +541,7 @@ module Decidim
     # Returns a klass object.
     def find_validator(attribute, klass)
       return unless object.respond_to?(:_validators)
+
       object._validators[attribute].find { |validator| validator.class == klass }
     end
 
@@ -517,14 +594,14 @@ module Decidim
 
     def categories_for_select(scope)
       sorted_main_categories = scope.first_class.includes(:subcategories).sort_by do |category|
-        translated_attribute(category.name, category.participatory_space.organization)
+        [category.weight, translated_attribute(category.name, category.participatory_space.organization)]
       end
 
       sorted_main_categories.flat_map do |category|
         parent = [[translated_attribute(category.name, category.participatory_space.organization), category.id]]
 
         sorted_subcategories = category.subcategories.sort_by do |subcategory|
-          translated_attribute(subcategory.name, subcategory.participatory_space.organization)
+          [subcategory.weight, translated_attribute(subcategory.name, subcategory.participatory_space.organization)]
         end
 
         sorted_subcategories.each do |subcategory|
@@ -573,12 +650,14 @@ module Decidim
     def file_is_image?(file)
       return unless file && file.respond_to?(:url)
       return file.content_type.start_with? "image" if file.content_type.present?
+
       Mime::Type.lookup_by_extension(File.extname(file.url)[1..-1]).to_s.start_with? "image" if file.url.present?
     end
 
     # Private: Returns whether the file exists or not.
     def file_is_present?(file)
       return unless file && file.respond_to?(:url)
+
       file.present?
     end
 
@@ -598,6 +677,14 @@ module Decidim
       selected = [selected] unless selected.is_a?(Array)
       selected = Decidim::Scope.where(id: selected.map(&:to_i)) unless selected.first.is_a?(Decidim::Scope)
       selected
+    end
+
+    def ruby_format_to_datepicker(ruby_date_format)
+      ruby_date_format.gsub("%d", "dd").gsub("%m", "mm").gsub("%Y", "yyyy").gsub("%H", "hh").gsub("%M", "ii")
+    end
+
+    def sanitize_tabs_selector(id)
+      id.tr("[", "-").tr("]", "-")
     end
   end
 end

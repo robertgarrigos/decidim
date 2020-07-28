@@ -2,8 +2,8 @@ ru:
   activemodel:
     attributes:
       debate:
-        category_id: Разряд
-        decidim_category_id: Разряд
+        category_id: Категория
+        decidim_category_id: Категория
         description: Описание
         end_time: 'Заканчивается:'
         information_updates: Обновления сведений
@@ -82,8 +82,8 @@ ru:
           participate: Принять участие
         filters:
           all: Все
-          category: Разряд
-          category_prompt: Выберите разряд
+          category: Категория
+          category_prompt: Выберите категорию
           citizens: Граждане
           official: Служебные
           origin: Источник
@@ -98,12 +98,8 @@ ru:
         new:
           back: Вернуться
           create: Создать
-          select_a_category: Пожалуйста, выберите разряд
+          select_a_category: Пожалуйста, выберите категорию
           title: Начать новое обсуждение
-        share:
-          close_window: Закрыть окно
-          share: Поделиться
-          share_link: Поделиться ссылкой
       models:
         debate:
           fields:
@@ -115,18 +111,10 @@ ru:
       debates:
         create_debate_event:
           space_followers:
-            email_intro: |-
-              Привет! В пространстве соучастия %{space_title} было создано новое обсуждение. Почитайте его и внесите свой вклад:
             email_outro: Вы получили это уведомление, потому что вы следите за пространством соучастия %{space_title}. Вы можете отписаться от уведомлений, перейдя по приведенной выше ссылке.
-            email_subject: В %{space_title} началось новое обсуждение
             notification_title: В <a href="%{space_path}">%{space_title}</a> началось обсуждение <a href="%{resource_path}">%{resource_title}</a>.
           user_followers:
-            email_intro: |-
-              Добрый день!
-              %{author_name} %{author_nickname}, за которым вы следите, начал новое обсуждение. Прочитайте его и внесите свой вклад:
             email_outro: Вы получили это уведомление, потому что вы следите за «%{author_nickname}». Вы можете отписаться от уведомлений, перейдя по приведенной выше ссылке.
-            email_subject: Новое обсуждение, начатое %{author_nickname}
-            notification_title: <a href="%{author_path}">%{author_name} %{author_nickname}</a> начал обсуждение <a href="%{resource_path}">%{resource_title}</a>.
         creation_disabled:
           email_intro: 'В %{participatory_space_title} уже нельзя начинать обсуждения. Вы можете принять участие в уже начатых обсуждениях на странице:'
           email_outro: Вы получили это уведомление, потому что вы следите за «%{participatory_space_title}». Вы можете отписаться от уведомлений, перейдя по приведенной выше ссылке.

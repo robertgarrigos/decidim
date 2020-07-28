@@ -11,6 +11,12 @@ describe "Admin manages consultations", type: :system do
     visit decidim_admin_consultations.consultations_path
   end
 
+  describe "listing consultations" do
+    let(:model_name) { consultation.class.model_name }
+
+    it_behaves_like "filtering collection by published/unpublished"
+  end
+
   describe "creating a consultation" do
     before do
       within ".layout-content" do
@@ -19,10 +25,10 @@ describe "Admin manages consultations", type: :system do
     end
 
     it "creates a new consultation" do
-      execute_script("$('#date_field_consultation_start_voting_date').focus()")
+      execute_script("$('#consultation_start_voting_date').focus()")
       find(".active").click
 
-      execute_script("$('#date_field_consultation_end_voting_date').focus()")
+      execute_script("$('#consultation_end_voting_date').focus()")
       find(".active").click
 
       within ".new_consultation" do
@@ -72,10 +78,10 @@ describe "Admin manages consultations", type: :system do
     end
 
     it "fails to create a new consultation" do
-      execute_script("$('#date_field_consultation_start_voting_date').focus()")
+      execute_script("$('#consultation_start_voting_date').focus()")
       find(".active").click
 
-      execute_script("$('#date_field_consultation_end_voting_date').focus()")
+      execute_script("$('#consultation_end_voting_date').focus()")
       find(".active").click
 
       within ".new_consultation" do
@@ -107,7 +113,7 @@ describe "Admin manages consultations", type: :system do
         find("*[type=submit]").click
       end
 
-      expect(page).to have_admin_callout("error")
+      expect(page).to have_admin_callout("problem")
     end
   end
 
@@ -158,7 +164,7 @@ describe "Admin manages consultations", type: :system do
         find("*[type=submit]").click
       end
 
-      expect(page).to have_admin_callout("error")
+      expect(page).to have_admin_callout("problem")
     end
   end
 
@@ -178,25 +184,6 @@ describe "Admin manages consultations", type: :system do
 
       expect(page).to have_admin_callout("successfully")
       expect(page).to have_css("img[src*='#{consultation3.banner_image.url}']")
-    end
-  end
-
-  describe "deleting a consultation" do
-    let!(:consultation2) { create(:consultation, organization: organization) }
-
-    before do
-      visit decidim_admin_consultations.consultations_path
-    end
-
-    it "deletes a consultation" do
-      click_link translated(consultation2.title)
-      accept_confirm { click_link "Delete" }
-
-      expect(page).to have_admin_callout("successfully")
-
-      within "table" do
-        expect(page).not_to have_content(translated(consultation2.title))
-      end
     end
   end
 
@@ -232,7 +219,7 @@ describe "Admin manages consultations", type: :system do
 
     it "publishes the consultation" do
       click_link "Publish"
-      expect(page).to have_content("published successfully")
+      expect(page).to have_content("successfully published")
       expect(page).to have_content("Unpublish")
       expect(page).to have_current_path decidim_admin_consultations.edit_consultation_path(consultation)
 
@@ -250,7 +237,7 @@ describe "Admin manages consultations", type: :system do
 
     it "unpublishes the consultation" do
       click_link "Unpublish"
-      expect(page).to have_content("unpublished successfully")
+      expect(page).to have_content("successfully unpublished")
       expect(page).to have_content("Publish")
       expect(page).to have_current_path decidim_admin_consultations.edit_consultation_path(consultation)
 

@@ -38,7 +38,7 @@ pl:
           not_found: Odpowiedź nie znaleziono.
   activerecord:
     models:
-      decidim/consultations:
+      decidim/consultation:
         one: Konsultacja
         few: Konsultacje
         many: Konsultacje
@@ -55,9 +55,9 @@ pl:
         other: Odpowiedzi
       decidim/consultations/vote:
         one: Głosować
-        few: Głosy
-        many: Głosy
-        other: Głosy
+        few: Głosować
+        many: Głosować
+        other: Głosować
   decidim:
     admin:
       actions:
@@ -84,8 +84,6 @@ pl:
         create:
           error: Wystąpił błąd podczas tworzenia nowej konsultacji.
           success: Konsultacje zostały pomyślnie utworzone.
-        destroy:
-          success: Konsultacja została pomyślnie usunięta.
         edit:
           update: Aktualizacja
         form:
@@ -188,6 +186,10 @@ pl:
         questions: pytania
         responses: Odpowiedzi
     consultations:
+      admin:
+        content_blocks:
+          highlighted_consultations:
+            max_results: Maksymalna ilość elementów do pokazania
       consultation:
         start_voting_date: Rozpocznie się głosowanie
         view_results: Pokaż wyniki
@@ -198,6 +200,9 @@ pl:
           label: 'Sortuj konsultacje według:'
           random: Losowy
           recent: Najnowszy
+      content_blocks:
+        highlighted_consultations:
+          name: Wyróżnione konsultacje
       count:
         title:
           one: "%{count} konsultacja"
@@ -220,6 +225,20 @@ pl:
         title: Pytania od %{scope_name}
       index:
         title: Konsultacje
+      last_activity:
+        new_consultation: Nowa konsultacja
+        new_question_at_html: "<span>Nowe pytanie o %{link}</span>"
+      pages:
+        home:
+          highlighted_consultations:
+            active_consultations: Aktywne konsultacje
+            see_all_consultations: Zobacz wszystkie konsultacje
+            voting_ends_in:
+              one: Głosowanie kończy się na <strong>jutro</strong>
+              few: Głosowanie kończy się w ciągu <strong>%{count} dni</strong>
+              many: Głosowanie kończy się w ciągu <strong>%{count} dni</strong>
+              other: Głosowanie kończy się w ciągu <strong>%{count} dni</strong>
+            voting_ends_today: Głosowanie kończy się dzisiaj <strong></strong>
       question:
         take_part: Wziąć udział
         view_results: Pokaż wyniki
@@ -245,6 +264,12 @@ pl:
           view_results: Pokaż wyniki
           vote: Głosować
         unspecified: Nieokreślony
+    help:
+      participatory_spaces:
+        consultations:
+          contextual: "<p>Konsultacje to przestrzeń, która pozwala zadać jednoznaczne pytanie wszystkim osobom, które tworzą organizację, wezwać do wzięcia udziału w konsultacjach, nakręcić i zlecić debatę za lub przeciw odpowiedzi. Po nadejściu daty konsultacji można głosować i publikować wyniki głosowania.</p> <p>Przykłady: Konsultacje mogą dotyczyć niemal każdego aspektu, który wpływa na organizację: niektóre przykłady zmieniają nazwę lub logo organizacji oferującej kilka alternatyw, decydując Tak lub Nie, aby stać się częścią większej organizacji, zatwierdzając lub odrzucając nowy strategiczny plan lub wynik grupy roboczej, lub określenie, czy stanowiska powinny wynosić maksymalnie 1, 2, czy 3 mandatów.</p>\n"
+          page: "<p>Konsultacje to przestrzeń, która pozwala zadać jednoznaczne pytanie wszystkim osobom, które tworzą organizację, wezwać do wzięcia udziału w konsultacjach, nakręcić i zlecić debatę za lub przeciw odpowiedzi. Po nadejściu daty konsultacji można głosować i publikować wyniki głosowania.</p> <p>Przykłady: Konsultacje mogą dotyczyć niemal każdego aspektu, który wpływa na organizację: niektóre przykłady zmieniają nazwę lub logo organizacji oferującej kilka alternatyw, decydując Tak lub Nie, aby stać się częścią większej organizacji, zatwierdzając lub odrzucając nowy strategiczny plan lub wynik grupy roboczej, lub określenie, czy stanowiska powinny pozostać maksymalnie 1, 2, czy 3 mandatami w organizacji.</p>\n"
+          title: Czym są konsultacje?
     menu:
       consultations: Konsultacje
     pages:

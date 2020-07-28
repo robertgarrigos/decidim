@@ -26,6 +26,8 @@ module Decidim
         attribute :min_number, Integer
         attribute :conditional_presence, String
         attribute :image
+        attribute :born_at, Date
+        attribute :start_time, DateTime
 
         translatable_attribute :name, String
         translatable_attribute :short_description, String
@@ -35,6 +37,8 @@ module Decidim
         validates :max_number, length: { maximum: 50 }
         validates :min_number, length: { minimum: 10 }
         validates :conditional_presence, presence: true, if: :validate_presence
+        validates :born_at, presence: true
+        validates :start_time, presence: true
 
         def validate_presence
           false
@@ -102,6 +106,29 @@ module Decidim
         end
       end
 
+      context "when a text field with hashtaggable option" do
+        let(:output) do
+          available_locales.each do |loc|
+            resource.name[loc] = "dummy name value #{loc}"
+          end
+          builder.translated :text_field, :name, hashtaggable: true
+        end
+
+        it "renders a multilingual input with correct value" do
+          available_locales.each do |loc|
+            expect(parsed.css("input[type='text'][value='dummy name value #{loc}']")).not_to be_empty
+          end
+        end
+
+        context "with a single locale" do
+          let(:available_locales) { %w(en) }
+
+          it "renders a single input" do
+            expect(parsed.css("input[type='text'][value]").first.attributes["value"].value).not_to be_empty
+          end
+        end
+      end
+
       context "with an editor field" do
         let(:output) do
           builder.translated :editor, :short_description
@@ -131,16 +158,51 @@ module Decidim
           end
         end
       end
+
+      context "with an editor field hashtaggable" do
+        let(:output) do
+          builder.translated :editor, :short_description, hashtaggable: true
+        end
+
+        it "renders a tabbed input hidden for each field and a container for the editor" do
+          expect(parsed.css("label[for='resource_short_description']")).not_to be_empty
+
+          expect(parsed.css("li.tabs-title a").count).to eq 3
+          expect(parsed.css(".editor.hashtags__container").count).to eq 3
+
+          expect(parsed.css(".editor label[for='resource_short_description_en']").first).to be_nil
+
+          expect(parsed.css(".tabs-panel .editor input[type='hidden'][name='resource[short_description_ca]']")).not_to be_empty
+          expect(parsed.css(".tabs-panel .editor input[type='hidden'][name='resource[short_description_en]']")).not_to be_empty
+          expect(parsed.css(".tabs-panel .editor input[type='hidden'][name='resource[short_description_de__CH]']")).not_to be_empty
+
+          expect(parsed.css(".tabs-panel .editor .editor-container").count).to eq 3
+        end
+
+        context "with a single locale" do
+          let(:available_locales) { %w(en) }
+
+          it "renders a single input and a container for the editor" do
+            expect(parsed.css(".editor-container.js-hashtags").count).to eq 1
+            expect(parsed.css(".editor input[type='hidden'][name='resource[short_description_en]']")).not_to be_empty
+            expect(parsed.css(".editor label[for='resource_short_description_en']")).not_to be_empty
+            expect(parsed.css(".editor .editor-container")).not_to be_empty
+          end
+        end
+      end
     end
 
     describe "categories_for_select" do
       subject { Nokogiri::HTML(output) }
 
       let!(:component) { create(:component) }
-      let!(:category) { create(:category, name: { "en" => "Nice category" }, participatory_space: component.participatory_space) }
-      let!(:other_category) { create(:category, name: { "en" => "A better category" }, participatory_space: component.participatory_space) }
-      let!(:subcategory) { create(:category, name: { "en" => "Subcategory" }, parent: category, participatory_space: component.participatory_space) }
+      let!(:category) { create(:category, name: { "en" => "Nice category" }, weight: weight1, participatory_space: component.participatory_space) }
+      let!(:other_category) { create(:category, name: { "en" => "A better category" }, weight: weight2, participatory_space: component.participatory_space) }
+      let!(:subcategory) { create(:category, name: { "en" => "Subcategory" }, weight: weight3, parent: category, participatory_space: component.participatory_space) }
       let(:scope) { component.categories }
+      let(:weight1) { 0 }
+      let(:weight2) { 0 }
+      let(:weight3) { 0 }
 
       let(:options) { {} }
       let(:output) { builder.categories_select(:category_id, scope, options) }
@@ -171,16 +233,38 @@ module Decidim
         end
       end
 
-      it "sorts main categories by name" do
-        expect(subject.css("option")[0].text).to eq(other_category.name["en"])
-        expect(subject.css("option")[1].text).to eq(category.name["en"])
+      context "when no weight is defined" do
+        it "sorts main categories by name" do
+          expect(subject.css("option")[0].text).to eq(other_category.name["en"])
+          expect(subject.css("option")[1].text).to eq(category.name["en"])
+        end
+
+        it "sorts subcategories by name" do
+          subcategory2 = create(:category, name: { "en" => "First subcategory" }, parent: category, participatory_space: component.participatory_space)
+
+          expect(subject.css("option")[2].text).to eq("- #{subcategory2.name["en"]}")
+          expect(subject.css("option")[3].text).to eq("- #{subcategory.name["en"]}")
+        end
       end
 
-      it "sorts subcategories by name" do
-        subcategory2 = create(:category, name: { "en" => "First subcategory" }, parent: category, participatory_space: component.participatory_space)
+      context "when weight is defined" do
+        let(:weight1) { 1 }
+        let(:weight2) { 2 }
+        let(:weight3) { 1 }
 
-        expect(subject.css("option")[2].text).to eq("- #{subcategory2.name["en"]}")
-        expect(subject.css("option")[3].text).to eq("- #{subcategory.name["en"]}")
+        it "sorts main categories by weight" do
+          expect(subject.css("option")[0].text).to eq(category.name["en"])
+          expect(subject.css("option")[2].text).to eq(other_category.name["en"])
+        end
+
+        it "sorts subcategories by weight" do
+          subcategory2 = create(:category, name: { "en" => "First subcategory" }, weight: 2, parent: category, participatory_space: component.participatory_space)
+
+          expect(subject.css("option")[0].text).to eq(category.name["en"])
+          expect(subject.css("option")[1].text).to eq("- #{subcategory.name["en"]}")
+          expect(subject.css("option")[2].text).to eq("- #{subcategory2.name["en"]}")
+          expect(subject.css("option")[3].text).to eq(other_category.name["en"])
+        end
       end
 
       context "when a category doesn't have the translation in the current locale" do
@@ -220,6 +304,38 @@ module Decidim
             '<input type="checkbox" value="1" name="resource[name]" id="resource_name" />Name' \
           "</label>"
         )
+      end
+    end
+
+    describe "date_field" do
+      context "when the resource has errors" do
+        before do
+          resource.valid?
+        end
+
+        let(:output) do
+          builder.date_field :born_at
+        end
+
+        it "renders the input with the proper class" do
+          expect(parsed.css("input.is-invalid-input")).not_to be_empty
+        end
+      end
+    end
+
+    describe "datetime_field" do
+      context "when the resource has errors" do
+        before do
+          resource.valid?
+        end
+
+        let(:output) do
+          builder.datetime_field :start_time
+        end
+
+        it "renders the input with the proper class" do
+          expect(parsed.css("input.is-invalid-input")).not_to be_empty
+        end
       end
     end
 

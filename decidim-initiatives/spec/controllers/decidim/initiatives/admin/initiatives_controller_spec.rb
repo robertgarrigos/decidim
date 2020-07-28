@@ -193,7 +193,12 @@ module Decidim
         end
 
         context "when update" do
-          let(:valid_attributes) { attributes_for(:initiative, organization: organization) }
+          let(:valid_attributes) do
+            attrs = attributes_for(:initiative, organization: organization)
+            attrs[:signature_end_date] = I18n.l(attrs[:signature_end_date], format: :decidim_short)
+            attrs[:signature_start_date] = I18n.l(attrs[:signature_start_date], format: :decidim_short)
+            attrs
+          end
 
           context "and Users without initiatives" do
             before do
@@ -325,6 +330,29 @@ module Decidim
             end
           end
 
+          context "and Initiative has not enough committee members" do
+            before do
+              created_initiative.author.confirm
+              sign_in created_initiative.author, scope: :user
+            end
+
+            it "does not pass to technical validation phase" do
+              created_initiative.type.update(minimum_committee_members: 4)
+              get :send_to_technical_validation, params: { slug: created_initiative.to_param }
+
+              created_initiative.reload
+              expect(created_initiative).not_to be_validating
+            end
+
+            it "does pass to technical validation phase" do
+              created_initiative.type.update(minimum_committee_members: 3)
+              get :send_to_technical_validation, params: { slug: created_initiative.to_param }
+
+              created_initiative.reload
+              expect(created_initiative).to be_validating
+            end
+          end
+
           context "and User is not the owner of the initiative" do
             let(:other_user) { create(:user, organization: organization) }
 
@@ -370,7 +398,7 @@ module Decidim
           end
 
           context "and Administrator" do
-            let!(:admin) { create(:user, :confirmed, :admin) }
+            let!(:admin) { create(:user, :confirmed, :admin, organization: organization) }
 
             before do
               sign_in admin, scope: :user
@@ -383,8 +411,8 @@ module Decidim
               initiative.reload
               expect(initiative).to be_published
               expect(initiative.published_at).not_to be_nil
-              expect(initiative.signature_start_time).not_to be_nil
-              expect(initiative.signature_end_time).not_to be_nil
+              expect(initiative.signature_start_date).not_to be_nil
+              expect(initiative.signature_end_date).not_to be_nil
             end
           end
         end
@@ -403,7 +431,7 @@ module Decidim
           end
 
           context "and Administrator" do
-            let(:admin) { create(:user, :confirmed, :admin) }
+            let(:admin) { create(:user, :confirmed, :admin, organization: organization) }
 
             before do
               sign_in admin, scope: :user
@@ -437,7 +465,7 @@ module Decidim
           end
 
           context "and Administrator" do
-            let(:admin) { create(:user, :confirmed, :admin) }
+            let(:admin) { create(:user, :confirmed, :admin, organization: organization) }
 
             before do
               sign_in admin, scope: :user
@@ -470,7 +498,7 @@ module Decidim
           end
 
           context "when Administrator" do
-            let!(:admin) { create(:user, :confirmed, :admin) }
+            let!(:admin) { create(:user, :confirmed, :admin, organization: organization) }
 
             before do
               sign_in admin, scope: :user
@@ -502,7 +530,7 @@ module Decidim
           end
 
           context "when Administrator" do
-            let!(:admin) { create(:user, :confirmed, :admin) }
+            let!(:admin) { create(:user, :confirmed, :admin, organization: organization) }
 
             before do
               sign_in admin, scope: :user
@@ -555,6 +583,34 @@ module Decidim
 
             it "is allowed" do
               get :export_votes, params: { slug: initiative.to_param, format: :csv }
+              expect(flash[:alert]).to be_nil
+              expect(response).to have_http_status(:ok)
+            end
+          end
+        end
+
+        context "when GET export_pdf_signatures" do
+          let(:initiative) { create(:initiative, :with_user_extra_fields_collection, organization: organization) }
+
+          context "and author" do
+            before do
+              sign_in initiative.author, scope: :user
+            end
+
+            it "is not allowed" do
+              get :export_pdf_signatures, params: { slug: initiative.to_param, format: :pdf }
+              expect(flash[:alert]).not_to be_empty
+              expect(response).to have_http_status(:found)
+            end
+          end
+
+          context "and admin" do
+            before do
+              sign_in admin_user, scope: :user
+            end
+
+            it "is allowed" do
+              get :export_pdf_signatures, params: { slug: initiative.to_param, format: :pdf }
               expect(flash[:alert]).to be_nil
               expect(response).to have_http_status(:ok)
             end
